@@ -56,7 +56,7 @@ other operating systems.
 The first step is to write the operating system to an SD card. For this purpose, there is https://downloads.raspberrypi.org/imager/imager.exe 
 a free program (Windows), with the help of which the image is copied to the SD card.
 
-![imager](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/imager.png)
+![imager](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/imager.png)
 
 ## Setting up the operating system
 
@@ -79,23 +79,23 @@ pi@raspberrypi:~ $ sudo raspi-config
 It is recommended to change the password, as well as to set up the Wi-Fi, change the time zone and the host name if necessary. In the 
 remainder of the application guide, the host name ```wx``` is used. In addition, SSH must be activated (to be found under Interface Options).
 
-![raspiconfig](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/raspiconfig.png)
+![raspiconfig](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/raspiconfig.png)
 
 All subsequent steps can now be done via SSH and the Raspberry Pi can be disconnected from the keyboard and screen.
 
 ## Installing the .NET Runtime
 After SSH has been activated, a connection to the Raspberry Pi can be established with the help of an SSH client (e.g. Putty, OpenSSH).
 
-![piconnect](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/piconnect.png)
+![piconnect](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/piconnect.png)
 
 First, the .NET Runtime and the ASP.NET Core Runtime must be installed. Help for this is offered under [1]. The current versions 
 can be obtained free of charge from Microsoft at https://dotnet.microsoft.com/download/dotnet-core.
 
-![downloadnet1](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/downloadnet1.png)
+![downloadnet1](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/downloadnet1.png)
 
 For the Raspberry Pi, the binaries for Linux-Arm32 are to be used. The direct link to the Linux-Arm32 binaries must be copied.
 
-![downloadnet2](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/downloadnet2.png)
+![downloadnet2](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/downloadnet2.png)
 
 The Linux Arm32 archive for the ASP.NET Core Runtime is downloaded to the Raspberry using wget.
 
@@ -127,12 +127,12 @@ pi@wx:~ $ sudo apt-get install mc -y
 
 If necessary, the profile can be extended by ```alias ll='ls -l'```.
 
-![profile](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/profile.png)
+![profile](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/profile.png)
 
 ## Set static IP
 It is recommended to configure a static IP address for the Raspberry under ```/etc/dhcpcd.conf``` (see [2]).
 
-![dhcpcd](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/dhcpcd.png)
+![dhcpcd](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/dhcpcd.png)
 
 ## Multicast Domain Name Service (mDNS)
 For example, Avahi can be used as mDNS. Avahi is an open-source mDNS implementation. At the command prompt, type the following command to install Avahi:
@@ -147,7 +147,7 @@ Once the installation process is complete, local network queries are accepted an
 WebExpress is provided in packaged form for the Raspberry Pi in the GitHub repository https://github.com/ReneSchwarzer/WebExpress/releases 
 free of charge.
 
-![downloadwebexpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/downloadwebexpress.png)
+![downloadwebexpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/downloadwebexpress.png)
 
 The binaries of WebExpress can be obtained from GitHub via wget.
 
@@ -319,17 +319,17 @@ WebExpress will start automatically after each restart of the Rasperry Pi.
 If https is used with self-generated certificates, the certificates should be stored in the client. The .pfx file must be placed in the 
 certificate store under Trusted Root Certification Authorities.
 
-![certificatestore1](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/certificatestore1.png)
-![certificatestore2](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/certificatestore2.png)
-![certificatestore3](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/certificatestore3.png)
-![certificatestore4](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/certificatestore4.png)
-![certificatestore5](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/certificatestore5.png)
-![certificatestore6](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/certificatestore6.png)
-![certificatestore7](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/certificatestore7.png)
+![certificatestore1](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore1.png)
+![certificatestore2](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore2.png)
+![certificatestore3](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore3.png)
+![certificatestore4](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore4.png)
+![certificatestore5](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore5.png)
+![certificatestore6](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore6.png)
+![certificatestore7](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore7.png)
 
 The WebExpress certificate must be trusted in the browser.
 
-![trust](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/assets/ig/trust.png)
+![trust](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/trust.png)
 
 # Update
 To ensure security, the Raspberry Pi, its applications and WebExpress must be updated regularly.
