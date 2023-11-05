@@ -1,4 +1,4 @@
-![WebExpress logo](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/icon.png)
+![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
 
 # General
 WebExpress is a lightweight web server that has been optimized for use in low-performance environments. Even on 
