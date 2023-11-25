@@ -1,4 +1,4 @@
-![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
+![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress/main/assets/banner.png)
 
 # WebExpress
 WebExpress is a lightweight web server optimized for use in low-performance environments (e.g. Rasperry PI). By providing 
@@ -12,20 +12,36 @@ language (e.g. C#). Some advantages of WebExpress are:
 
 The WebExpress family includes the following projects:
 
-- [WebExpress (core)](https://github.com/ReneSchwarzer/WebExpress#readme) - The core for WebExpress applications.
+- [WebExpress](https://github.com/ReneSchwarzer/WebExpress#readme) - The web server for WebExpress applications and the documentation.
+- [WebExpress.WebCore](https://github.com/ReneSchwarzer/WebExpress.WebCore#readme) - The core for WebExpress applications.
 - [WebExpress.WebUI](https://github.com/ReneSchwarzer/WebExpress.WebUI#readme) - Common templates and controls for WebExpress applications.
 - [WebExpress.WebIndex](https://github.com/ReneSchwarzer/WebExpress.WebIndex#readme) - Reverse index for WebExpress applications.
 - [WebExpress.WebApp](https://github.com/ReneSchwarzer/WebExpress.WebApp#readme) - Business application template for WebExpress applications.
-- [WebExpress.Server](https://github.com/ReneSchwarzer/WebExpress.Server#readme) - The web server for WebExpress applications.
+
+WebExpress is part of the WebExpress family. The project provides a web server for WebExpress applications.
+
+# Libraries used
+- https://github.com/dotnet/core (MIT)
+- https://getbootstrap.com/ (MIT)
+- https://www.chartjs.org (MIT)
+- https://jquery.com/ (MIT)
+- https://summernote.org/ (MIT)
+- https://popper.js.org/ (MIT)
+- https://github.com/kurtobando/simple-tags (MIT)
+- https://github.com/uxsolutions/bootstrap-datepicker (Apache 2.0)
+- https://github.com/xoofx/markdig (BSD-2-Clause license)
+
+# Download 
+The current binaries are available for download [here](https://github.com/ReneSchwarzer/WebExpress/releases).
 
 # Start
 To get started with WebExpress, use the following links and tutorials.
 
-- [installation guide](https://github.com/ReneSchwarzer/WebExpress.Doc/blob/main/doc/installation_guide.md) 
-- [development guide](https://github.com/ReneSchwarzer/WebExpress.Doc/blob/main/doc/development_guide.md)
+- [installation guide](https://github.com/ReneSchwarzer/WebExpress/blob/main/doc/installation_guide.md) 
+- [development guide](https://github.com/ReneSchwarzer/WebExpress/blob/main/doc/development_guide.md)
 
 ## Tutorials
 - [HelloWorld](https://github.com/ReneSchwarzer/WebExpress.Tutorial.HelloWorld#readme)
 
 # Tags
-#NETCore #WebExpress 
+#WebExpress #WebServer

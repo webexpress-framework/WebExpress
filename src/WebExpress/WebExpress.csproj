@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<Version>0.0.4.0</Version>
+		<AssemblyVersion>0.0.4.0</AssemblyVersion>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net7.0</TargetFramework>
+		<ApplicationIcon>Rocket.ico</ApplicationIcon>
+		<Authors>Rene_Schwarzer@hotmail.de</Authors>
+		<StartupObject>WebExpress.App.Program</StartupObject>
+		<RuntimeIdentifiers>win10-x64;win-arm;linux-arm;ubuntu.14.04-arm;ubuntu.16.04-arm</RuntimeIdentifiers>
+		<RepositoryUrl>https://github.com/ReneSchwarzer/WebExpress.Server</RepositoryUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="WebExpress.Core" Version="0.0.4-alpha" />
+	  <PackageReference Include="WebExpress.WebApp" Version="0.0.4-alpha" />
+	  <PackageReference Include="WebExpress.WebIndex" Version="0.0.4-alpha" />
+	  <PackageReference Include="WebExpress.WebUI" Version="0.0.4-alpha" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Config\webexpress.config.xml">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+		<Exec Command="$(SolutionDir)$(AssemblyName)\bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).exe -s $(SolutionDir)..\WebExpress.spec -c $(Configuration) -t $(TargetFramework) -o $(SolutionDir)..\pkg\$(Configuration)" />
+	</Target>
+
+</Project>
