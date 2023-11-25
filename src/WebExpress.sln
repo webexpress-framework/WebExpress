@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34221.43
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebExpress", "WebExpress\WebExpress.csproj", "{81C574D8-3689-4DF1-9E1D-7B7786B282B3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebExpress.Test", "WebExpress.Test\WebExpress.Test.csproj", "{183EEA9C-E88E-46CC-9473-6B7E49084BE0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{81C574D8-3689-4DF1-9E1D-7B7786B282B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81C574D8-3689-4DF1-9E1D-7B7786B282B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81C574D8-3689-4DF1-9E1D-7B7786B282B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81C574D8-3689-4DF1-9E1D-7B7786B282B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{183EEA9C-E88E-46CC-9473-6B7E49084BE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{183EEA9C-E88E-46CC-9473-6B7E49084BE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{183EEA9C-E88E-46CC-9473-6B7E49084BE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{183EEA9C-E88E-46CC-9473-6B7E49084BE0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D6771134-B061-4752-BBD7-8C70DB5F3686}
+	EndGlobalSection
+EndGlobal
