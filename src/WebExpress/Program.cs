@@ -1,5 +1,5 @@
 ﻿using System.Reflection;
-using WebExpress.Core;
+using WebExpress.WebCore;
 
 namespace WebExpress.App
 {
