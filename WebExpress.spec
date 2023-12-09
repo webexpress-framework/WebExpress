@@ -9,7 +9,7 @@
 	<readme>README.md</readme>
 	<description>WebExpress is a lightweight web server optimized for use in low-performance environments (e.g. Rasperry PI).</description>
 	<tags>webexpress</tags>
-	<artifact>WebExpress.Core.dll</artifact>
+	<artifact>WebExpress.WebCore.dll</artifact>
 	<artifact>WebExpress.WebUI.dll</artifact>
 	<artifact>WebExpress.WebIndex.dll</artifact>
 	<artifact>WebExpress.WebApp.dll</artifact>
