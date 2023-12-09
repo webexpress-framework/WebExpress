@@ -1,24 +1,24 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>0.0.4.0</Version>
-		<AssemblyVersion>0.0.4.0</AssemblyVersion>
+		<Version>0.0.5.0</Version>
+		<AssemblyVersion>0.0.5.0</AssemblyVersion>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net7.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<ApplicationIcon>Rocket.ico</ApplicationIcon>
 		<Authors>Rene_Schwarzer@hotmail.de</Authors>
 		<StartupObject>WebExpress.App.Program</StartupObject>
-		<RuntimeIdentifiers>win10-x64;win-arm;linux-arm;ubuntu.14.04-arm;ubuntu.16.04-arm</RuntimeIdentifiers>
+		<RuntimeIdentifiers>win-x64;linux-x64;linux-arm;</RuntimeIdentifiers>
 		<RepositoryUrl>https://github.com/ReneSchwarzer/WebExpress.Server</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="WebExpress.Core" Version="0.0.4-alpha" />
-	  <PackageReference Include="WebExpress.WebApp" Version="0.0.4-alpha" />
-	  <PackageReference Include="WebExpress.WebIndex" Version="0.0.4-alpha" />
-	  <PackageReference Include="WebExpress.WebUI" Version="0.0.4-alpha" />
+	  <PackageReference Include="WebExpress.WebApp" Version="0.0.5-alpha" />
+	  <PackageReference Include="WebExpress.WebCore" Version="0.0.5-alpha" />
+	  <PackageReference Include="WebExpress.WebIndex" Version="0.0.5-alpha" />
+	  <PackageReference Include="WebExpress.WebUI" Version="0.0.5-alpha" />
 	</ItemGroup>
 
 	<ItemGroup>
