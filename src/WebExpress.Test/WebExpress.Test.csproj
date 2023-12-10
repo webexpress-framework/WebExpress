@@ -11,9 +11,9 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="WebExpress.WebApp" Version="0.0.5-alpha" />
-    <PackageReference Include="WebExpress.WebIndex" Version="0.0.5-alpha" />
-    <PackageReference Include="WebExpress.WebUI" Version="0.0.5-alpha" />
+    <PackageReference Include="WebExpress.WebApp" Version="0.0.6-alpha" />
+    <PackageReference Include="WebExpress.WebIndex" Version="0.0.6-alpha" />
+    <PackageReference Include="WebExpress.WebUI" Version="0.0.6-alpha" />
     <PackageReference Include="xunit" Version="2.6.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.5">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
