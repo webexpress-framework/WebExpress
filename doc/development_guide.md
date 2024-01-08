@@ -60,12 +60,12 @@ Kestrel to process http(s) requests.
 ![WebExpress bigpicture](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/dg/bigpicture.svg)
 
 In order to be able to easily extend WebExpress, it is split into several program libraries. 
-The ```WebExpress.dll``` program library is global and is used as a basis in other projects. It 
+The ```WebExpress.Core.dll``` program library is global and is used as a basis in other projects. It 
 provides basic functions for creating content and additional functions (e.g. logging). The 
 ```WebExpress.UI.dll``` and ```WebExpress.WebApp.dll``` packages provide controls and templates that 
-facilitate the development of (business) applications. The ```WebExpress.App.exe``` program library 
-represents the application that takes over the control of the individual functions and 
-components. The ```WebExpress.App.exe``` program library is generic and can be replaced by its 
+facilitate the development of (business) applications. ```WebExpress.WebIndex.dll``` extends ```WebExpress.WebApp.dll``` 
+with full-text indexing. The ```WebExpress.exe``` program library represents the application that takes over the control 
+of the individual functions and components. The ```WebExpress.exe``` program library is generic and can be replaced by its 
 own program library.
 
 ![WebExpress packages](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/dg/packages.svg)
@@ -690,12 +690,18 @@ can be accessed. The following methods are available:
 |Delete |The id                |Deletes an existing notification.
 
 ## Index model
-The index model provides a reverse index to enable fast and efficient search for 
-data. Because a reverse index is kept in memory, it can greatly speed up access 
-to the data. However, creating and storing a reverse index requires additional 
-storage space and processing time. Especially with large amounts of data, the 
-storage requirements can be significant. Therefore, it is important to weigh 
-the benefits against the costs in order to achieve the best possible performance.
+The index model provides a reverse index to enable fast and efficient searching. A reverse 
+index can significantly speed up access to the data. However, creating and storing a 
+reverse index requires additional storage space and Processing time. The storage requirement 
+increases, especially with large amounts of data can be important. Therefore, it is important 
+to weigh the pros and cons to achieve the best possible performance. The full-text search in WebExpress 
+supports the following search options:
+
+- Word search
+- Wildcard search
+- Phrase search (exact word sequence)
+- Proximity search
+- Fuzzy search
 
 ![WebExpress indexmodel](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/dg/indexmodel.svg)
 
@@ -706,6 +712,7 @@ the ```IndexManager```.
 /// DataType must implement the IIndexItem interface.
 public class DataType : IIndexItem
 {
+    [IndexIgnore]
     public int Id { get; set;}
     public string Text { get; set;}
 } 
@@ -839,8 +846,8 @@ The role definition classes have the following attributes:
 |Description |String  |1            |Yes      |The description of the role. This can be a key to internationalization.
 |Role        |String  |1            |Yes      |Inherits the characteristics of the specified role.
 
-Identity resources are usually automatically discovered from the metadata of the web resources and web components and assigned to roles. In addition, identity resources can also be 
-created from definition classes.
+Identity resources are usually automatically discovered from the metadata of the web resources and web components and assigned to roles. In addition, identity resources 
+can also be created from definition classes.
 
 ``` c#
 [Module<MyModule>]
@@ -935,8 +942,8 @@ The properties pane is used to display metadata and properties of the displayed 
 
 ### Notifications
 There are three ways to display notifications in web applications. The first way is to display notifications in the Notification section of the header. Above all, personalized 
-notifications are displayed here (e.g. new comments on subscribed content). The second way is to display notifications in an area below the header. This is intended for application-wide 
-notifications (e.g. scheduled maintenance windows).
+notifications are displayed here (e.g. new comments on subscribed content). The second way is to display notifications in an area below the header. This is intended for 
+application-wide notifications (e.g. scheduled maintenance windows).
 
 ![WebExpress webapppagetoastnotification](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/dg/webapppagetoastnotification.svg)
 
@@ -1003,14 +1010,15 @@ The settings menu groups the different settings thematically. The groups are det
 ![WebExpress webappsettingpagemenu](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/dg/webappsettingpagemenu.svg)
 
 ### Setting tab
-The contents of the ```SettingTab``` are fed from the ```SettingSection``` attributes of the settings pages. For each defined section, a tab element is created and linked to the first element 
-of the section. The ```SettingTab``` is not displayed if no section or only one section has been defined.
+The contents of the ```SettingTab``` are fed from the ```SettingSection``` attributes of the settings pages. For each defined section, a tab element 
+is created and linked to the first element of the section. The ```SettingTab``` is not displayed if no section or only one section has been defined.
 
 ![WebExpress webappsettingpagetab](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/dg/webappsettingpagetab.svg)
 
 ## Theme model
-WebExpress.WebApp offers a ready-made layout (e.g. color scheme, fonts, font sizes). This can be adapted to individual needs by the web applications. The management of the themes is taken over by the 
-```ThemeManager```. An individual topic can be assigned to each application. The configuration of the topics can be done via definition classes or via a settings dialog, which is provided by WebExpress.WebApp.
+WebExpress.WebApp offers a ready-made layout (e.g. color scheme, fonts, font sizes). This can be adapted to individual needs by the web applications. The 
+management of the themes is taken over by the ```ThemeManager```. An individual topic can be assigned to each application. The configuration of the 
+topics can be done via definition classes or via a settings dialog, which is provided by WebExpress.WebApp.
 
 ![WebExpress webappthememodel](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/dg/webappthememodel.svg)
 
@@ -1066,11 +1074,11 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 The classic example of the Hello World application is intended to show in the simplest possible way which instructions and components are needed for a complete program.
 
 ``` c#
-using WebExpress.WebAttribute;
-using WebExpress.WebApplication;
-using WebExpress.WebModule;
-using WebExpress.WebPlugin;
-using WebExpress.WebResource;
+using WebExpress.Core.WebAttribute;
+using WebExpress.Core.WebApplication;
+using WebExpress.Core.WebModule;
+using WebExpress.Core.WebPlugin;
+using WebExpress.Core.WebResource;
 
 namespace Sample
 {
