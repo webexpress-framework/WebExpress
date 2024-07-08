@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -11,16 +11,12 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-		<PackageReference Include="WebExpress.WebCore" Version="0.0.7-alpha" />
-		<PackageReference Include="WebExpress.WebApp" Version="0.0.7-alpha" />
-		<PackageReference Include="WebExpress.WebIndex" Version="0.0.7-alpha" />
-		<PackageReference Include="WebExpress.WebUI" Version="0.0.7-alpha" />
-		<PackageReference Include="xunit" Version="2.6.3" />
-		<PackageReference Include="xunit.runner.visualstudio" Version="2.5.5">
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-			<PrivateAssets>all</PrivateAssets>
-		</PackageReference>
-		<PackageReference Include="coverlet.collector" Version="6.0.0">
+		<PackageReference Include="WebExpress.WebCore" Version="0.0.8-alpha" />
+		<PackageReference Include="WebExpress.WebApp" Version="0.0.8-alpha" />
+		<PackageReference Include="WebExpress.WebIndex" Version="0.0.8-alpha" />
+		<PackageReference Include="WebExpress.WebUI" Version="0.0.8-alpha" />
+		<PackageReference Include="xunit" Version="2.8.1" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.1">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
