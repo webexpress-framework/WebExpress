@@ -143,10 +143,10 @@ and elements are illustrated in the following figure:
 ║                      ¦  │ Fragment ├────────┤ Resource │ │   Job    │ │   Event  │  ¦║
 ║                      ¦  └──────────┘        └──────────┘ └──────────┘ └──────────┘  ¦║
 ║                      ¦                       ▲    ▲   ▲                             ¦║
-║                      ¦               ┌-------┘    ¦   └--------┐                    ¦║
-║                      ¦          ┌────┴─────┐ ┌────┴─────┐ ┌────┴─────┐              ¦║
-║                      ¦          │ Rest-API │ │   Page   │ │StatusPage│              ¦║
-║                      ¦          └──────────┘ └──────────┘ └──────────┘              ¦║
+║                      ¦                ┌------┘    ¦   └--------┐                    ¦║
+║                      ¦           ┌────┴────┐ ┌────┴─────┐ ┌────┴─────┐              ¦║
+║                      ¦           │ RestAPI │ │   Page   │ │StatusPage│              ¦║
+║                      ¦           └─────────┘ └──────────┘ └──────────┘              ¦║
 ║                      ¦                                                              ¦║
 ║                      └--------------------------------------------------------------┘║
 ║                                                                                      ║
@@ -336,7 +336,7 @@ from the catalog. The `PackageManager` manages the catalog. This can be accessed
 ```
 
 ## Plugin model
-The plugin system can be used to extend both WebExpress and application functionalities. Each plugin can provide content in 
+The plugin system can be used to extend both `WebExpress` and application functionalities. Each plugin can provide content in 
 different forms. A distinction is made between the following types of content:
 
 |Content                      |Managed by                  |Description
@@ -371,7 +371,7 @@ The following attributes are available:
 
 |Attribute   |Type   |Multiplicity |Optional |Description
 |------------|-------|-------------|---------|--------------
-|Id          |String |1            |Yes      |The unique identification key. If no ID is specified, the namespace is used. An ìd should only be specified in exceptional cases.
+|Id          |String |1            |Yes      |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
 |Name        |String |1            |Yes      |The name of the plugin. This can be a key to internationalization.
 |Description |String |1            |Yes      |The description of the plugin. This can be a key to internationalization.
 |Icon        |String |1            |Yes      |The icon that represents the plugin graphically.
@@ -446,7 +446,7 @@ The following attributes are available:
 
 |Attribute   |Type       |Multiplicity |Optional |Description
 |------------|-----------|-------------|---------|------------
-|Id          |String     |1            |Yes      |The unique identification key. If no ID is specified, the class name is used. An ID should only be specified in exceptional cases.
+|Id          |String     |1            |Yes      |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
 |Name        |String     |1            |Yes      |The name of the application. This can be a key to internationalization.
 |Description |String     |1            |Yes      |The description of the application. This can be a key to internationalization.
 |Icon        |String     |1            |Yes      |The icon that represents the application graphically.
@@ -500,37 +500,37 @@ the application is stored in the `ApplicationContext` and managed by the `Applic
 ¦                         ┌────────────────────────────────┘
 ¦                       * V
 ¦           ┌──────────────────────────────┐
-¦           │ <<Interface>>                │<-----------------------------┐
-¦           │ IApplicationContext          │                              ¦
-¦           ├──────────────────────────────┤                              ¦
-¦           │ PluginContext:IPluginContext │                              ¦
-¦           │ ApplicationId:String         │                              ¦
-¦           │ ApplicationName:String       │                              ¦
-¦           │ Description:String           │                              ¦
-¦           │ Options:IEnumerable<String>  │                              ¦
-¦           │ AssetPath:String             │                              ¦
-¦           │ DataPath:String              │                              ¦
-¦           │ ContextPath:UriResource      │                              ¦
-¦           │ Icon:UriResource             │                              ¦
-¦           └──────────────────────────────┘                              ¦
-¦                                                                         ¦
-¦                                                                         ¦
-¦                                                                         ¦
-¦       ┌────────────────────────────────────────┐                        ¦
-¦       │ <<Interface>>                          │                        ¦
-¦       │ IApplication                           │                        ¦
-¦       ├────────────────────────────────────────┤                        ¦
-¦       │ Initialization(IApplicationContext)    │                        ¦
-¦       │ Run()                                  │                        ¦
-¦       │ Dispose()                              │                        ¦
-¦       └────────────────────────────────────────┘                        ¦
-¦                           ▲                                             ¦
-¦                           ¦                                             ¦
-¦                           ¦                                             ¦
-¦ create ┌──────────────────┴──────────────────┐                          ¦
-└------->│ MyApplication                       │                          ¦
-         ├─────────────────────────────────────┤                     uses ¦
-         │ Initialization(IApplicationContext) ├--------------------------┘
+¦           │ <<Interface>>                │<--------------┐
+¦           │ IApplicationContext          │               ¦
+¦           ├──────────────────────────────┤               ¦
+¦           │ PluginContext:IPluginContext │               ¦
+¦           │ ApplicationId:String         │               ¦
+¦           │ ApplicationName:String       │               ¦
+¦           │ Description:String           │               ¦
+¦           │ Options:IEnumerable<String>  │               ¦
+¦           │ AssetPath:String             │               ¦
+¦           │ DataPath:String              │               ¦
+¦           │ ContextPath:UriResource      │               ¦
+¦           │ Icon:UriResource             │               ¦
+¦           └──────────────────────────────┘               ¦
+¦                                                          ¦
+¦                                                          ¦
+¦                                                          ¦
+¦       ┌────────────────────────────────────────┐         ¦
+¦       │ <<Interface>>                          │         ¦
+¦       │ IApplication                           │         ¦
+¦       ├────────────────────────────────────────┤         ¦
+¦       │ Initialization(IApplicationContext)    │         ¦
+¦       │ Run()                                  │         ¦
+¦       │ Dispose()                              │         ¦
+¦       └────────────────────────────────────────┘         ¦
+¦                           ▲                              ¦
+¦                           ¦                              ¦
+¦                           ¦                              ¦
+¦ create ┌──────────────────┴──────────────────┐           ¦
+└------->│ MyApplication                       │           ¦
+         ├─────────────────────────────────────┤      uses ¦
+         │ Initialization(IApplicationContext) ├-----------┘
          │ Run()                               │
          │ Dispose()                           │
          └─────────────────────────────────────┘
@@ -556,7 +556,7 @@ The following attributes are available:
 
 |Attribute      |Type               |Multiplicity |Optional |Description
 |---------------|-------------------|-------------|---------|----------------
-|Id             |String             |1            |Yes      |The unique identification key. If no ID is specified, the class name is used. An id should only be specified in exceptional cases.
+|Id             |String             |1            |Yes      |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
 |Name           |String             |1            |Yes      |The name of the module. This can be a key to internationalization.
 |Description    |String             |1            |Yes      |The description of the module. This can be a key to internationalization.
 |Icon           |String             |1            |Yes      |The icon that represents the module graphically.
@@ -750,7 +750,7 @@ non-cached resources, a new instance is created each time they are called.
     │ │        │ │        │ │         │ │         │ │   Refresh│ │         │ │
     │ │        │ │        │ │         │ │         │ ├─────────>│ │         │ │
     │ │        │ │        │ │         │ │         │ │<---------│ │         │ │
-    │ │        │ │        │ │         │ │<---------------------│ │         │ │
+    │ │        │ │        │ │         │ │<--------│ │          │ │         │ │
     │ │        │ │        │ │<--------│ │         │ │          │ │         │ │
     │ │ Request│ │        │ │         │ │         │ │          │ │         │ │
     │ ├───────>│ │        │ │         │ │       Search Resource│ │         │ │
@@ -1258,7 +1258,7 @@ The following attributes are available:
 
 |Attribute     |Type         |Multiplicity |Optional |Description
 |--------------|-------------|-------------|---------|-----------------
-|Id            |String       |1            |No       |The unique identification key. 
+|Id            |String       |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
 |Section       |String       |1            |No       |The section of the Web page where the fragment is rendered.
 |Order         |Int          |1            |Yes      |The order within the section. If no value is specified, the order "0" is set as the default.
 |Module        |`IModule`    |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
@@ -1412,75 +1412,75 @@ tabs to separate different sections, users can navigate and complete the form mo
 A form takes user input and forwards it to the web server for processing:
 
 ```
-      ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-      │ Web     │ │ HTTP    │ │ MyPage  │ │ Form    │ │ FormTab │ │FormGroup│ │ FormItem│
-      │ Client  │ │ Server  │ │         │ │         │ │         │ │         │ │         │
-      └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
-           ¦           ¦           ¦           ¦           ¦           ¦           ¦
-          ┌─┐ Request ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
-new/reset │ ├────────>│ │ Process │ │         │ │         │ │         │ │         │ │
-          │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
-          │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
-          │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
-          │ │         │ │       └>│ │  Render │ │         │ │         │ │         │ │
-          │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
-          │ │         │ │         │ │       ┌─┤Initialize │Initialize │Initialize │ │
-          │ │         │ │        Initialize │ │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │       ┌─┤ │    Set  │ │    Set  │ │     Set │ │
-          │ │         │ │         │ │  Fill │ │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │         │ │  Render │ │  Render │ │  Render │ │
-          │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
-          │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
-          │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
-          └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
-           ¦           ¦           ¦           ¦           ¦           ¦           ¦
-          ┌─┐ Request ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
-  refresh │ ├────────>│ │ Process │ │         │ │         │ │         │ │         │ │
-          │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
-          │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
-          │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
-          │ │         │ │       └>│ │  Render │ │         │ │         │ │         │ │
-          │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
-          │ │         │ │         │ │       ┌─┤Initialize │Initialize │Initialize │ │
-          │ │         │ │        Initialize │ │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │         │ │  Render │ │  Render │ │  Render │ │
-          │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
-          │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
-          │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
-          └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
-           ¦           ¦           ¦           ¦           ¦           ¦           ¦
-          ┌─┐ Request ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
-   submit │ ├────────>│ │ Process │ │         │ │         │ │         │ │         │ │
-          │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
-          │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
-          │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
-          │ │         │ │       └>│ │  Render │ │         │ │         │ │         │ │
-          │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
-          │ │         │ │         │ │       ┌─┤Initialize │Initialize │Initialize │ │
-          │ │         │ │        Initialize │ │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │         │ │         │ │         │ │         │ │
-          │ │         │ │         │ │       ┌─┤ │Validate │ │Validate │ │Validate │ │
-          │ │         │ │        Validation │ │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │         │ │         │ │         │ │         │ │
-          │ │         │ │         │ │       ┌─┤ │         │ │         │ │         │ │
-          │ │         │ │         │ Process │ │ │         │ │         │ │         │ │
-          │ │         │ │         │ │       └>│ │         │ │         │ │         │ │
-          │ │         │ │         │ │         │ │  Render │ │  Render │ │  Render │ │
-          │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
-          │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
-          │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
-          │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
-          │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
-          └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
+     ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+     │ Web     │ │ HTTP    │ │ MyPage  │ │ Form    │ │ FormTab │ │FormGroup│ │ FormItem│
+     │ Client  │ │ Server  │ │         │ │         │ │         │ │         │ │         │
+     └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
+          ¦           ¦           ¦           ¦           ¦           ¦           ¦
+         ┌─┐  Request┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
+new/reset│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
+         │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
+         │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
+         │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
+         │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
+         │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
+         │ │         │ │         │ │       ┌─┤ Initialize│ Initialize│ Initialize│ │
+         │ │         │ │         Initialize│ │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │       ┌─┤ │     Set │ │     Set │ │      Set│ │
+         │ │         │ │         │ │   Fill│ │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
+         │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
+         │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
+         │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
+         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
+          ¦           ¦           ¦           ¦           ¦           ¦           ¦
+         ┌─┐  Request┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
+  refresh│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
+         │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
+         │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
+         │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
+         │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
+         │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
+         │ │         │ │         │ │       ┌─┤ Initialize│ Initialize│ Initialize│ │
+         │ │         │ │         Initialize│ │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
+         │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
+         │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
+         │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
+         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
+          ¦           ¦           ¦           ¦           ¦           ¦           ¦
+         ┌─┐  Request┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
+   submit│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
+         │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
+         │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
+         │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
+         │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
+         │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
+         │ │         │ │         │ │       ┌─┤ Initialize│ Initialize│ Initialize│ │
+         │ │         │ │         Initialize│ │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │         │ │         │ │         │ │         │ │
+         │ │         │ │         │ │       ┌─┤ │ Validate│ │ Validate│ │ Validate│ │
+         │ │         │ │         Validation│ │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │         │ │         │ │         │ │         │ │
+         │ │         │ │         │ │       ┌─┤ │         │ │         │ │         │ │
+         │ │         │ │         │  Process│ │ │         │ │         │ │         │ │
+         │ │         │ │         │ │       └>│ │         │ │         │ │         │ │
+         │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
+         │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+         │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+         │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
+         │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
+         │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
+         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
 ```
 
 Form classes and associated form controls are available for entering data, ensuring a consistent and user-friendly 
@@ -2404,7 +2404,7 @@ The role definition classes have the following attributes:
 
 |Attribute   |Type    |Multiplicity |Optional |Description
 |------------|--------|-------------|---------|-------------
-|Id          |String  |1            |No       |The unique identification key.
+|Id          |String  |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
 |Module      |IModule |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Name        |String  |1            |No       |The human-readable name of the role or an internationalization key.
 |Description |String  |1            |Yes      |The description of the role. This can be a key to internationalization.
@@ -2427,7 +2427,7 @@ The identity resource definition classes have the following attributes:
 
 |Attribute     |Type        |Multiplicity |Optional |Description
 |--------------|------------|-------------|---------|-------------
-|Id            |String      |1            |No       |The unique identification key.
+|Id            |String      |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
 |Module        |IModule     |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Name          |String      |1            |No       |The human-readable name of the role or an internationalization key.
 |Description   |String      |1            |Yes      |The description of the role. This can be a key to internationalization.
@@ -2510,7 +2510,7 @@ to these areas and display their contents.
 ```
 ╔WebAppPage════════════════════════════════════════════════════════════════════════════╗
 ║┌Header──────────────────────────────────────────────────────────────────────────────┐║
-║│ Icon AppTitle     Link ▼  Link ▼  Link ▼     Create ▼     Search    ?    ✉️   ⚙ ▼ │║
+║│ Icon AppTitle     Link ▼  Link ▼  Link ▼     Create ▼     Search    ?          ⚙ ▼ │║
 ║└────────────────────────────────────────────────────────────────────────────────────┘║
 ║┌ToastNotfication────────────────────────────────────────────────────────────────────┐║
 ║│ Notfications                                             ┌PopupNotfication──────┐ ×│║
@@ -2853,12 +2853,12 @@ requested page was not found.
 ║│  └─────────────┘  ││  └─────────────────────────────────────────────────────────┘  │║
 ║│                   ││  ┌StatusMessage────────────────────────────────────────────┐  │║
 ║│  ┌StatusIcon───┐  ││  │ We could not find the page you were looking for.        │  │║
-║│  │             │  ││  │ Meanwhile, you may returnto dashboard or try using      │  │║
-║│  │     !       │  ││  │ the search form.                                        │  │║
-║│  │             │  ││  │                                                         │  │║
+║│  │     /\      │  ││  │ Meanwhile, you may returnto dashboard or try using      │  │║
+║│  │    /  \     │  ││  │ the search form.                                        │  │║
+║│  │   / ▓  \    │  ││  │                                                         │  │║
+║│  │  /  o   \   │  ││  │                                                         │  │║
+║│  │ /________\  │  ││  │                                                         │  │║
 ║│  └─────────────┘  ││  │                                                         │  │║
-║│                   ││  │                                                         │  │║
-║│                   ││  │                                                         │  │║
 ║│                   ││  │                                                         │  │║
 ║│                   ││  │                                                         │  │║
 ║│                   ││  │                                                         │  │║
@@ -2990,7 +2990,7 @@ are automatically populated from the meta information.
 ```
 ╔WebAppPageSetting═════════════════════════════════════════════════════════════════════╗
 ║┌Header──────────────────────────────────────────────────────────────────────────────┐║
-║│ Icon AppTitle     Link ▼  Link ▼  Link ▼      Create ▼      Search   ?   ✉️   ⚙ ▼ │║
+║│ Icon AppTitle     Link ▼  Link ▼  Link ▼      Create ▼      Search   ?         ⚙ ▼ │║
 ║└────────────────────────────────────────────────────────────────────────────────────┘║
 ║┌ToastNotfication────────────────────────────────────────────────────────────────────┐║
 ║│ Notfications                                             ┌PopupNotfication──────┐ ×│║
@@ -3095,54 +3095,54 @@ data to be created, retrieved, updated, and deleted, and form the backbone of ma
 are supported by a framework that provides HTML and REST API templates to enable a generic view and processing.
 
 ```
-   ┌─────────┐         ┌─────────┐         ┌─────────┐         ┌─────────┐
-   │ Web     │         │ HTTP    │         │ Resource│         │ REST-   │
-   │ Client  │         │ Server  │         │ Rest    │         │ API     │
-   └────┬────┘         └────┬────┘         └────┬────┘         └────┬────┘
-        ¦                   ¦                   ¦                   ¦
-       ┌─┐     POST Request┌─┐                 ┌─┐                 ┌─┐
-create │ ├────────────────>│ │         Process │ │                 │ │
-       │ │                 │ ├────────────────>│ │       CreateData│ │
-       │ │                 │ │                 │ ├────────────────>│ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │<----------------│ │
-       │ │Response (201)   │ │<----------------│ │                 │ │
-       │ │<----------------│ │                 │ │                 │ │
-       └─┘                 └─┘                 └─┘                 └─┘
-        ¦                   ¦                   ¦                   ¦ 
-       ┌─┐      GET Request┌─┐                 ┌─┐                 ┌─┐
-  read │ ├────────────────>│ │         Process │ │                 │ │
-       │ │                 │ ├────────────────>│ │          GetData│ │
-       │ │                 │ │                 │ ├────────────────>│ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │<----------------│ │
-       │ │Response (200)   │ │<----------------│ │                 │ │
-       │ │<----------------│ │                 │ │                 │ │
-       └─┘                 └─┘                 └─┘                 └─┘
-        ¦                   ¦                   ¦                   ¦ 
-       ┌─┐    PATCH Request┌─┐                 ┌─┐                 ┌─┐
-update │ ├────────────────>│ │         Process │ │                 │ │
-       │ │                 │ ├────────────────>│ │       UpdateData│ │
-       │ │                 │ │                 │ ├────────────────>│ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │<----------------│ │
-       │ │Response (200)   │ │<----------------│ │                 │ │
-       │ │<----------------│ │                 │ │                 │ │
-       └─┘                 └─┘                 └─┘                 └─┘
-        ¦                   ¦                   ¦                   ¦ 
-       ┌─┐   DELETE Request┌─┐                 ┌─┐                 ┌─┐
-delete │ ├────────────────>│ │         Process │ │                 │ │
-       │ │                 │ ├────────────────>│ │       DeleteData│ │
-       │ │                 │ │                 │ ├────────────────>│ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │                 │ │
-       │ │                 │ │                 │ │<----------------│ │
-       │ │Response (200)   │ │<----------------│ │                 │ │
-       │ │<----------------│ │                 │ │                 │ │
-       └─┘                 └─┘                 └─┘                 └─┘           
+  ┌─────────┐         ┌─────────┐         ┌─────────┐         ┌─────────┐
+  │ Web     │         │ HTTP    │         │ Resource│         │ REST-   │
+  │ Client  │         │ Server  │         │ Rest    │         │ API     │
+  └────┬────┘         └────┬────┘         └────┬────┘         └────┬────┘
+       ¦                   ¦                   ¦                   ¦
+      ┌─┐     POST Request┌─┐                 ┌─┐                 ┌─┐
+create│ ├────────────────>│ │          Process│ │                 │ │
+      │ │                 │ ├────────────────>│ │       CreateData│ │
+      │ │                 │ │                 │ ├────────────────>│ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │<----------------│ │
+      │ │Response (201)   │ │<----------------│ │                 │ │
+      │ │<----------------│ │                 │ │                 │ │
+      └─┘                 └─┘                 └─┘                 └─┘
+       ¦                   ¦                   ¦                   ¦ 
+      ┌─┐      GET Request┌─┐                 ┌─┐                 ┌─┐
+  read│ ├────────────────>│ │          Process│ │                 │ │
+      │ │                 │ ├────────────────>│ │          GetData│ │
+      │ │                 │ │                 │ ├────────────────>│ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │<----------------│ │
+      │ │Response (200)   │ │<----------------│ │                 │ │
+      │ │<----------------│ │                 │ │                 │ │
+      └─┘                 └─┘                 └─┘                 └─┘
+       ¦                   ¦                   ¦                   ¦ 
+      ┌─┐    PATCH Request┌─┐                 ┌─┐                 ┌─┐
+update│ ├────────────────>│ │          Process│ │                 │ │
+      │ │                 │ ├────────────────>│ │       UpdateData│ │
+      │ │                 │ │                 │ ├────────────────>│ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │<----------------│ │
+      │ │Response (200)   │ │<----------------│ │                 │ │
+      │ │<----------------│ │                 │ │                 │ │
+      └─┘                 └─┘                 └─┘                 └─┘
+       ¦                   ¦                   ¦                   ¦ 
+      ┌─┐   DELETE Request┌─┐                 ┌─┐                 ┌─┐
+delete│ ├────────────────>│ │          Process│ │                 │ │
+      │ │                 │ ├────────────────>│ │       DeleteData│ │
+      │ │                 │ │                 │ ├────────────────>│ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │                 │ │
+      │ │                 │ │                 │ │<----------------│ │
+      │ │Response (200)   │ │<----------------│ │                 │ │
+      │ │<----------------│ │                 │ │                 │ │
+      └─┘                 └─┘                 └─┘                 └─┘           
 ```
 
 CRUD operations are mapped by the REST API by the following operations (RFC 7231 and RFC 5789):
@@ -3331,7 +3331,7 @@ The following attributes are available:
 
 |Attribute   |Type   |Multiplicity |Optional |Description
 |------------|-------|-------------|---------|---------------------
-|Id          |String |1            |No       |The unique identification key.
+|Id          |String |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
 |Name        |String |1            |No       |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
 |Description |String |1            |Yes      |The description of the topic. This can be a key to internationalization.
 |Image       |String |1            |Yes      |Link to an image that visually represents the topic.
