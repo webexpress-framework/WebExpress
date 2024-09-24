@@ -352,7 +352,7 @@ different forms. A distinction is made between the following types of content:
 |Jobs                         |SchedulerManager            |Jobs can be used for cyclic processing of tasks. 
 |Tasks                        |TaskManager                 |Management of ad-hoc tasks. 
 
-Each plugin must have a class that implements `IPlugin`.
+Each plugin must have exactly one plugin class that implements `IPlugin`.
 
 ```csharp
 [Name("myplugin")]
@@ -371,7 +371,7 @@ The following attributes are available:
 
 |Attribute   |Type   |Multiplicity |Optional |Description
 |------------|-------|-------------|---------|--------------
-|Id          |String |1            |Yes      |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
+|Id          |String |1            |Yes      |The unique identification key. If no id is specified, the namespace name is used. An id should only be specified in exceptional cases.
 |Name        |String |1            |Yes      |The name of the plugin. This can be a key to internationalization.
 |Description |String |1            |Yes      |The description of the plugin. This can be a key to internationalization.
 |Icon        |String |1            |Yes      |The icon that represents the plugin graphically.
@@ -403,8 +403,8 @@ stored in the `PluginContext` and is available globally via the `PluginManager`.
 │ Register()                           ├-----------┐   │ PluginId:String         │
 │ Remove(IPluginContext)               │           ¦   │ PluginName:String       │
 │ GetPlugin(PluginId):IPluginContext   │           ¦   │ Manufacturer:String     │
-└──────────────────────────────────────┘           ¦   │ Description:String      │
-                                                   ¦   │ Version:String          │
+│ GetPlugin(Type):IPluginContext       │           ¦   │ Description:String      │
+└──────────────────────────────────────┘           ¦   │ Version:String          │
                                                    ¦   │ Copyright:String        │
                                                    ¦   │ License:String          │
   ┌────────────────────────────────┐               ¦   │ Icon:UriResource        │
@@ -495,6 +495,7 @@ the application is stored in the `ApplicationContext` and managed by the `Applic
 ┌--┤ Register(IPluginContext)                         │    │
 ¦  │ Remove(IPluginContext)                           │    │
 ¦  │ GetApplcation(ApplicationId):IApplicationContext │    │
+¦  │ GetApplcation(Type):IApplicationContext          │    │
 ¦  └──────────────────────────────────────────────────┘    │
 ¦                                                          │
 ¦                         ┌────────────────────────────────┘
@@ -1125,10 +1126,10 @@ StatusPageManager and an instance is created. To do this, the following order is
       └────────────────────────────────────┘
 ```
 
-If no status page is found in the current application, a default page is created and delivered by WebExpress.
+If no status page is found in the current application, a default page is created and delivered by `WebExpress`.
 
 ## Internationalization model
-The provision of multilingual applications for different cultures is supported by WebExpress. In addition, the 
+The provision of multilingual applications for different cultures is supported by `WebExpress`. In addition, the 
 following text formatting is also adapted to the corresponding culture:
 
 |Text formatting |Description
@@ -1138,7 +1139,54 @@ following text formatting is also adapted to the corresponding culture:
 |Time zones     |Support for time zones when displaying times.
 |Number formats |Support the different representation of decimal and thousands separators, as well as different currencies, weights and measurements.
 
-For the translation of texts, language translation files are used, which are stored in the packages under `Internationalization`. 
+The `InternationalizationManager` is a central component responsible for managing the translation of texts within the application. It reads the language 
+files and provides the `I18N` function to access the translations. 
+
+```
+┌────────────────────────────────────┐
+│ <<Interface>>                      │
+│ IComponentPlugin                   │
+├────────────────────────────────────┤
+│ Initialization(IHttpServerContext) │
+│ Register(IPluginContext)           │
+│ Remove(IPluginContext)             │
+└────────────────────────────────────┘
+                 ▲
+           ┌-----┘
+           ¦
+           ¦             ┌─────────────────────────────────────────────────────────┐
+           ¦             │ ComponentManager                                        │
+           ¦           1 ├─────────────────────────────────────────────────────────┤
+           ¦         ┌───┤ InternationalizationManager:InternationalizationManager │
+           ¦         │   │ …                                                       │
+           ¦         │   └─────────────────────────────────────────────────────────┘
+           ¦         │
+           ¦         └────────────────────┐
+           ¦                              │
+           ¦                              │                  ┌─────────────────────┐
+           ¦                              │                  │ <<Interface>>       │
+           ¦                            1 V                  │ II18N               │
+    ┌──────┴──────────────────────────────────────┐          ├─────────────────────┤
+    │ InternationalizationManager                 │          │ Culture:CultureInfo │
+    ├─────────────────────────────────────────────┤          └─────────────────────┘
+    │ AddStatusPage:Event                         │
+    │ RemoveStatusPage:Event                      │
+    ├─────────────────────────────────────────────┤
+    │ HttpServerContext:IHttpServerContext        │
+    ├─────────────────────────────────────────────┤
+    │ Initialization(IHttpServerContext)          │
+    │ Register(IPluginContext)                    │
+    │ Remove(IPluginContext)                      │
+    │ I18N(Key,Args):String                       │
+    │ I18N(II18N,Key,Args):String                 │
+    │ I18N(Request,Key,Args):String               │
+    │ I18N(CultureInfo,Key,Args):String           │
+    │ I18N(CultureInfo,PluginId,Key,Args):String  │
+    └─────────────────────────────────────────────┘
+```
+
+For the translation of texts, language translation files are used, which are stored in 
+the packages under `Internationalization`:
 
 ```
    📁 Internationalization
@@ -1146,12 +1194,15 @@ For the translation of texts, language translation files are used, which are sto
    └📄 en
 ```
 
-The data must be stored as embedded resources in the project file.
+To add a new language, a new language file must be created in the Internationalization 
+folder and registered in the project file:
 
 ```xml
 <ItemGroup>
     <EmbeddedResource Include="Internationalization/de" />
+    <EmbeddedResource Include="Internationalization/<PluginId>.de" />
     <EmbeddedResource Include="Internationalization/en" />
+    <EmbeddedResource Include="Internationalization/<PluginId>.en" />
 </ItemGroup>
 ```
 
@@ -1163,16 +1214,41 @@ translation file is structured as follows:
 key=text fragment
 
 e.g.
-inventoryexpress.inventory.name.discription=The name of the inventory item
-```
+# de
+welcome.message=Willkommen '{0}' zu unserer Anwendung!
+logout.button=Abmelden
 
-The translation of a text is done with the help of the InternationalizationManager, which provides the I18N function. 
+# en
+welcome.message=Welcome '{0}' to our application!
+logout.button=Logout
+```
+When creating language files, it is important to pay attention to cultural differences in the translation of content, e.g. in forms of address.
+
+The translation of a text is done with the help of the InternationalizationManager, which provides the `I18N` function. The term i18n is a numeronym 
+for "internationalization", where the number 18 stands for the 18 letters between the first "i" and the last "n" in the word. 
 
 ```csharp
-using static WebExpress.Internationalization.InternationalizationManager;
+// Language, PluginId, Key
+var text = InternationalizationManager.I18N("de", "<PlginId>", "logout.button"); 
 
-var text = I18N("de", "example", "name.discription"); Language, PluginId, Key
-var text = I18N(culture, "PlginId:name.discription"); culture, pluginId:key
+// Culture, PluginId:key
+var text = InternationalizationManager.I18N(culture, "<PlginId>:logout.button"); 
+
+// Language, PluginId, Key, Placeholders for dynamic content in texts
+var user = "Max";
+var text = InternationalizationManager.I18N("de", "<PlginId>:welcome.message", user); 
+```
+
+The `I18N` function works as follows:
+- Language: Specifies the language code (e.g. "de" for German) or a CulturInfo object of the language.
+- PluginId: Identifies the plugin for which the translation is registered.
+- Key: The key that corresponds to the text fragment to be translated.
+
+If a key is not found, the I18N function returns the key itself by default. This can be replaced with a custom error message:
+
+```csharp
+var text = InternationalizationManager.I18N("en", "<PluginId>", "non.existent.key") ??
+    "Translation not found";
 ```
 
 ## Fragment model
