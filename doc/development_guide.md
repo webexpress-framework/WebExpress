@@ -66,82 +66,70 @@ high-quality web applications can be created faster and more cost-effectively. S
 fundamentally change the way web applications are developed.
 
 # Architecture
-WebExpress is deliberately kept very simple. It consists only of basic functionalities 
+`WebExpress` is deliberately kept very simple. It consists only of basic functionalities 
 for processing HTTP and HTTPS requests, an API and a plugin system for extending the 
-functionalities. This means that WebExpress itself is not able to generate content. 
+functionalities. This means that `WebExpress` itself is not able to generate content. 
 The plugin system is required for this. Plugins are .Net assemblies, which create 
-content based on the WebExpress API. The plugins are loaded and executed by WebExpress. 
-WebExpress controls the plugins and distributes the http(s) requests to the responsible 
-plugin. The plugins answer the requests, create the content and transfer it to WebExpress. 
-Finally, the content is delivered as an HTTP response via WebExpress. WebExpress uses 
+content based on the WebExpress API. The plugins are loaded and executed by `WebExpress`. 
+`WebExpress` controls the plugins and distributes the http(s) requests to the responsible 
+plugin. The plugins answer the requests, create the content and transfer it to `WebExpress`. 
+Finally, the content is delivered as an HTTP response via `WebExpress`. `WebExpress` uses 
 Kestrel to process http(s) requests.
 
 ```
 ╔WebExpress══════════════════════════════════════════════════════════════════════════╗
-║┌Plugin p----------------------------------------------┐ ┌Plugin p2----------------┐║
-║¦                                                      ¦ ¦                         ¦║
+║┌Plugin a---------------------------------------┐ ┌Plugin b------------------------┐║
+║¦                                               ¦ ¦                                ¦║
 ║¦┌─────────────────┐┌──────────────────────────────────────────┐┌─────────────────┐¦║
 ║¦│ Application X   ││ Application y                            ││ Application z   │¦║
 ║¦│                 ││                                          ││                 │¦║
-║¦│ ┌─────────────┐ ││ ┌──────────────┐ ┌─────────────┐ ┌────────────────────────┐ │¦║
-║¦│ │ Modul A     │ ││ │ Modul B      │ │ Modul C     │ │  Modul D               │ │¦║
-║¦│ │             │ ││ │              │ │             │ │                        │ │¦║
-║¦│ │ ┌─────────┐ │ ││ │ ┌──────────┐ │ │ ┌─────────┐ │ │ ┌────────┐ ┌─────────┐ │ │¦║
-║¦│ │ │Resources│ │ ││ │ │Resources │ │ │ │ RestAPI │ │ │ │  Jobs  │ │Resources│ │ │¦║
-║¦│ │ └─────────┘ │ ││ │ └──────────┘ │ │ └─────────┘ │ │ └────────┘ └─────────┘ │ │¦║
-║¦│ │             │ ││ │              │ │             │ │                        │ │¦║
-║¦│ │ ┌─────────┐ │ ││ │ ┌──────────┐ │ │ ┌─────────┐ │ │ ┌────────┐ ┌─────────┐ │ │¦║
-║¦│ │ │  Jobs   │ │ ││ │ │Fragments │ │ │ │  Jobs   │ │ │ │RestAPI │ │Fragments│ │ │¦║
-║¦│ │ └─────────┘ │ ││ │ └──────────┘ │ │ └─────────┘ │ │ └────────┘ └─────────┘ │ │¦║
-║¦│ │             │ ││ │              │ │             │ │                        │ │¦║
-║¦│ └─────────────┘ ││ └──────────────┘ └─────────────┘ └────────────────────────┘ │¦║
+║¦│ ┌───────────┐   ││ ┌──────────┐  ┌─────────┐                ││ ┌───────────┐   │¦║
+║¦│ │ Resources │   ││ │  Pages   │  │ RestAPI │                ││ │ Resources │   │¦║
+║¦│ └───────────┘   ││ └──────────┘  └─────────┘                ││ └───────────┘   │¦║
 ║¦│                 ││                                          ││                 │¦║
-║¦│                 ││ ┌─────────────┐ ┌─────────┐              ││                 │¦║
-║¦│                 ││ │ StatusPages │ │ Events  │              ││                 │¦║
-║¦│                 ││ └─────────────┘ └─────────┘              ││                 │¦║
+║¦│ ┌─────────┐     ││ ┌───────────┐ ┌───────────┐ ┌────────┐   ││ ┌───────────┐   │¦║
+║¦│ │  Pages  │     ││ │ Fragments │ │ Resources │ │Identity│   ││ │ Fragments │   │¦║
+║¦│ └─────────┘     ││ └───────────┘ └───────────┘ └────────┘   ││ └───────────┘   │¦║
+║¦│                 ││                                          ││                 │¦║
+║¦│ ┌────────┐      ││ ┌─────────────┐ ┌─────────┐ ┌────────┐   ││ ┌─────────────┐ │¦║
+║¦│ │  Jobs  │      ││ │ StatusPages │ │ Events  │ │  Jobs  │   ││ │ StatusPages │ │¦║
+║¦│ └────────┘      ││ └─────────────┘ └─────────┘ └────────┘   ││ └─────────────┘ │¦║
 ║¦│                 ││                                          ││                 │¦║
 ║¦└─────────────────┘└──────────────────────────────────────────┘└─────────────────┘¦║
-║¦                                                      ¦ ¦                         ¦║
-║¦┌──────────┐ ┌──────────┐                             ¦ ¦ ┌────────┐              ¦║
-║¦│   I18N   │ │Components│                             ¦ ¦ │  I18N  │              ¦║
-║¦└──────────┘ └──────────┘                             ¦ ¦ └────────┘              ¦║
-║└------------------------------------------------------┘ └-------------------------┘║
+║¦                                               ¦ ¦                                ¦║
+║¦┌──────────┐ ┌──────────┐                      ¦ ¦ ┌────────┐                     ¦║
+║¦│   I18N   │ │Components│                      ¦ ¦ │  I18N  │                     ¦║
+║¦└──────────┘ └──────────┘                      ¦ ¦ └────────┘                     ¦║
+║└-----------------------------------------------┘ └--------------------------------┘║
 ╚════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 `WebExpress` consists of several program libraries, which serve as the basis for `WebExpress` projects. The 
 `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions 
 such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates 
-that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing 
-and `WebExpress.WebIdentity` provides functions for management and access authorization. The `WebExpress.exe` 
-program library represents the application that takes control of the individual functions and components. The 
-`WebExpress.exe` program library is generic and can be replaced by its own program library.
+that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. 
+The `WebExpress.exe` program library represents the application that takes control of the individual functions and 
+components. The `WebExpress.exe` program library is generic and can be replaced by its own program library.
 
 ```
 ╔WebExpress.exe══════════════════════════════════════════════════════╗
 ║                                                                    ║
 ║                                            ┌──────────────┐        ║
-║                                            │ WebIndex.dll │<───┐   ║
-║                                            └──────────────┘    │   ║
-║                                                   ∧            │   ║
-║         ┌──────────────────────────────────────┐  │            │   ║
-║         V                                      │  └───┐        │   ║
-║   ┌─────────────┐       ┌───────────┐       ┌──┴──────┴──┐     │   ║
-║   │ WebCore.dll │<──────┤ WebUI.dll │<──────┤ WebApp.dll │     │   ║
-║   └─────────────┘       └───────────┘       └────────────┘     │   ║
-║         ∧                    ∧                    ∧            │   ║
-║         │                    └────────────────┐   │            │   ║
-║         │                                     │   └───────┐    │   ║
-║         │                                  ┌──┴───────────┴──┐ │   ║
-║         └──────────────────────────────────┤ WebIdentity.dll ├─┘   ║
-║                                            └─────────────────┘     ║
+║                                            │ WebIndex.dll │        ║
+║                                            └──────────────┘        ║
+║                                                   ∧                ║
+║         ┌──────────────────────────────────────┐  │                ║
+║         V                                      │  └───┐            ║
+║   ┌─────────────┐       ┌───────────┐       ┌──┴──────┴──┐         ║
+║   │ WebCore.dll │<──────┤ WebUI.dll │<──────┤ WebApp.dll │         ║
+║   └─────────────┘       └───────────┘       └────────────┘         ║
 ║                                                                    ║
 ╚════════════════════════════════════════════════════════════════════╝
 ```
 
-In the context of WebExpress, (web) applications are deployed. An application is the logical 
-combination of modules. Modules, in turn, are amalgamations of (web) elements. Elements reflect 
-content (e.g. web pages). The relationships between WebExpress, packages, applications, modules, 
+In the context of `WebExpress`, (web) applications are deployed. An application is the logical 
+combination of Components. Components, in turn, are amalgamations of (web) elements. Elements reflect 
+content (e.g. web pages). The relationships between `WebExpress`, packages, applications, 
 and elements are illustrated in the following figure: 
 
 ```
@@ -152,18 +140,14 @@ and elements are illustrated in the following figure:
 ║ ┌────────────────┐ 1 ¦                       * ┌──────────┐  ┌────────────────────┐ ¦║
 ║ │ WebExpress.exe ├────────────────────────────>│  Plugin  │  │ external libraries │ ¦║
 ║ └────────────────┘   ¦                         └──────────┘  └────────────────────┘ ¦║
-║                      ¦                            ∧    ∧                            ¦║
-║                      ¦                     ┌──────┘    └──────┐                     ¦║
-║                      ¦                ┌────┴─────┐      ┌─────┴─────┐               ¦║
-║                      ¦                │   I18N   │      │Application│               ¦║
-║                      ¦                └──────────┘      └───────────┘               ¦║
-║                      ¦                                        ∧                     ¦║
-║                      ¦                                        │                     ¦║
-║                      ¦                                  ┌─────┴─────┐               ¦║
-║                      ¦       ┌─────────────────────────>│  Module   │               ¦║
-║                      ¦       │                          └───────────┘               ¦║
-║                      ¦       │                            ∧   ∧   ∧                 ¦║
-║                      ¦       │                   ┌────────┘   │   └────────┐        ¦║
+║                      ¦                          1 ∧  * ∧                            ¦║
+║                      ¦           1 ┌──────────────┘    └──────┐ 1                   ¦║
+║                      ¦        ┌────┴─────┐            * ┌─────┴─────┐*  1┌────────┐ ¦║
+║                      ¦        │   I18N   │     ┌───────>│Application│<───┤Identity│ ¦║
+║                      ¦        └──────────┘     │        └───────────┘    └────────┘ ¦║
+║                      ¦                         │        * ∧ * ∧ * ∧                 ¦║
+║                      ¦       ┌─────────────────┘          │   │   │                 ¦║
+║                      ¦     1 │                 1 ┌────────┘ 1 │ 1 └────────┐        ¦║
 ║                      ¦  ┌────┴─────┐        ┌────┴─────┐ ┌────┴─────┐ ┌────┴─────┐  ¦║
 ║                      ¦  │ Fragment │        │ Endpoint │ │   Job    │ │   Event  │  ¦║
 ║                      ¦  └──────────┘        └──────────┘ └──────────┘ └──────────┘  ¦║
@@ -187,9 +171,8 @@ The following component managers are available in `WebExpress`:
 |----------------------------|-----------------------
 |LogManager                  |Allows to create, view, and delete logs used for troubleshooting and monitoring system performance.
 |PackageManager              |Management of packages that extend the functionality of `WebExpress`.
-|PluginManager               |Management of extension modules that extend the functionality of `WebExpress`.
+|PluginManager               |Management of extension addons that extend the functionality of `WebExpress`.
 |ApplicationManager          |An application is the logical combination of functionalities into an application system.
-|ModuleManager               |Modules encapsulate (web) elements and make them available for one or more applications.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |JobManager                  |Jobs can be used for cyclic processing of tasks.  
 |ResponseManager             |Represent HTML pages that are returned with a StatusCode other than 200.
@@ -205,62 +188,65 @@ The following component managers are available in `WebExpress`:
 In addition, you can create your own components and register them in the `ComponentManager`.
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│ <<Interface>>                                            │
-│ IComponentHub                                            │
-├──────────────────────────────────────────────────────────┤
-│ AddManager:Event                                         │
-│ RemoveManager:Event                                      │
-├──────────────────────────────────────────────────────────┤
-│ HttpServerContext:IHttpServerContext                     │ 1
-│ Managers:IEnumerable<IComponentManager>                  │─────┐
-│ LogManager:ILogManager                                   │     │
-│ PackageManager:IPackageManager                           │     │
-│ PluginManager:IPluginManager                             │     │
-│ ApplicationManager:IApplicationManager                   │     │
-│ ModuleManager:IModuleManager                             │     │
-│ EventManager:IEventManager                               │     │
-│ JobManager:IJobManager                                   │     │
-│ ResponseManager:IResponseManager                         │     │
-│ ResourceManager:IResourceManager                         │     │
-│ ThemeManager:IThemeManager                               │     │
-│ FragmentManager:IFragmentManager                         │     │
-│ SitemapManager:ISitemapManager                           │     │
-│ InternationalizationManager:IInternationalizationManager │     │
-│ SessionManager:ISessionManager                           │     │
-│ TaskManager:ITaskManager                                 │     │
-├──────────────────────────────────────────────────────────┤     │
-│ GetManager(id):IComponentManager                         │     │
-│ GetManager<T>():T                                        │     │
-│ Remove(pluginContext)                                    │     │
-└──────────────────────────────────────────────────────────┘     │
-                                                                 │
-                            ┌────────────────────────────────────┘
-                            V
-           ┌───────────────────────────────────┐
-           │ <<Interface>>                     │
-           │ IComponentManager                 │
-           ├───────────────────────────────────┤
-           └───────────────────────────────────┘
-                            ▲
-                            ¦
-                            ¦
-               ┌────────────┴────────────┐
-               │ <<Interface>>           │
-               │ IComponentManagerPlugin │
-               ├─────────────────────────┤
-               │ Register(pluginContext) │
-               │ Remove(pluginContext)   │
-               └─────────────────────────┘
-                            ▲
-                            ¦
-                            ¦
-               ┌────────────┴────────────┐
-               │ MyComponentManager      │
-               ├─────────────────────────┤
-               │ Register(pluginContext) │
-               │ Remove(pluginContext)   │
-               └─────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║      ┌──────────────────────────────────────────────────────────┐                    ║
+║      │ <<Interface>>                                            │                    ║
+║      │ IComponentHub                                            │                    ║
+║      ├──────────────────────────────────────────────────────────┤                    ║
+║      │ AddManager:Event                                         │                    ║
+║      │ RemoveManager:Event                                      │                    ║
+║      ├──────────────────────────────────────────────────────────┤                    ║
+║      │ HttpServerContext:IHttpServerContext                     │ 1                  ║
+║      │ Managers:IEnumerable<IComponentManager>                  │─────┐              ║
+║      │ LogManager:ILogManager                                   │     │              ║
+║      │ PackageManager:IPackageManager                           │     │              ║
+║      │ PluginManager:IPluginManager                             │     │              ║
+║      │ ApplicationManager:IApplicationManager                   │     │              ║
+║      │ EventManager:IEventManager                               │     │              ║
+║      │ JobManager:IJobManager                                   │     │              ║
+║      │ ResponseManager:IResponseManager                         │     │              ║
+║      │ ResourceManager:IResourceManager                         │     │              ║
+║      │ ThemeManager:IThemeManager                               │     │              ║
+║      │ FragmentManager:IFragmentManager                         │     │              ║
+║      │ SitemapManager:ISitemapManager                           │     │              ║
+║      │ InternationalizationManager:IInternationalizationManager │     │              ║
+║      │ SessionManager:ISessionManager                           │     │              ║
+║      │ TaskManager:ITaskManager                                 │     │              ║
+║      ├──────────────────────────────────────────────────────────┤     │              ║
+║      │ GetManager(id):IComponentManager                         │     │              ║
+║      │ GetManager<T>():T                                        │     │              ║
+║      │ Remove(pluginContext)                                    │     │              ║
+║      └──────────────────────────────────────────────────────────┘     │              ║
+║                                                                       │              ║
+║                                  ┌────────────────────────────────────┘              ║
+║                                  V                                                   ║
+║                 ┌───────────────────────────────────┐                                ║
+║                 │ <<Interface>>                     │                                ║
+║                 │ IComponentManager                 │                                ║
+║                 ├───────────────────────────────────┤                                ║
+║                 └───────────────────────────────────┘                                ║
+║                                  ▲                                                   ║
+║                                  ¦                                                   ║
+║                                  ¦                                                   ║
+║                     ┌────────────┴────────────┐                                      ║
+║                     │ <<Interface>>           │                                      ║
+║                     │ IComponentManagerPlugin │                                      ║
+║                     ├─────────────────────────┤                                      ║
+║                     │ Register(pluginContext) │                                      ║
+║                     │ Remove(pluginContext)   │                                      ║
+║                     └─────────────────────────┘                                      ║
+║                                  ▲                                                   ║
+║                                  ¦                                                   ║
+║                                  ¦                                                   ║
+║                     ┌────────────┴────────────┐                                      ║
+║                     │ MyComponentManager      │                                      ║
+║                     ├─────────────────────────┤                                      ║
+║                     │ Register(pluginContext) │                                      ║
+║                     │ Remove(pluginContext)   │                                      ║
+║                     └─────────────────────────┘                                      ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ## Package model
@@ -331,56 +317,47 @@ deactivating or removing them if desired. The following directories are used to 
 New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning 
 service cyclically scans the directory for new packets and loads them. 
 If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). 
-In addition package, the directory of the deactivated package is deleted and all contents (applications, modules, elements) 
+In addition package, the directory of the deactivated package is deleted and all contents (components) 
 are removed from the running `WebExpress`. When `WebExpress` boots up and initializes, the catalog is read and the 
 disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and 
 loading the package into the package directory. When a package is deleted, it is removed from the package directory and 
 from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime via the following classes.
 
 ```
-  ┌───────────────────────────────────┐
-  │ <<Interface>>                     │
-  │ IComponentManager                 │
-  ├───────────────────────────────────┤
-  └───────────────────────────────────┘
-                  ▲                                ┌────────────────────────────────┐
-                  ¦                                │ <<Interface>>                  │
-                  ¦                                │ IComponentHub                  │
-┌─────────────────┴────────────────────┐ 1       1 ├────────────────────────────────┤
-│ PackageManager                       │<──────────┤ PackageManager:IPackageManager │
-├──────────────────────────────────────┤           │ …                              │
-│ AddPackage:Event                     │           └────────────────────────────────┘
-│ ARemovePackage:Event                 │
-├──────────────────────────────────────┤
-│ Catalog:PackageCatalog               │
-├──────────────────────────────────────┤
-└──────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║         ┌───────────────────┐                                                        ║
+║         │ <<Interface>>     │                                                        ║
+║         │ IComponentManager │                                                        ║
+║         ├───────────────────┤                                                        ║
+║         └───────────────────┘                                                        ║
+║                  ▲                                                                   ║
+║                  ¦                        ┌────────────────────────────────┐         ║
+║                  ¦                        │ <<Interface>>                  │         ║
+║      ┌───────────┴────────────┐           │ IComponentHub                  │         ║
+║      │ <<Interface>>          │ 1       1 ├────────────────────────────────┤         ║
+║      │ IPackageManager        │<──────────┤ PackageManager:IPackageManager │         ║
+║      ├────────────────────────┤           │ …                              │         ║
+║      │ AddPackage:Event       │           └────────────────────────────────┘         ║
+║      │ RemovePackage:Event    │                                                      ║
+║      ├────────────────────────┤                                                      ║
+║      │ Catalog:PackageCatalog │                                                      ║
+║      ├────────────────────────┤                                                      ║
+║      └────────────────────────┘                                                      ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ## Plugin model
-The plugin system can be used to extend both `WebExpress` and application functionalities. Each plugin can provide content in 
-different forms. A distinction is made between the following types of content:
-
-|Content                      |Managed by                  |Description
-|-----------------------------|----------------------------|-----------------------
-|Applications                 |ApplicationManager          |An application is the logical combination of functionalities into an application system.
-|Internationalization schemas |InternationalizationManager |Provides language packs for the internationalization of applications.
-|Module                       |ModuleManager               |Modules encapsulate (web) elements and make them available for one or more applications.
-|Identities                   |IdentityManager             |Users or technical objects that are used for identity and access management.
-|Resources                    |ResourceManager             |Resources are contents that are delivered by WebExpress. These include, for example, websites that consist of HTML source code, arbitrary files (e.g. css, JavaScript, images) and REST interfaces, which are mainly used for communication via HTTP(S) with (other) systems.
-|Status pages                 |ResponseManager             |Represent HTML pages that are returned with a StatusCode other than 200.
-|Layout schemes               |LayoutManager               |Provides color and layout schemes for customizing applications.
-|Components                   |ComponentManager            |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
-|Jobs                         |SchedulerManager            |Jobs can be used for cyclic processing of tasks. 
-|Tasks                        |TaskManager                 |Management of ad-hoc tasks. 
-
-Each plugin must have exactly one plugin class that implements `IPlugin`.
+The plugin system can be used to extend both `WebExpress` and application functionalities. Each 
+plugin must have exactly one plugin class that implements `IPlugin`.
 
 ```csharp
 [Name("myplugin")]
 [Description("description")]
 [Icon("/assets/img/Logo.png")]
 [Dependency("webexpress.webapp")]
+[Application<MyApplication>]
 public sealed class MyPlugin : IPlugin
 {
   public Initialization(IPluginContext) {}
@@ -391,68 +368,78 @@ public sealed class MyPlugin : IPlugin
 
 The following attributes are available:
 
-|Attribute   |Type   |Multiplicity |Optional |Description
-|------------|-------|-------------|---------|--------------
-|Name        |String |1            |Yes      |The name of the plugin. This can be a key to internationalization.
-|Description |String |1            |Yes      |The description of the plugin. This can be a key to internationalization.
-|Icon        |String |1            |Yes      |The icon that represents the plugin graphically.
-|Dependency  |String |n            |Yes      |Defines a dependency on another plugin and is specified via the PluginId.
+|Attribute   |Type           |Multiplicity |Optional |Description
+|------------|---------------|-------------|---------|--------------
+|Name        |String         |1            |Yes      |The name of the plugin. This can be a key to internationalization.
+|Description |String         |1            |Yes      |The description of the plugin. This can be a key to internationalization.
+|Icon        |String         |1            |Yes      |The icon that represents the plugin graphically.
+|Dependency  |String         |n            |Yes      |Defines a dependency on another plugin and is specified via the PluginId.
+|Applcation  |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
 
 The implemented methods from the interface cover the life cycle of the plugin. Meta information about the plugin is 
 stored in the `PluginContext` and is available globally via the `PluginManager`.
 
 ```
-                                                   ┌──────────────────────────────┐
-                                                   │ <<Interface>>                │
-                                                   │ IComponentHub                │
-                                                 1 ├──────────────────────────────┤
-         ┌───────────────────┐                 ┌───┤ PluginManager:IPluginManager │
-         │ <<Interface>>     │                 │   │ …                            │
-         │ IComponentManager │                 │   └──────────────────────────────┘
-         ├───────────────────┤                 │
-         └───────────────────┘                 │            ┌───────────────┐
-                   ▲                           │            │ <<Interface>> │
-                   ¦                           │            │ IContext      │
-                   ¦                           │            ├───────────────┤
-┌──────────────────┴───────────────────┐ 1     │            └───────────────┘
-│ PluginManager                        │<──────┘                   ▲
-├──────────────────────────────────────┤                           ¦
-│ AddPlugin:Event                      │                           ¦
-│ RemovePlugin:Event                   │               ┌───────────┴─────────────┐
-├──────────────────────────────────────┤ 1           * │ <<Interface>>           │
-│ Plugins:IEnumerable<IPluginContext>  ├──────────────>│ IPluginContext          │
-├──────────────────────────────────────┤               ├─────────────────────────┤
-│ Register()                           ├-----------┐   │ Assembly:Assembly       │
-│ Remove(IPluginContext)               │           ¦   │ PluginId:String         │
-│ GetPlugin(PluginId):IPluginContext   │           ¦   │ PluginName:String       │
-│ GetPlugin(Type):IPluginContext       │           ¦   │ Manufacturer:String     │
-└──────────────────────────────────────┘           ¦   │ Description:String      │
-                                                   ¦   │ Version:String          │
-                                                   ¦   │ Copyright:String        │
-           ┌───────────────┐                       ¦   │ License:String          │
-           │ <<Interface>> │                       ¦   │ Icon:UriResource        │
-           │ IComponent    │                       ¦   │ Host:IHttpServerContext │
-           ├───────────────┤                       ¦   └─────────────────────────┘
-           └───────────────┘                       ¦              ∧
-                  ▲                                ¦              ¦
-                  ¦                                ¦              ¦
-                  ¦                                ¦              ¦
-  ┌───────────────┴────────────────┐               ¦              ¦
-  │ <<Interface>>                  │               ¦              ¦
-  │ IPlugin                        │               ¦              ¦
-  ├────────────────────────────────┤               ¦              ¦
-  │ Run()                          │               ¦              ¦
-  │ Dispose()                      │               ¦              ¦
-  └────────────────────────────────┘               ¦              ¦
-                  ▲                                ¦              ¦
-                  ¦                                ¦              ¦
-                  ¦                                ¦              ¦
-  ┌───────────────┴────────────────┐    create     ¦              ¦
-  │ MyPlugin                       │<--------------┘              ¦
-  ├────────────────────────────────┤               uses           ¦
-  │ Run()                          ├------------------------------┘
-  │ Dispose()                      │
-  └────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                                                   ┌──────────────────────────────┐   ║
+║                                                   │ <<Interface>>                │   ║
+║                                                   │ IComponentHub                │   ║
+║                                                 1 ├──────────────────────────────┤   ║
+║          ┌───────────────────┐                ┌───┤ PluginManager:IPluginManager │   ║
+║          │ <<Interface>>     │                │   │ …                            │   ║
+║          │ IComponentManager │                │   └──────────────────────────────┘   ║
+║          ├───────────────────┤                │                                      ║
+║          └───────────────────┘                │                                      ║
+║                    ▲                          │           ┌───────────────┐          ║
+║                    ¦                          │           │ <<Interface>> │          ║
+║                    ¦                          │           │ IContext      │          ║
+║ ┌──────────────────┴───────────────────┐      │           ├───────────────┤          ║
+║ │ <<Interface>>                        │ 1    │           └───────────────┘          ║
+║ │ IPluginManager                       │<─────┘                   ▲                  ║
+║ ├──────────────────────────────────────┤                          ¦                  ║
+║ │ AddPlugin:Event                      │                          ¦                  ║
+║ │ RemovePlugin:Event                   │              ┌───────────┴─────────────┐    ║
+║ ├──────────────────────────────────────┤ 1          * │ <<Interface>>           │    ║
+║ │ Plugins:IEnumerable<IPluginContext>  ├─────────────>│ IPluginContext          │    ║
+║ ├──────────────────────────────────────┤              ├─────────────────────────┤    ║
+║ │ GetPlugin(PluginId):IPluginContext   ├----------┐   │ Assembly:Assembly       │    ║
+║ │ GetPlugin(Type):IPluginContext       │          ¦   │ PluginId:String         │    ║
+║ └──────────────────────────────────────┘          ¦   │ PluginName:String       │    ║
+║                                                   ¦   │ Manufacturer:String     │    ║
+║                                                   ¦   │ Description:String      │    ║
+║                                                   ¦   │ Version:String          │    ║
+║                                                   ¦   │ Copyright:String        │    ║
+║          ┌───────────────┐                        ¦   │ License:String          │    ║
+║          │ <<Interface>> │                        ¦   │ Icon:UriResource        │    ║
+║          │ IComponent    │                        ¦   └─────────────────────────┘    ║
+║          ├───────────────┤                        ¦              ∧                   ║
+║          └───────────────┘                        ¦              ¦                   ║
+║                 ▲                                 ¦              ¦                   ║
+║                 ¦                                 ¦              ¦                   ║
+║                 ¦                                 ¦              ¦                   ║
+║         ┌───────┴───────┐                         ¦              ¦                   ║
+║         │ <<Interface>> │                         ¦              ¦                   ║
+║         │ IPlugin       │                         ¦              ¦                   ║
+║         ├───────────────┤                         ¦              ¦                   ║
+║         │ Run()         │                         ¦              ¦                   ║
+║         │ Dispose()     │                         ¦              ¦                   ║
+║         └───────────────┘                         ¦              ¦                   ║
+║                ▲                                  ¦              ¦                   ║
+║                ¦                                  ¦              ¦                   ║
+╚════════════════¦══════════════════════════════════¦══════════════¦═══════════════════╝
+                 ¦                                  ¦              ¦
+╔MyPlugin════════¦══════════════════════════════════¦══════════════¦═══════════════════╗
+║                ¦                                  ¦              ¦                   ║
+║                ¦                                  ¦              ¦                   ║
+║          ┌─────┴─────┐                 create     ¦              ¦                   ║
+║          │ MyPlugin  │<---------------------------┘              ¦                   ║
+║          ├───────────┤                                    uses   ¦                   ║
+║          │ Run()     ├-------------------------------------------┘                   ║
+║          │ Dispose() │                                                               ║
+║          └───────────┘                                                               ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ## Internationalization model
@@ -470,39 +457,50 @@ The `InternationalizationManager` is a central component responsible for managin
 files and provides the `I18N` function to access the translations. 
 
 ```
-┌────────────────────────────────────┐
-│ <<Interface>>                      │
-│ IComponentManagerPlugin            │
-├────────────────────────────────────┤
-│ Register(IPluginContext)           │
-│ Remove(IPluginContext)             │
-└────────────────────────────────────┘
-                 ▲
-           ┌-----┘
-           ¦            ┌──────────────────────────────────────────────────────────┐
-           ¦            │ <<Interface>>                                            │
-           ¦            │ IComponentHub                                            │
-           ¦          1 ├──────────────────────────────────────────────────────────┤
-           ¦        ┌───┤ InternationalizationManager:IInternationalizationManager │
-           ¦        │   │ …                                                        │
-           ¦        │   └──────────────────────────────────────────────────────────┘
-           ¦        │
-           ¦        └─────────────────────┐
-           ¦                              │
-           ¦                              │                  ┌─────────────────────┐
-           ¦                              │                  │ <<Interface>>       │
-           ¦                            1 V                  │ II18N               │
-    ┌──────┴──────────────────────────────────────┐          ├─────────────────────┤
-    │ InternationalizationManager                 │          │ Culture:CultureInfo │
-    ├─────────────────────────────────────────────┤          └─────────────────────┘
-    │ Register(IPluginContext)                    │
-    │ Remove(IPluginContext)                      │
-    │ I18N(Key,Args):String                       │
-    │ I18N(II18N,Key,Args):String                 │
-    │ I18N(Request,Key,Args):String               │
-    │ I18N(CultureInfo,Key,Args):String           │
-    │ I18N(CultureInfo,PluginId,Key,Args):String  │
-    └─────────────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║        ┌───────────────────┐                                                         ║
+║        │ <<Interface>>     │                                                         ║
+║        │ IComponentManager │                                                         ║
+║        ├───────────────────┤                                                         ║
+║        └───────────────────┘                                                         ║
+║                  ▲                                                                   ║
+║            ┌-----┘                                                                   ║
+║            ¦                                                                         ║
+║            ¦    ┌──────────────────────────────────────────────────────────┐         ║
+║            ¦    │ <<Interface>>                                            │         ║
+║            ¦    │ IComponentHub                                            │         ║
+║            ¦    ├──────────────────────────────────────────────────────────┤ 1       ║
+║            ¦    │ InternationalizationManager:IInternationalizationManager ├───┐     ║
+║            ¦    │ …                                                        │   │     ║
+║            ¦    └──────────────────────────────────────────────────────────┘   │     ║
+║            ¦                                                                   │     ║
+║            ¦                              ┌────────────────────────────────────┘     ║
+║            ¦                              │                                          ║
+║            ¦                              │                                          ║
+║            ¦                              │                                          ║
+║            ¦                            1 V                                          ║
+║     ┌──────┴──────────────────────────────────────┐                                  ║
+║     │ <<Interface>>                               │                                  ║
+║     │ IInternationalizationManager                │                                  ║
+║     ├─────────────────────────────────────────────┤                                  ║
+║     │ I18N(Key,Args):String                       │                                  ║
+║     │ I18N(II18N,Key,Args):String                 │                                  ║
+║     │ I18N(Request,Key,Args):String               │                                  ║
+║     │ I18N(CultureInfo,Key,Args):String           │                                  ║
+║     │ I18N(CultureInfo,PluginId,Key,Args):String  │                                  ║
+║     └─────────────────────────────────────────────┘                                  ║
+║                           ∧                                                          ║
+║                           ¦                                                          ║
+║                           ¦ uses                                                     ║
+║             ┌─────────────┴────────────────┐                                         ║
+║             │ I18N                         │                                         ║
+║             ├──────────────────────────────┤                                         ║
+║             │ Translate(Key):String        │                                         ║
+║             │ Translate(Key, Args):String  │                                         ║
+║             └──────────────────────────────┘                                         ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 For the translation of texts, language translation files are used, which are stored in 
@@ -520,9 +518,7 @@ folder and registered in the project file:
 ```xml
 <ItemGroup>
     <EmbeddedResource Include="Internationalization/de" />
-    <EmbeddedResource Include="Internationalization/<PluginId>.de" />
     <EmbeddedResource Include="Internationalization/en" />
-    <EmbeddedResource Include="Internationalization/<PluginId>.en" />
 </ItemGroup>
 ```
 
@@ -596,221 +592,189 @@ The following attributes are available:
 |AssetPath   |String     |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
 |DataPath    |String     |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String     |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
-|Option      |String     |n            |Yes      |Includes resources that are marked as optional and are otherwise not directly integrated into the application. The name of the option is the ModuleId and the ResourceId (e.g. webexpress.webapp.settinglog) or webexpress.webapp.* if all options of a module are to be included. A regular expression can also be used.
-|            |Type       |             |         |The class of the module. All options from the module will be activated.
-|            |Type, Type |             |         |The class of the module and resource to be activated.
 
 The methods implemented from the interface cover the life cycle of the application. When the plugin is loaded, all the 
 applications it contains are instantiated. These remain in place until the plugin is unloaded. Meta information about 
 the application is stored in the `ApplicationContext` and managed by the `ApplicationManager`.
 
 ```
-        ┌────────────────────────────────────────┐
-        │ <<Interface>>                          │
-        │ IComponentHub                          │
-        ├────────────────────────────────────────┤ 1
-        │ ApplicationManager:IApplicationManager │───┐
-        │ …                                      │   │
-        └────────────────────────────────────────┘   │
-                                                     │
-                                                     │
-                                                     │
-   ┌────────────────────────────────────┐            │
-   │ <<Interface>>                      │            │
-   │ IComponentManagerPlugin            │            │
-   ├────────────────────────────────────┤            │
-   │ Register(IPluginContext)           │            │
-   │ Remove(IPluginContext)             │            │
-   └────────────────────────────────────┘            │
-                     ▲                        ┌──────┘
-           ┌---------┘                        │
-           ¦                                1 V
-   ┌───────┴──────────────────────────────────────────┐
-   │ ApplicationManager                               │
-   ├──────────────────────────────────────────────────┤
-   │ AddApplication:Event                             │
-   │ RemoveApplication:Event                          │
-   ├──────────────────────────────────────────────────┤ 1
-   │ Applications:IEnumerable<IApplicationContext>    ├────┐
-   ├──────────────────────────────────────────────────┤    │
-┌--┤ Register(IPluginContext)                         │    │
-¦  │ Remove(IPluginContext)                           │    │
-¦  │ GetApplication(ApplicationId):IApplicationContext │    │
-¦  │ GetApplication(Type):IApplicationContext          │    │
-¦  └──────────────────────────────────────────────────┘    │
-¦                                                          │
-¦          ┌────────────────┐                              │
-¦          │ <<Interface>>  │                              │
-¦          │ IContext       │                              │
-¦          ├────────────────┤                              │
-¦          └────────────────┘                              │
-¦                  ▲                                       │
-¦                  ¦                ┌──────────────────────┘
-¦                  ¦              * V
-¦           ┌──────┴───────────────────────┐
-¦           │ <<Interface>>                │<--------------┐
-¦           │ IApplicationContext          │               ¦
-¦           ├──────────────────────────────┤               ¦
-¦           │ PluginContext:IPluginContext │               ¦
-¦           │ ApplicationId:String         │               ¦
-¦           │ ApplicationName:String       │               ¦
-¦           │ Description:String           │               ¦
-¦           │ Options:IEnumerable<String>  │               ¦
-¦           │ AssetPath:String             │               ¦
-¦           │ DataPath:String              │               ¦
-¦           │ ContextPath:UriResource      │               ¦
-¦           │ Icon:UriResource             │               ¦
-¦           └──────────────────────────────┘               ¦
-¦                                                          ¦
-¦                   ┌────────────────┐                     ¦
-¦                   │ <<Interface>>  │                     ¦
-¦                   │ IComponent     │                     ¦
-¦                   ├────────────────┤                     ¦
-¦                   └────────────────┘                     ¦
-¦                           ▲                              ¦
-¦                           ¦                              ¦
-¦                           ¦                              ¦
-¦       ┌───────────────────┴────────────────────┐         ¦
-¦       │ <<Interface>>                          │         ¦
-¦       │ IApplication                           │         ¦
-¦       ├────────────────────────────────────────┤         ¦
-¦       │ Run()                                  │         ¦
-¦       │ Dispose()                              │         ¦
-¦       └────────────────────────────────────────┘         ¦
-¦                           ▲                              ¦
-¦                           ¦                              ¦
-¦                           ¦                              ¦
-¦ create ┌──────────────────┴──────────────────┐      uses ¦
-└------->│ MyApplication                       ├-----------┘
-         ├─────────────────────────────────────┤
-         │ Run()                               │
-         │ Dispose()                           │
-         └─────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                   ┌────────────────────────────────────────┐                         ║
+║                   │ <<Interface>>                          │                         ║
+║                   │ IComponentHub                          │                         ║
+║                   ├────────────────────────────────────────┤ 1                       ║
+║                   │ ApplicationManager:IApplicationManager │───┐                     ║
+║                   │ …                                      │   │                     ║
+║                   └────────────────────────────────────────┘   │                     ║
+║                                                                │                     ║
+║                     ┌────────────────────┐                     │                     ║
+║                     │ <<Interface>>      │                     │                     ║
+║                     │ IComponentManager  │                     │                     ║
+║                     ├────────────────────┤                     │                     ║
+║                     └────────────────────┘                     │                     ║
+║                                ▲                        ┌──────┘                     ║
+║                      ┌---------┘                        │                            ║
+║                      ¦                                1 V                            ║
+║              ┌───────┴───────────────────────────────────────────┐                   ║
+║              │ <<Interface>>                                     │                   ║
+║           ┌--┤ IApplicationManager                               │                   ║
+║           ¦  ├───────────────────────────────────────────────────┤                   ║
+║           ¦  │ AddApplication:Event                              │                   ║
+║           ¦  │ RemoveApplication:Event                           │                   ║
+║           ¦  ├───────────────────────────────────────────────────┤ 1                 ║
+║           ¦  │ Applications:IEnumerable<IApplicationContext>     ├───┐               ║
+║           ¦  ├───────────────────────────────────────────────────┤   │               ║
+║           ¦  │ GetApplication(ApplicationId):IApplicationContext │   │               ║
+║           ¦  │ GetApplication(Type):IApplicationContext          │   │               ║
+║           ¦  └───────────────────────────────────────────────────┘   │               ║
+║           ¦                                                          │               ║
+║           ¦          ┌────────────────┐                              │               ║
+║           ¦          │ <<Interface>>  │                              │               ║
+║           ¦          │ IContext       │                              │               ║
+║           ¦          ├────────────────┤                              │               ║
+║           ¦          └────────────────┘                              │               ║
+║           ¦                  ▲                                       │               ║
+║           ¦                  ¦                ┌──────────────────────┘               ║
+║           ¦                  ¦              * V                                      ║
+║           ¦           ┌──────┴───────────────────────┐                               ║
+║           ¦           │ <<Interface>>                │<--------------┐               ║
+║           ¦           │ IApplicationContext          │               ¦               ║
+║           ¦           ├──────────────────────────────┤               ¦               ║
+║           ¦           │ PluginContext:IPluginContext │               ¦               ║
+║           ¦           │ ApplicationId:String         │               ¦               ║
+║           ¦           │ ApplicationName:String       │               ¦               ║
+║           ¦           │ Description:String           │               ¦               ║
+║           ¦           │ Options:IEnumerable<String>  │               ¦               ║
+║           ¦           │ AssetPath:String             │               ¦               ║
+║           ¦           │ DataPath:String              │               ¦               ║
+║           ¦           │ ContextPath:UriResource      │               ¦               ║
+║           ¦           │ Icon:UriResource             │               ¦               ║
+║           ¦           └──────────────────────────────┘               ¦               ║
+║           ¦                                                          ¦               ║
+║           ¦                   ┌────────────────┐                     ¦               ║
+║           ¦                   │ <<Interface>>  │                     ¦               ║
+║           ¦                   │ IComponent     │                     ¦               ║
+║           ¦                   ├────────────────┤                     ¦               ║
+║           ¦                   └────────────────┘                     ¦               ║
+║           ¦                           ▲                              ¦               ║
+║           ¦                           ¦                              ¦               ║
+║           ¦                           ¦                              ¦               ║
+║           ¦                   ┌───────┴───────┐                      ¦               ║
+║           ¦                   │ <<Interface>> │                      ¦               ║
+║           ¦                   │ IApplication  │                      ¦               ║
+║           ¦                   ├───────────────┤                      ¦               ║
+║           ¦                   │ Run()         │                      ¦               ║
+║           ¦                   │ Dispose()     │                      ¦               ║
+║           ¦                   └───────────────┘                      ¦               ║
+║           ¦                           ▲                              ¦               ║
+║           ¦                           ¦                              ¦               ║
+╚═══════════¦═══════════════════════════¦══════════════════════════════¦═══════════════╝
+            ¦                           ¦                              ¦
+╔MyPlugin═══¦═══════════════════════════¦══════════════════════════════¦═══════════════╗
+║           ¦                           ¦                              ¦               ║
+║           ¦ create            ┌───────┴───────┐                 uses ¦               ║
+║           └------------------>│ MyApplication ├----------------------┘               ║
+║                               ├───────────────┤                                      ║
+║                               │ Run()         │                                      ║
+║                               │ Dispose()     │                                      ║
+║                               └───────────────┘                                      ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
-
-## Module model
-Each application can consist of one or more modules. To define a module, a class must be defined that implements the `Module` 
-interface. The module's metadata is appended as attributes of the class. A module has the task of organizing (web) elements 
-for the application and making them accessible.
-
-```csharp
-[Name("MyModule")]
-[Description("example")]
-[Icon("/mod.svg")]
-[ContextPath("/mod")]
-[Application<MyApplication>]
-public sealed class MyModule : Module
-{
-}
-```
-
-The following attributes are available:
-
-|Attribute      |Type               |Multiplicity |Optional |Description
-|---------------|-------------------|-------------|---------|----------------
-|Name           |String             |1            |Yes      |The name of the module. This can be a key to internationalization.
-|Description    |String             |1            |Yes      |The description of the module. This can be a key to internationalization.
-|Icon           |String             |1            |Yes      |The icon that represents the module graphically.
-|AssetPath      |String             |1            |Yes      |The path where the assets are stored. This path is mounted in the application's asset path.
-|DataPath       |String             |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the application.
-|ContextPath    |String             |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the application.
-|IdentityDomain |None, Local, Share |1            |Yes      |Determines the identity domain of the application. `None` - The application does not provide an identity domain. `Local` - The application has its own identity domain. `Share` - The application shares the identity domain with other applications.
-|Application    |String             |n            |No       |A specific `ApplicationId`, regular expression, or * for any application. 
-|               |Type               |             |         |The class of the application.
-
-The instance of the module is created when the plugin is loaded and persists until the application is unloaded. The methods 
-implemented from the interface cover the life cycle of the module. Meta information about the module is stored in the 
-`ModuleContext` and is available globally. The `ModuleManager` manages the modules. 
-
-```
-           ┌──────────────────────────────┐
-           │ <<Interface>>                │
-           │ IComponentHub                │
-           ├──────────────────────────────┤ 1
-           │ ModuleManager:IModuleManager │─────┐
-           │ …                            │     │
-           └──────────────────────────────┘     │
-                                                │
-┌────────────────────────────────────┐          │
-│ <<Interface>>                      │          │
-│ IComponentManagerPlugin            │          │
-├────────────────────────────────────┤          │
-│ Register(IPluginContext)           │          │
-│ Remove(IPluginContext)             │          │
-└────────────────────────────────────┘          │
-            ▲                                   │
-            ¦                                   │
-            ¦                                 1 V
-   ┌────────┴───────────────────────────────────────────────┐
-   │ ModuleManager                                          │
-   ├────────────────────────────────────────────────────────┤
-   │ AddModule:Event                                        │
-   │ RemoveModule:Event                                     │
-   ├────────────────────────────────────────────────────────┤ 1
-   │ Modules:IEnumerable<IModuleContext>                    ├───┐
-   ├────────────────────────────────────────────────────────┤   │
-┌--┤ Register(IPluginContext)                               │   │
-¦  │ Remove(IPluginContext)                                 │   │
-¦  │ GetModule(IApplicationContext,ModuleId):IModuleContext │   │
-¦  └────────────────────────────────────────────────────────┘   │
-¦                                                               │
-¦                                                               │
-¦                   ┌────────────────┐                          │
-¦                   │ <<Interface>>  │                          │
-¦                   │ IContext       │                          │
-¦                   ├────────────────┤                          │
-¦                   └────────────────┘                          │
-¦                           ▲                                   │
-¦                           ¦                                   │
-¦                           ¦                                   │
-¦        ┌──────────────────┴─────────────────────┐             │ 
-¦        │ <<Interface>>                          │ *           │
-¦        │ IModuleContext                         │<────────────┘
-¦        ├────────────────────────────────────────┤
-¦        │ PluginContext:IPluginContext           │
-¦        │ ApplicationContext:IApplicationContext │
-¦        │ ModuleId:String                        │
-¦        │ ModuleName:String                      │
-¦        │ Description:String                     │
-¦        │ AssetPath:String                       │
-¦        │ DataPath:String                        │
-¦        │ ContextPath:UriResource                │
-¦        │ Icon:UriResource                       │
-¦        └────────────────────────────────────────┘
-¦                           ∧
-¦                           └-----------------------┐
-¦                                                   ¦
-¦                   ┌────────────────┐              ¦
-¦                   │ <<Interface>>  │              ¦
-¦                   │ IComponent     │              ¦
-¦                   ├────────────────┤              ¦
-¦                   └────────────────┘              ¦
-¦                           ▲                       ¦
-¦                           ¦                       ¦
-¦                           ¦                       ¦
-¦          ┌────────────────┴───────────────┐       ¦
-¦          │ <<Interface>>                  │       ¦
-¦          │ IModule                        │       ¦
-¦          ├────────────────────────────────┤       ¦
-¦          │ Run()                          │       ¦
-¦          │ Dispose()                      │       ¦
-¦          └────────────────────────────────┘       ¦
-¦                           ▲                       ¦
-¦                           ¦                       ¦
-¦                           ¦                       ¦
-¦  create  ┌────────────────┴───────────────┐       ¦
-└--------->│ MyModule                       ├-------┘
-           ├────────────────────────────────┤
-           │ Run()                          │
-           │ Dispose()                      │
-           └────────────────────────────────┘
-```
-
 ## Endpoint model
 Endpoints are (web) elements that can be accessed with a URI (Uniform Resource Identifier). When a plugin is loaded, all 
 classes marked as resources are automatically determined from the assembly and included in a sitemap. For this purpose, 
 the affected classes are provided with attributes. Endpoints are virtual and are implemented through specific derivations 
 such as pages, resources, or REST APIs. Additionally, custom endpoints can also be defined.
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║      ┌───────────────────┐                                                           ║
+║      │ <<Interface>>     │                                                           ║
+║      │ IComponentManager │                                                           ║
+║      ├───────────────────┤                                                           ║
+║      └───────────────────┘                                                           ║
+║         ▲     ▲      ▲                                                               ║
+║         ¦     ¦      ¦                                                               ║
+║  ┌----- ¦-----┘      └----------------------┐                                        ║
+║  ¦      ¦                                   ¦                                        ║
+║  ¦      ¦            ┌──────────────────────┴────────────────────────┐               ║
+║  ¦      ¦          * │ <<Interface>>                                 │               ║
+║  ¦      ¦      ┌────>│ ISitemapManager                               │               ║
+║  ¦      ¦      │     ├───────────────────────────────────────────────┤ 1             ║
+║  ¦      ¦      │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────────┐   ║
+║  ¦      ¦      │     ├───────────────────────────────────────────────┤           │   ║
+║  ¦      ¦      │     │ Refresh()                                     │<-----┐    │   ║
+║  ¦      ¦      │     │ SearchResource(Uri,SearchContex):SearchResult │      ¦    │   ║
+║  ¦      ¦      │     └───────────────────────────────────────────────┘      ¦    │   ║
+║  ¦      ¦      │                                                            ¦    │   ║
+║  ¦      ¦      │                                                            ¦    │   ║
+║  ¦      ¦      │   ┌───────────────────────────────────┐                    ¦    │   ║
+║  ¦      ¦      │   │ <<Interface>>                     │                    ¦    │   ║
+║  ¦      ¦      │   │ IComponentHub                     │                    ¦    │   ║
+║  ¦      ¦      │ 1 ├───────────────────────────────────┤                    ¦    │   ║
+║  ¦      ¦      └───┤ SitemapManager:ISitemapManager    │ 1                  ¦    │   ║
+║  ¦      ¦          │ ResourceManager:IResourceManager  ├───┐                ¦    │   ║
+║  ¦      ¦          │ GetComponentManager(Id)           │   │                ¦    │   ║
+║  ¦      ¦          │   :IComponentManager              │   │                ¦    │   ║
+║  ¦      ¦          │ GetComponent<IComponentManager>() │   │                ¦    │   ║
+║  ¦      ¦          │   :IComponentManager              │   │                ¦    │   ║
+║  ¦      ¦          │ …                                 │   │                ¦    │   ║
+║  ¦      ¦          └───────────────────────────────────┘   │                ¦    │   ║
+║  ¦      ¦                                            ┌─────┘                ¦    │   ║
+║  ¦      └-----------┐                                │                      ¦    │   ║
+║  ¦                  ¦                              1 V                      ¦    │   ║
+║  ¦        ┌─────────┴─────────────────────────────────────────┐             ¦    │   ║
+║  ¦        │ <<Interface>>                                     │ Refresh     ¦    │   ║
+║  ¦        │ IEndpointManager                                  ├-------------┘    │   ║
+║  ¦        ├───────────────────────────────────────────────────┤                  │   ║
+║  ¦        │ AddEndpoint:Event                                 │                  │   ║
+║  ¦        │ RemoveEndpoint:Event                              │                  │   ║
+║  ¦      1 ├───────────────────────────────────────────────────┤                  │   ║
+║  ¦    ┌───┤ Endpoints:IEnumerable<IEndpointContext>           │                  │   ║
+║  ¦    │   ├───────────────────────────────────────────────────┤                  │   ║
+║  ¦    │   │ Register<IEndpointContext>(EndpointRegistration)  │<----┐            │   ║
+║  ¦    │   │ Remove<IEndpointContext>()                        │     ¦            │   ║
+║  ¦    │   │ HandleRequest(Request, IEndpointContext):Response │     ¦            │   ║
+║  ¦    │   │ GetEndpoints(EndpointType,IApplicationContext)    │     ¦            │   ║
+║  ¦    │   │   :IEnumerable<IEndpointContext>                  │     ¦            │   ║
+║  ¦    │   └───────────────────────────────────────────────────┘     ¦            │   ║
+║  ¦    │                                                             ¦            │   ║
+║  ¦    │                    ┌────────────────┐                       ¦            │   ║
+║  ¦    │                    │ <<Interface>>  │                       ¦            │   ║
+║  ¦    │                    │ IContext       │                       ¦            │   ║
+║  ¦    │                    ├────────────────┤                       ¦            │   ║
+║  ¦    │                    └────────────────┘                       ¦            │   ║
+║  ¦    │                            ▲                                ¦            │   ║
+║  ¦    │                            ¦                                ¦            │   ║
+║  ¦    │                            ¦                                ¦            │   ║
+║  ¦    │        ┌───────────────────┴────────────────────┐           ¦            │   ║
+║  ¦    │      * │ <<Interface>>                          │ *         ¦            │   ║
+║  ¦    └───────>│ IEndpointContext                       │<───────────────────────┘   ║
+║  ¦             ├────────────────────────────────────────┤           ¦                ║
+║  ¦             │ EndpointId:String                      │           ¦                ║
+║  ¦             │ PluginContext:IPluginContext           │           ¦                ║
+║  ¦             │ ApplicationContext:IApplicationContext │           ¦                ║
+║  ¦             │ Conditions:IEnumerable<ICondition>     │           ¦                ║
+║  ¦             │ ParentContext:IEndpointContext         │           ¦                ║
+║  ¦             │ Cache:Bool                             │           ¦                ║
+║  ¦             │ ContextPath:UriResource                │           ¦                ║
+║  ¦             │ Uri:UriResource                        │           ¦                ║
+║  ¦             └────────────────────────────────────────┘           ¦                ║
+║  ¦                                                                  ¦                ║
+╚══¦══════════════════════════════════════════════════════════════════¦════════════════╝
+   └-------------------------------┐                                  ¦
+╔MyPlugin══════════════════════════¦══════════════════════════════════¦════════════════╗
+║                                  ¦                                  ¦                ║
+║                     ┌────────────┴──────────────┐ Register          ¦                ║
+║                     │ MyEndpointManager         ├-------------------┘                ║
+║                     ├───────────────────────────┤                                    ║
+║                     └───────────────────────────┘                                    ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
 
 ### Resources
 Resources are typically assets that can come in various forms, such as images, videos, documents, or other files. They serve 
@@ -819,7 +783,6 @@ to provide and support content and functionalities within an application.
 ```csharp
 [Segment("E")]
 [ContextPath("/C/D")]
-[Module<MyModule>]
 [Scope<ScopeGeneral>]
 [Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
@@ -835,16 +798,15 @@ The following attributes are available:
 |Segment         |String, String    |1            |Yes      |The path segment of the resource. The first argument is the path segment. The second argument is the display string.
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
-|ContextPath     |String            |1            |Yes      |The URI path from the module to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the module, the resource, and the segment.
-|Parent          |`IResource`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
+|ContextPath     |String            |1            |Yes      |The URI path from the application to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
+|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Module          |`IModule`         |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
 
-A cached resource is created on the first call and persists until the associated module is unloaded. The `Initialize` 
+A cached resource is created on the first call and persists until the associated plugin is unloaded. The `Initialize` 
 method is called once at instantiation, while the `Process` method is called each time the resource is requested. For 
 non-cached resources, a new instance is created each time they are called.
 
@@ -857,10 +819,10 @@ non-cached resources, a new instance is created each time they are called.
     ┌─┐        ┌─┐        ┌─┐ Register┌─┐                  └────┬─────┘
     │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
     │ │        │ │        │ │         │ ├─────────────────────>┌─┐
-    │ │        │ │        │ │         │ │<---------------------│ │
+    │ │        │ │        │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │        Initialization│ │
     │ │        │ │        │ │         │ ├─────────────────────>│ │
-    │ │        │ │        │ │         │ │<---------------------│ │
+    │ │        │ │        │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │                      └─┘
     │ │        │ │        │ │         │ │     ┌─────────┐
     │ │        │ │        │ │         │ │     │ App.    │
@@ -870,165 +832,170 @@ non-cached resources, a new instance is created each time they are called.
     │ │        │ │        │ │         │ │AddPlugin┌─┐                   └───┬───┘
     │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
     │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
-    │ │        │ │        │ │         │ │         │ │<---------------------│ │
+    │ │        │ │        │ │         │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │         │ │        Initialization│ │
     │ │        │ │        │ │         │ │         │ ├─────────────────────>│ │
-    │ │        │ │        │ │         │ │         │ │<---------------------│ │
-    │ │        │ │        │ │         │ │<--------│ │                      └─┘
-    │ │        │ │        │ │         │ │         └─┘
-    │ │        │ │        │ │         │ │     ┌─────────┐
-    │ │        │ │        │ │         │ │     │ Module  │
-    │ │        │ │        │ │         │ │     │ Manager │
-    │ │        │ │        │ │         │ │     └────┬────┘             ┌──────────┐
-    │ │        │ │        │ │         │ │          ¦                  │ MyModule │
-    │ │        │ │        │ │         │ │         ┌─┐                 │          │
-    │ │        │ │        │ │         │ │AddPlugin│ │                 └─────┬────┘
-    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
-    │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
-    │ │        │ │        │ │         │ │         │ │<---------------------│ │
-    │ │        │ │        │ │         │ │         │ │        Initialization│ │
-    │ │        │ │        │ │         │ │         │ ├─────────────────────>│ │
-    │ │        │ │        │ │         │ │         │ │<---------------------│ │
-    │ │        │ │        │ │         │ │<--------│ │                      └─┘
+    │ │        │ │        │ │         │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │<--------┤ │                      └─┘
     │ │        │ │        │ │         │ │         └─┘
     │ │        │ │        │ │         │ │
-    │ │        │ │        │ │         │ │     ┌──────────┐ ┌─────────┐
-    │ │        │ │        │ │         │ │     │ Resource │ │ Sitemap │
-    │ │        │ │        │ │         │ │     │ Manager  │ │ Manager │
-    │ │        │ │        │ │         │ │     └────┬─────┘ └────┬────┘ ┌────────────┐
-    │ │        │ │        │ │         │ │          ¦            ¦      │ MyResource │
-    │ │        │ │        │ │         │ │         ┌─┐          ┌─┐     │            │
-    │ │        │ │        │ │         │ │AddPlugin│ │          │ │     └────┬───────┘
-    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
-    │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
-    │ │        │ │        │ │         │ │         │ │<---------------------│ │
-    │ │        │ │        │ │         │ │         │ │        Initialization│ │
-    │ │        │ │        │ │         │ │         │ ├─────────────────────>│ │
-    │ │        │ │        │ │         │ │         │ │<---------------------│ │
-    │ │        │ │        │ │         │ │         │ │   Refresh│ │         │ │
-    │ │        │ │        │ │         │ │         │ ├─────────>│ │         │ │
-    │ │        │ │        │ │         │ │         │ │<---------│ │         │ │
-    │ │        │ │        │ │         │ │<--------│ │          │ │         │ │
-    │ │        │ │        │ │<--------│ │         │ │          │ │         │ │
-    │ │ Request│ │        │ │         │ │         │ │          │ │         │ │
-    │ ├───────>│ │        │ │         │ │       Search Resource│ │         │ │
-    │ │        │ ├────────────────────────────────────────────>│ │         │ │
-    │ │        │ │<--------------------------------------------│ │         │ │
-    │ │        │ │        │ │         │ │         │ │          │ │  Process│ │
-    │ │        │ ├────────────────────────────────────────────────────────>│ │
-    │ │Response│ │<--------------------------------------------------------│ │
-    │ │<-------│ │        │ │         │ │         │ │          │ │         │ │
-    └─┘        └─┘        └─┘         └─┘         └─┘          └─┘         └─┘
+    │ │        │ │        │ │         │ │     ┌──────────┐        ┌──────────┐
+    │ │        │ │        │ │         │ │     │ Endpoint │        │ Resource │
+    │ │        │ │        │ │         │ │     │ Manager  │        │ Manager  │
+    │ │        │ │        │ │         │ │     └────┬─────┘        └────┬─────┘
+    │ │        │ │        │ │         │ │          ¦                   ¦
+    │ │        │ │        │ │         │ │         ┌─┐Register         ┌─┐
+    │ │        │ │        │ │         │ │         │ │<────────────────┤ │
+    │ │        │ │        │ │         │ │         │ ├---------------->│ │
+    │ │        │ │        │ │         │ │         │ │                 │ │
+    │ │        │ │        │ │         │ │         │ │                 │ │
+    │ │        │ │        │ │         │ │         │ │                 │ │
+    │ │        │ │        │ │         │ │         │ │    ┌─────────┐  │ │
+    │ │        │ │        │ │         │ │         │ │    │ Sitemap │  │ │
+    │ │        │ │        │ │         │ │         │ │    │ Manager │  │ │
+    │ │        │ │        │ │         │ │         │ │    └────┬────┘  │ │
+    │ │        │ │        │ │         │ │         │ │         ¦       │ │
+    │ │        │ │        │ │         │ │         │ │        ┌─┐      │ │
+    │ │        │ │        │ │         │ │AddPlugin│ │        │ │      │ │
+    │ │        │ │        │ │         │ ├────────>│ │        │ │      │ │
+    │ │        │ │        │ │         │ │         │ │ Refresh│ │      │ │
+    │ │        │ │        │ │         │ │         │ ├───────>│ │      │ │
+    │ │        │ │        │ │         │ │         │ │<-------┤ │      │ │
+    │ │        │ │        │ │         │ │<--------┤ │        │ │      │ │
+    │ │        │ │        │ │<--------┤ │         │ │        │ │      │ │
+    │ │ Request│ │        │ │         │ │         │ │        │ │      │ │
+    │ ├───────>│ │        │ │         │ │     Search Resource│ │      │ │
+    │ │        │ ├──────────────────────────────────────────>│ │      │ │ ┌────────────┐
+    │ │        │ │<------------------------------------------┤ │      │ │ │ MyResource │
+    │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │            │
+    │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
+    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
+    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌─┐
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ Process│ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>│ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
+    │ │        │ │        │ │         │ │         │ │<----------------┤ │      │ │
+    │ │Response│ │<-------------------------------┤ │        │ │      │ │      │ │
+    │ │<-------┤ │        │ │         │ │         │ │        │ │      │ │      │ │
+    └─┘        └─┘        └─┘         └─┘         └─┘        └─┘      └─┘      └─┘
 ```
 
 The `ResourceManager` manages all resources. However, these are only accessible through the `SitemapManager`. The 
 interaction of the classes involved is illustrated in the following figure:
 
 ```
-┌────────────────────────────────────┐
-│ <<Interface>>                      │
-│ IComponentManager                  │
-├────────────────────────────────────┤
-└────────────────────────────────────┘
-      ▲                       ▲
-      ¦                       ¦
-      ¦                       └-------------------------┐
-      ¦                                                 ¦
-      ¦                        * ┌──────────────────────┴────────────────────────┐
-      ¦                    ┌────>│ SitemapManager                                │
-      ¦                    │     ├───────────────────────────────────────────────┤ 1
-      ¦                    │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐
-      ¦                    │     ├───────────────────────────────────────────────┤   │
-      ¦                    │     │ Refresh()                                     │   │
-      ¦                    │     │ SearchResource(Uri,SearchContex):SearchResult │   │
-      ¦                    │     └───────────────────────────────────────────────┘   │
-      ¦                    │                                                         │
-      ¦                    └───────────────┐                                         │
-      ¦                                    │                                         │
-      ¦                                    │   ┌──────────────────────────────────┐  │
-┌─────┴──────────────────────┐             │   │ <<Interface>>                    │  │
-│ <<Interface>>              │             │   │ ComponentHub                     │  │
-│ IComponentManagerPlugin    │             │ 1 ├──────────────────────────────────┤  │
-├────────────────────────────┤             └───┤ SitemapManager:ISitemapManager   │  │
-│ Register(IPluginContext)   │             ┌───┤ ResourceManager:IResourceManager │  │
-│ Remove(IPluginContext)     │             │ 1 │ …                                │  │
-└────────────────────────────┘             │   └──────────────────────────────────┘  │
-             ▲                             └─────────────────┐                       │
-             ¦                                               │                       │
-             ¦                                             1 V                       │
-   ┌─────────┴─────────────────────────────────────────────────────────────┐         │
-   │ ResourceManager                                                       │         │
-   ├───────────────────────────────────────────────────────────────────────┤         │
-   │ AddResource:Event                                                     │         │
-   │ RemoveResource:Event                                                  │         │
- 1 ├───────────────────────────────────────────────────────────────────────┤         │
-┌──┤ Resources:IEnumerable<IResourceContext>                               │         │
-│  ├───────────────────────────────────────────────────────────────────────┤         │
-│  │ Register(IPluginContext)                                              ├---┐     │
-│  │ Remove(IPluginContext)                                                │   ¦     │
-│  │ GetResorces(IApplicationContext,ModuleId,ResourceId):IResourceContext │   ¦     │
-│  └───────────────────────────────────────────────────────────────────────┘   ¦     │
-│                                                                              ¦     │
-│                        ┌────────────────┐                                    ¦     │
-│                        │ <<Interface>>  │                                    ¦     │
-│                        │ IContext       │                                    ¦     │
-│                        ├────────────────┤                                    ¦     │
-│                        └────────────────┘                                    ¦     │
-│                                ▲                                             ¦     │
-│                                ¦                                             ¦     │
-│                                ¦                                             ¦     │
-│               ┌────────────────┴───────────────────┐                         ¦     │
-│               │ <<Interface>>                      │                         ¦     │
-│               │ IEndpointContext                   │                         ¦     │
-│               ├────────────────────────────────────┤                         ¦     │
-│               │ EndpointId:String                  │                         ¦     │
-│               │ PluginContext:IPluginContext       │                         ¦     │
-│               │ ModuleContext:IModuleContext       │                         ¦     │
-│               │ Conditions:IEnumerable<ICondition> │                         ¦     │
-│               │ ParentContext:IEndpointContext     │                         ¦     │
-│               │ Cache:Bool                         │                         ¦     │
-│               │ ContextPath:UriResource            │                         ¦     │
-│               │ Uri:UriResource                    │                         ¦     │
-│               └────────────────────────────────────┘                         ¦     │
-│                                ▲                                             ¦     │
-│                                ¦                                             ¦     │
-│                                ¦                                             ¦     │
-│             * ┌────────────────┴───────────────────┐                         ¦     │
-└──────────────>│ <<Interface>>                      │ *                       ¦     │
-   ┌----------->│ IResourceContext                   │<──────────────────────────────┘
-   ¦            ├────────────────────────────────────┤                         ¦
-   ¦            └────────────────────────────────────┘                         ¦
-   ¦                                                                           ¦
-   ¦                     ┌────────────────┐                                    ¦
-   ¦                     │ <<Interface>>  │                                    ¦
-   ¦                     │ IComponent     │                                    ¦
-   ¦                     ├────────────────┤                                    ¦
-   ¦                     └────────────────┘                                    ¦
-   ¦                             ▲                                             ¦
-   ¦                             ¦                                             ¦
-   ¦                             ¦                                             ¦
-   ¦                     ┌───────┴────────┐                                    ¦
-   ¦                     │ <<Interface>>  │                                    ¦
-   ¦                     │ IEndpoint      │                                    ¦
-   ¦                     ├────────────────┤                                    ¦
-   ¦                     └────────────────┘                                    ¦
-   ¦                             ▲                                             ¦
-   ¦                             ¦                                             ¦
-   ¦                             ¦                                             ¦
-   ¦          ┌──────────────────┴─────────────────────┐                       ¦
-   ¦          │ <<Interface>>                          │                       ¦
-   ¦          │ IResource                              │                       ¦
-   ¦          ├────────────────────────────────────────┤                       ¦
-   ¦          │ Process(Request):Response              │                       ¦
-   ¦          └────────────────────────────────────────┘                       ¦
-   ¦                              ▲                                            ¦
-   ¦                              ¦                                            ¦
-   ¦                              ¦                                            ¦
-   ¦     uses ┌───────────────────┴────────────────────┐                create ¦
-   └----------┤ MyResource                             │<----------------------┘
-              ├────────────────────────────────────────┤
-              │ Process(Request):Response              │
-              └────────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║     ┌───────────────────┐                                                            ║
+║     │ <<Interface>>     │                                                            ║
+║     │ IComponentManager │                                                            ║
+║     ├───────────────────┤                                                            ║
+║     └───────────────────┘                                                            ║
+║        ▲            ▲                                                                ║
+║        ¦            ¦                                                                ║
+║        ¦            └-----------------------------┐                                  ║
+║        ¦                                          ¦                                  ║
+║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
+║        ¦                 * │ <<Interface>>                                 │         ║
+║        ¦             ┌────>│ ISitemapManager                               │         ║
+║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
+║        ¦             │     ├───────────────────────────────────────────────┤   │     ║
+║        ¦             │     │ Refresh()                                     │   │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦             │                                                         │     ║
+║        ¦             │                                                         │     ║
+║        ¦             │   ┌──────────────────────────────────┐                  │     ║
+║        ¦             │   │ <<Interface>>                    │                  │     ║
+║        ¦             │   │ IComponentHub                    │                  │     ║
+║        ¦             │ 1 ├──────────────────────────────────┤                  │     ║
+║        └------┐      └───┤ SitemapManager:ISitemapManager   │ 1                │     ║
+║               ¦          │ ResourceManager:IResourceManager ├───┐              │     ║
+║               ¦          │ …                                │   │              │     ║
+║               ¦          └──────────────────────────────────┘   │              │     ║
+║               ¦                                          ┌──────┘              │     ║
+║               ¦                                          │                     │     ║
+║               ¦                                        1 V                     │     ║
+║     ┌─────────┴────────────────────────────────────────────────────┐           │     ║
+║     │ <<Interface>>                                                │           │     ║
+║     │ IResourceManager                                             ├-------┐   │     ║
+║     ├──────────────────────────────────────────────────────────────┤       ¦   │     ║
+║     │ AddResource:Event                                            │       ¦   │     ║
+║     │ RemoveResource:Event                                         │       ¦   │     ║
+║   1 ├──────────────────────────────────────────────────────────────┤       ¦   │     ║
+║  ┌──┤ Resources:IEnumerable<IResourceContext>                      │       ¦   │     ║
+║  │  ├──────────────────────────────────────────────────────────────┤       ¦   │     ║
+║  │  │ GetResorces(IApplicationContext,ResourceId):IResourceContext │       ¦   │     ║
+║  │  └──────────────────────────────────────────────────────────────┘       ¦   │     ║
+║  │                                                                         ¦   │     ║
+║  │                        ┌────────────────┐                               ¦   │     ║
+║  │                        │ <<Interface>>  │                               ¦   │     ║
+║  │                        │ IContext       │                               ¦   │     ║
+║  │                        ├────────────────┤                               ¦   │     ║
+║  │                        └────────────────┘                               ¦   │     ║
+║  │                                ▲                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │            ┌───────────────────┴────────────────────┐                   ¦   │     ║
+║  │            │ <<Interface>>                          │                   ¦   │     ║
+║  │            │ IEndpointContext                       │                   ¦   │     ║
+║  │            ├────────────────────────────────────────┤                   ¦   │     ║
+║  │            │ EndpointId:String                      │                   ¦   │     ║
+║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
+║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
+║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ ParentContext:IEndpointContext         │                   ¦   │     ║
+║  │            │ Cache:Bool                             │                   ¦   │     ║
+║  │            │ ContextPath:UriResource                │                   ¦   │     ║
+║  │            │ Uri:UriResource                        │                   ¦   │     ║
+║  │            └────────────────────────────────────────┘                   ¦   │     ║
+║  │                               ▲                                         ¦   │     ║
+║  │                               ¦                                         ¦   │     ║
+║  │                               ¦                                         ¦   │     ║
+║  │                    * ┌────────┴─────────┐                               ¦   │     ║
+║  └─────────────────────>│ <<Interface>>    │ *                             ¦   │     ║
+║           ┌------------>│ IResourceContext │<──────────────────────────────────┘     ║
+║           ¦             ├──────────────────┤                               ¦         ║
+║           ¦             └──────────────────┘                               ¦         ║
+║           ¦                                                                ¦         ║
+║           ¦              ┌────────────────┐                                ¦         ║
+║           ¦              │ <<Interface>>  │                                ¦         ║
+║           ¦              │ IComponent     │                                ¦         ║
+║           ¦              ├────────────────┤                                ¦         ║
+║           ¦              └────────────────┘                                ¦         ║
+║           ¦                      ▲                                         ¦         ║
+║           ¦                      ¦                                         ¦         ║
+║           ¦                      ¦                                         ¦         ║
+║           ¦              ┌───────┴────────┐                                ¦         ║
+║           ¦              │ <<Interface>>  │                                ¦         ║
+║           ¦              │ IEndpoint      │                                ¦         ║
+║           ¦              ├────────────────┤                                ¦         ║
+║           ¦              └────────────────┘                                ¦         ║
+║           ¦                      ▲                                         ¦         ║
+║           ¦                      ¦                                         ¦         ║
+║           ¦                      ¦                                         ¦         ║
+║           ¦        ┌─────────────┴─────────────┐                           ¦         ║
+║           ¦        │ <<Interface>>             │                           ¦         ║
+║           ¦        │ IResource                 │                           ¦         ║
+║           ¦        ├───────────────────────────┤                           ¦         ║
+║           ¦        │ Process(Request):Response │                           ¦         ║
+║           ¦        └───────────────────────────┘                           ¦         ║
+║           ¦                      ▲                                         ¦         ║
+║           ¦                      ¦                                         ¦         ║
+╚═══════════¦══════════════════════¦═════════════════════════════════════════¦═════════╝
+            ¦                      ¦                                         ¦
+╔MyPlugin═══¦══════════════════════¦═════════════════════════════════════════¦═════════╗
+║           ¦                      ¦                                         ¦         ║
+║           ¦  uses   ┌────────────┴──────────────┐                   create ¦         ║
+║           └---------┤ MyResource                │<-------------------------┘         ║
+║                     ├───────────────────────────┤                                    ║
+║                     │ Process(Request):Response │                                    ║
+║                     └───────────────────────────┘                                    ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 Resources, such as pages or assets, can be uniquely addressed with the help of URIs. The following resource types 
@@ -1051,7 +1018,6 @@ through specific derivations such as HTML documents, dynamic web pages, or singl
 [Title("my page")]
 [Segment("E")]
 [ContextPath("/C/D")]
-[Module<MyModule>]
 [Scope<ScopeGeneral>]
 [Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
@@ -1068,126 +1034,131 @@ The following attributes are available:
 |Segment         |String, String    |1            |Yes      |The path segment of the resource. The first argument is the path segment. The second argument is the display string.
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
-|ContextPath     |String            |1            |Yes      |The URI path from the module to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the module, the resource, and the segment.
-|Parent          |`IResource`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
+|ContextPath     |String            |1            |Yes      |The URI path from the Application to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
+|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Scope           |`IScope`          |n            |Yes      |The scope of the resource
-|Module          |`IModule`         |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
-|Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
 
 Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, which is available 
 in the `RenderContext`, is responsible for the display of the page.
 
 ```
-┌────────────────────────────────────┐
-│ <<Interface>>                      │
-│ IComponentManager                  │
-├────────────────────────────────────┤
-└────────────────────────────────────┘
-      ▲                       ▲
-      ¦                       ¦
-      ¦                       └-------------------------┐
-      ¦                                                 ¦
-      ¦                        * ┌──────────────────────┴────────────────────────┐
-      ¦                    ┌────>│ SitemapManager                                │
-      ¦                    │     ├───────────────────────────────────────────────┤ 1
-      ¦                    │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐
-      ¦                    │     ├───────────────────────────────────────────────┤   │
-      ¦                    │     │ Refresh()                                     │   │
-      ¦                    │     │ SearchResource(Uri,SearchContex):SearchResult │-┐ │
-      ¦                    │     └───────────────────────────────────────────────┘ ¦ │
-      ¦                    │                                                       ¦ │
-      ¦                    └───────────────┐                                       ¦ │
-      ¦                                    │                                       ¦ │
-      ¦                                    │   ┌────────────────────────────────┐  ¦ │
-┌─────┴──────────────────────┐             │   │ <<Interface>>                  │  ¦ │
-│ <<Interface>>              │             │   │ ComponentHub                   │  ¦ │
-│ IComponentManagerPlugin    │             │ 1 ├────────────────────────────────┤  ¦ │
-├────────────────────────────┤             └───┤ SitemapManager:ISitemapManager │  ¦ │
-│ Register(IPluginContext)   │             ┌───┤ PageManager:IPageManager       │  ¦ │
-│ Remove(IPluginContext)     │             │ 1 │ …                              │  ¦ │
-└────────────────────────────┘             │   └────────────────────────────────┘  ¦ │
-             ▲                             └────────────┐                          ¦ │
-             ¦                                          │                          ¦ │
-             ¦                                        1 V                          ¦ │
-   ┌─────────┴─────────────────────────────────────────────────────┐               ¦ │
-   │ PageManager                                                   │               ¦ │
-   ├───────────────────────────────────────────────────────────────┤               ¦ │
-   │ AddPage:Event                                                 │               ¦ │
-   │ RemovePage:Event                                              │               ¦ │
- 1 ├───────────────────────────────────────────────────────────────┤               ¦ │
-┌──┤ Resources:IEnumerable<IPageContext>                           │               ¦ │
-│  ├───────────────────────────────────────────────────────────────┤               ¦ │
-│  │ Register(IPluginContext)                                      ├-----------┐   ¦ │
-│  │ Remove(IPluginContext)                                        │           ¦   ¦ │
-│  │ GetResorces(IApplicationContext,ModuleId,PageId):IPageContext │           ¦   ¦ │
-│  └───────────────────────────────────────────────────────────────┘           ¦   ¦ │
-│                                                                              ¦   ¦ │
-│                        ┌────────────────┐                                    ¦   ¦ │
-│                        │ <<Interface>>  │                                    ¦   ¦ │
-│                        │ IContext       │                                    ¦   ¦ │
-│                        ├────────────────┤                                    ¦   ¦ │
-│                        └────────────────┘                                    ¦   ¦ │
-│                                ▲                                             ¦   ¦ │
-│                                ¦                                             ¦   ¦ │
-│                                ¦                                             ¦   ¦ │
-│               ┌────────────────┴───────────────────┐                         ¦   ¦ │
-│               │ <<Interface>>                      │                         ¦   ¦ │
-│               │ IEndpointContext                   │                         ¦   ¦ │
-│               ├────────────────────────────────────┤                         ¦   ¦ │
-│               │ EndpointId:String                  │                         ¦   ¦ │
-│               │ PluginContext:IPluginContext       │                         ¦   ¦ │
-│               │ ModuleContext:IModuleContext       │                         ¦   ¦ │
-│               │ Conditions:IEnumerable<ICondition> │                         ¦   ¦ │
-│               │ ParentContext:IEndpointContext     │                         ¦   ¦ │
-│               │ Cache:Bool                         │                         ¦   ¦ │
-│               │ ContextPath:UriResource            │                         ¦   ¦ │
-│               │ Uri:UriResource                    │                         ¦   ¦ │
-│               └────────────────────────────────────┘                         ¦   ¦ │
-│                                ▲                                             ¦   ¦ │
-│                                ¦                                             ¦   ¦ │
-│                                ¦                                             ¦   ¦ │
-│             * ┌────────────────┴───────────────────┐                         ¦   ¦ │
-└──────────────>│ <<Interface>>                      │ *                       ¦   ¦ │
-   ┌----------->│ IPageContext                       │<──────────────────────────────┘
-   ¦            ├────────────────────────────────────┤                         ¦   ¦
-   ¦            │ PageTitle:String                   │                         ¦   ¦
-   ¦            │ Scopes:IEnumerable<String>         │                         ¦   ¦
-   ¦            └────────────────────────────────────┘                         ¦   ¦
-   ¦                                                                           ¦   ¦
-   ¦                     ┌────────────────┐                                    ¦   ¦
-   ¦                     │ <<Interface>>  │                                    ¦   ¦
-   ¦                     │ IComponent     │                                    ¦   ¦
-   ¦                     ├────────────────┤                                    ¦   ¦
-   ¦                     └────────────────┘                                    ¦   ¦
-   ¦                             ▲                                             ¦   ¦
-   ¦                             ¦                                             ¦   ¦
-   ¦                             ¦                                             ¦   ¦
-   ¦                     ┌───────┴────────┐                                    ¦   ¦
-   ¦                     │ <<Interface>>  │                                    ¦   ¦
-   ¦                     │ IEndpoint      │                                    ¦   ¦
-   ¦                     ├────────────────┤                                    ¦   ¦
-   ¦                     └────────────────┘                                    ¦   ¦
-   ¦                             ▲                                             ¦   ¦
-   ¦                             ¦                                             ¦   ¦
-   ¦                             ¦  ┌────────────────┐                         ¦   ¦
-   ¦          ┌──────────────────┴──│ IRenderContext │─┐                       ¦   ¦
-   ¦          │ <<Interface>>       └────────────────┘ │                       ¦   ¦
-   ¦          │ IPage                                  │                       ¦   ¦
-   ¦          ├────────────────────────────────────────┤                       ¦   ¦
-   ¦          │ Process(IRenderContext)                │                       ¦   ¦
-   ¦          └────────────────────────────────────────┘                       ¦   ¦
-   ¦                              ▲                                            ¦   ¦
-   ¦                              ¦                                            ¦   ¦
-   ¦                              ¦                                            ¦   ¦
-   ¦     uses ┌───────────────────┴────────────────────┐                create ¦   ¦
-   └----------┤ MyPage                                 │<----------------------┘   ¦
-              ├────────────────────────────────────────┤                      call ¦
-              │ Process(IRenderContext)                │<--------------------------┘
-              └────────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║      ┌───────────────────┐                                                           ║
+║      │ <<Interface>>     │                                                           ║
+║      │ IComponentManager │                                                           ║
+║      ├───────────────────┤                                                           ║
+║      └───────────────────┘                                                           ║
+║         ▲             ▲                                                              ║
+║         ¦             ¦                                                              ║
+║         ¦             └------------------------┐                                     ║
+║         ¦                                      ¦                                     ║
+║         ¦             * ┌──────────────────────┴────────────────────────┐            ║
+║         ¦               │ <<Interface>>                                 │            ║
+║         ¦         ┌────>│ ISitemapManager                               │            ║
+║         ¦         │     ├───────────────────────────────────────────────┤ 1          ║
+║         ¦         │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────┐    ║
+║         ¦         │     ├───────────────────────────────────────────────┤       │    ║
+║         ¦         │     │ Refresh()                                     │       │    ║
+║         ¦         │     │ SearchResource(Uri,SearchContex):SearchResult │--┐    │    ║
+║         ¦         │     └───────────────────────────────────────────────┘  ¦    │    ║
+║         ¦         │                                                        ¦    │    ║
+║         ¦         └───────────────┐                                        ¦    │    ║
+║         ¦                         │                                        ¦    │    ║
+║         ¦                         │   ┌────────────────────────────────┐   ¦    │    ║
+║         ¦                         │   │ <<Interface>>                  │   ¦    │    ║
+║         ¦                         │   │ IComponentHub                  │   ¦    │    ║
+║         ¦                         │ 1 ├────────────────────────────────┤   ¦    │    ║
+║         ¦                         └───┤ SitemapManager:ISitemapManager │   ¦    │    ║
+║         └------┐                  ┌───┤ PageManager:IPageManager       │   ¦    │    ║
+║                ¦                  │ 1 │ …                              │   ¦    │    ║
+║                ¦                  │   └────────────────────────────────┘   ¦    │    ║
+║                ¦                  └──────────────────┐                     ¦    │    ║
+║                ¦                                     │                     ¦    │    ║
+║                ¦                                   1 V                     ¦    │    ║
+║      ┌─────────┴────────────────────────────────────────────┐              ¦    │    ║
+║      │ <<Interface>>                                        ├---------┐    ¦    │    ║
+║      │ IPageManager                                         │         ¦    ¦    │    ║
+║      ├──────────────────────────────────────────────────────┤         ¦    ¦    │    ║
+║      │ AddPage:Event                                        │         ¦    ¦    │    ║
+║      │ RemovePage:Event                                     │         ¦    ¦    │    ║
+║    1 ├──────────────────────────────────────────────────────┤         ¦    ¦    │    ║
+║   ┌──┤ Resources:IEnumerable<IPageContext>                  │         ¦    ¦    │    ║
+║   │  ├──────────────────────────────────────────────────────┤         ¦    ¦    │    ║
+║   │  │ GetResorces(IApplicationContext,PageId):IPageContext │         ¦    ¦    │    ║
+║   │  └──────────────────────────────────────────────────────┘         ¦    ¦    │    ║
+║   │                                                                   ¦    ¦    │    ║
+║   │                        ┌────────────────┐                         ¦    ¦    │    ║
+║   │                        │ <<Interface>>  │                         ¦    ¦    │    ║
+║   │                        │ IContext       │                         ¦    ¦    │    ║
+║   │                        ├────────────────┤                         ¦    ¦    │    ║
+║   │                        └────────────────┘                         ¦    ¦    │    ║
+║   │                                ▲                                  ¦    ¦    │    ║
+║   │                                ¦                                  ¦    ¦    │    ║
+║   │                                ¦                                  ¦    ¦    │    ║
+║   │            ┌───────────────────┴────────────────────┐             ¦    ¦    │    ║
+║   │            │ <<Interface>>                          │             ¦    ¦    │    ║
+║   │            │ IEndpointContext                       │             ¦    ¦    │    ║
+║   │            ├────────────────────────────────────────┤             ¦    ¦    │    ║
+║   │            │ EndpointId:String                      │             ¦    ¦    │    ║
+║   │            │ PluginContext:IPluginContext           │             ¦    ¦    │    ║
+║   │            │ ApplicationContext:IApplicationContext │             ¦    ¦    │    ║
+║   │            │ Conditions:IEnumerable<ICondition>     │             ¦    ¦    │    ║
+║   │            │ ParentContext:IEndpointContext         │             ¦    ¦    │    ║
+║   │            │ Cache:Bool                             │             ¦    ¦    │    ║
+║   │            │ ContextPath:UriResource                │             ¦    ¦    │    ║
+║   │            │ Uri:UriResource                        │             ¦    ¦    │    ║
+║   │            └────────────────────────────────────────┘             ¦    ¦    │    ║
+║   │                                 ▲                                 ¦    ¦    │    ║
+║   │                                 ¦                                 ¦    ¦    │    ║
+║   │                                 ¦                                 ¦    ¦    │    ║
+║   │                * ┌──────────────┴─────────────┐                   ¦    ¦    │    ║
+║   └─────────────────>│ <<Interface>>              │ *                 ¦    ¦    │    ║
+║           ┌--------->│ IPageContext               │<────────────────────────────┘    ║
+║           ¦          ├────────────────────────────┤                   ¦    ¦         ║
+║           ¦          │ PageTitle:String           │                   ¦    ¦         ║
+║           ¦          │ Scopes:IEnumerable<String> │                   ¦    ¦         ║
+║           ¦          └────────────────────────────┘                   ¦    ¦         ║
+║           ¦                                                           ¦    ¦         ║
+║           ¦                ┌────────────────┐                         ¦    ¦         ║
+║           ¦                │ <<Interface>>  │                         ¦    ¦         ║
+║           ¦                │ IComponent     │                         ¦    ¦         ║
+║           ¦                ├────────────────┤                         ¦    ¦         ║
+║           ¦                └────────────────┘                         ¦    ¦         ║
+║           ¦                        ▲                                  ¦    ¦         ║
+║           ¦                        ¦                                  ¦    ¦         ║
+║           ¦                        ¦                                  ¦    ¦         ║
+║           ¦                ┌───────┴────────┐                         ¦    ¦         ║
+║           ¦                │ <<Interface>>  │                         ¦    ¦         ║
+║           ¦                │ IEndpoint      │                         ¦    ¦         ║
+║           ¦                ├────────────────┤                         ¦    ¦         ║
+║           ¦                └────────────────┘                         ¦    ¦         ║
+║           ¦                        ▲                                  ¦    ¦         ║
+║           ¦                        ¦                                  ¦    ¦         ║
+║           ¦                        ¦  ┌────────────────┐              ¦    ¦         ║
+║           ¦     ┌──────────────────┴──│ IRenderContext │─┐            ¦    ¦         ║
+║           ¦     │ <<Interface>>       └────────────────┘ │            ¦    ¦         ║
+║           ¦     │ IPage                                  │            ¦    ¦         ║
+║           ¦     ├────────────────────────────────────────┤            ¦    ¦         ║
+║           ¦     │ Process(IRenderContext)                │            ¦    ¦         ║
+║           ¦     └────────────────────────────────────────┘            ¦    ¦         ║
+║           ¦                       ▲                                   ¦    ¦         ║
+║           ¦                       ¦                                   ¦    ¦         ║
+╚═══════════¦═══════════════════════¦═══════════════════════════════════¦════¦═════════╝
+            ¦                       ¦                                   ¦    ¦
+╔MyPlugin═══¦═══════════════════════¦═══════════════════════════════════¦════¦═════════╗
+║           ¦                       ¦                                   ¦    ¦         ║
+║           ¦     uses ┌────────────┴────────────┐               create ¦    ¦         ║
+║           └----------┤ MyPage                  │<---------------------┘    ¦         ║
+║                      ├─────────────────────────┤                      call ¦         ║
+║                      │ Process(IRenderContext) │<--------------------------┘         ║
+║                      └─────────────────────────┘                                     ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 Rendering a page in `WebExpress` involves converting it into an HTML tree, which is then sent to the requesting client
@@ -1199,72 +1170,82 @@ for viewing.
 This ensures each page is correctly rendered and sent to the client.
 
 ```
-┌────────────────────────────────────────┐
-│ <<Interface>>                          │
-│ IRenderContext                         │
-├────────────────────────────────────────┤
-│ ApplicationContext:IApplicationContext │
-│ Request:Request                        │
-│ Scopes:IEnumerable<string>             │
-│ VisualTree:IVisualTree                 │
-└────────────────────────────────────────┘
-                    ▲
-                    ¦ 
-                    ¦ 
-                    ¦ 
-┌────────────────────────────────────────┐
-│ RenderContext                          │
-├────────────────────────────────────────┤
-│ ApplicationContext:IApplicationContext │
-│ Request:Request                        │
-│ Scopes:IEnumerable<string>             │
-│ VisualTree:IVisualTree                 │
-├────────────────────────────────────────┤
-│ RenderContext(ApplicationContext,      │
-│   Request,Scopes)                      │
-│ CreateVisualTree():IVisualTree         │
-└────────────────────────────────────────┘
-                    ▲
-                    ¦                     ┌──────────────────────────────────────┐
-                    ¦                     │ <<Interface>>                        │
-                    ¦                     │ IVisualTree                          │
-                    ¦                     ├──────────────────────────────────────┤
-                    ¦                     │ Title:string                         │
-                    ¦                     │ Favicons:List<Favicon>               │
-                    ¦                     │ Styles:List<string>                  │
-                    ¦                     │ HeaderScriptLinks:List<string>       │
-                    ¦                     │ …                                    │
-                    ¦                     ├──────────────────────────────────────┤
-                    ¦                     │ Render(IVisualTreeContext):IHtmlNode │
-                    ¦                     └──────────────────────────────────────┘
-                    ¦                                         ▲
-┌───────────────────┴────────────────────┐                    ¦ 
-│ MyRenderContext                        │                    ¦
-├────────────────────────────────────────┤                    ¦
-│ ApplicationContext:IApplicationContext │                    ¦
-│ Request:Request                        │                    ¦
-│ Scopes:IEnumerable<string>             │ *                  ¦
-│ VisualTree:IVisualTree                 │───────┐            ¦
-├────────────────────────────────────────┤       │            ¦
-│ MyRenderContext(ApplicationContext,    │       │            ¦
-│   Request,Scopes)                      │       │            ¦
-│ CreateVisualTree():IVisualTree         │       │            ¦
-└──────────────────┬─────────────────────┘       │            ¦
-                   ¦                             │            ¦                     
-                   ¦                             │            ¦            
-                   ¦                           1 V            ¦      
-                   ¦             create   ┌───────────────────┴──────────────────┐
-                   └--------------------->│ MyVisualTree                         │
-                                          ├──────────────────────────────────────┤      
-                                          │ Title:string                         │      
-                                          │ Favicons:List<Favicon>               │      
-                                          │ Styles:List<string>                  │
-                                          │ HeaderScriptLinks:List<string>       │
-                                          │ …                                    │
-                                          ├──────────────────────────────────────┤
-                                          │ Render(IVisualTreeContext):IHtmlNode │
-                                          └──────────────────────────────────────┘
-```                                       
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌────────────────────────────────────────┐                                         ║
+║   │ <<Interface>>                          │                                         ║
+║   │ IRenderContext                         │                                         ║
+║   ├────────────────────────────────────────┤                                         ║
+║   │ ApplicationContext:IApplicationContext │                                         ║
+║   │ Request:Request                        │                                         ║
+║   │ Scopes:IEnumerable<string>             │                                         ║
+║   │ VisualTree:IVisualTree                 │                                         ║
+║   └────────────────────────────────────────┘                                         ║
+║                       ▲                                                              ║
+║                       ¦                                                              ║
+║                       ¦                                                              ║
+║                       ¦                                                              ║
+║   ┌────────────────────────────────────────┐                                         ║
+║   │ RenderContext                          │                                         ║
+║   ├────────────────────────────────────────┤                                         ║
+║   │ ApplicationContext:IApplicationContext │                                         ║
+║   │ Request:Request                        │                                         ║
+║   │ Scopes:IEnumerable<string>             │                                         ║
+║   │ VisualTree:IVisualTree                 │                                         ║
+║   ├────────────────────────────────────────┤                                         ║
+║   │ RenderContext(ApplicationContext,      │                                         ║
+║   │   Request,Scopes)                      │                                         ║
+║   │ CreateVisualTree():IVisualTree         │                                         ║
+║   └────────────────────────────────────────┘                                         ║
+║                       ▲                                                              ║
+║                       ¦                                                              ║
+║                       ¦                 ┌──────────────────────────────────────┐     ║
+║                       ¦                 │ <<Interface>>                        │     ║
+║                       ¦                 │ IVisualTree                          │     ║
+║                       ¦                 ├──────────────────────────────────────┤     ║
+║                       ¦                 │ Title:string                         │     ║
+║                       ¦                 │ Favicons:List<Favicon>               │     ║
+║                       ¦                 │ Styles:List<string>                  │     ║
+║                       ¦                 │ HeaderScriptLinks:List<string>       │     ║
+║                       ¦                 │ …                                    │     ║
+║                       ¦                 ├──────────────────────────────────────┤     ║
+║                       ¦                 │ Render(IVisualTreeContext):IHtmlNode │     ║
+║                       ¦                 └──────────────────────────────────────┘     ║
+║                       ¦                                     ▲                        ║
+║                       ¦                                     ¦                        ║
+╚═══════════════════════¦═════════════════════════════════════¦════════════════════════╝
+                        ¦                                     ¦
+╔MyPlugin═══════════════¦═════════════════════════════════════¦════════════════════════╗
+║                       ¦                                     ¦                        ║
+║   ┌───────────────────┴────────────────────┐                ¦                        ║
+║   │ MyRenderContext                        │                ¦                        ║
+║   ├────────────────────────────────────────┤                ¦                        ║
+║   │ ApplicationContext:IApplicationContext │                ¦                        ║
+║   │ Request:Request                        │                ¦                        ║
+║   │ Scopes:IEnumerable<string>             │ *              ¦                        ║
+║   │ VisualTree:IVisualTree                 │─────┐          ¦                        ║
+║   ├────────────────────────────────────────┤     │          ¦                        ║
+║   │ MyRenderContext(ApplicationContext,    │     │          ¦                        ║
+║   │   Request,Scopes)                      │     │          ¦                        ║
+║   │ CreateVisualTree():IVisualTree         │     │          ¦                        ║
+║   └──────────────────┬─────────────────────┘     │          ¦                        ║
+║                      ¦                           │          ¦                        ║
+║                      ¦                           │          ¦                        ║
+║                      ¦                         1 V          ¦                        ║
+║                      ¦         create   ┌───────────────────┴──────────────────┐     ║
+║                      └----------------->│ MyVisualTree                         │     ║
+║                                         ├──────────────────────────────────────┤     ║
+║                                         │ Title:string                         │     ║
+║                                         │ Favicons:List<Favicon>               │     ║
+║                                         │ Styles:List<string>                  │     ║
+║                                         │ HeaderScriptLinks:List<string>       │     ║
+║                                         │ …                                    │     ║
+║                                         ├──────────────────────────────────────┤     ║
+║                                         │ Render(IVisualTreeContext):IHtmlNode │     ║
+║                                         └──────────────────────────────────────┘     ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
                                           
 ### RestAPI
 A REST API (Representational State Transfer Application Programming Interface) is an interface that allows resources to be 
@@ -1355,7 +1336,6 @@ operations.
 ```csharp
 [Segment("E")]
 [ContextPath("/C/D")]
-[Module<MyModule>]
 [Method(CrudMethod.POST)]
 [Method(CrudMethod.GET)]
 [Version(1)]
@@ -1377,133 +1357,139 @@ Below are the descriptions of the attributes used in the rest api classes:
 |Segment         |String, String    |1            |Yes      |The path segment of the resource. The first argument is the path segment. The second argument is the display string.
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
-|ContextPath     |String            |1            |Yes      |The URI path from the module to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the module, the resource, and the segment.
+|ContextPath     |String            |1            |Yes      |The URI path from the applcation to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
 |Method          |GrudMethod        |n            |Yes      |The method attribute defines which CRUD operations (Create, Read, Update, Delete) can be executed.
 |Version         |UInt              |1            |Yes      |The version attribute indicates the current version of the API, ensuring clients interact with the correct version for compatibility and feature updates.
-???|Parent          |`IResource`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
+???|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Module          |`IModule`         |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
-|Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
 
 The following diagram outlines how the class structure and interactions for the REST API are defined.
 
 ```
-┌────────────────────────────────────┐
-│ <<Interface>>                      │
-│ IComponentManager                  │
-├────────────────────────────────────┤
-└────────────────────────────────────┘
-      ▲                       ▲
-      ¦                       ¦
-      ¦                       └-------------------------┐
-      ¦                                                 ¦
-      ¦                        * ┌──────────────────────┴────────────────────────┐
-      ¦                    ┌────>│ SitemapManager                                │
-      ¦                    │     ├───────────────────────────────────────────────┤ 1
-      ¦                    │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐
-      ¦                    │     ├───────────────────────────────────────────────┤   │
-      ¦                    │     │ Refresh()                                     │   │
-      ¦                    │     │ SearchResource(Uri,SearchContex):SearchResult │   │
-      ¦                    │     └───────────────────────────────────────────────┘   │
-      ¦                    │                                                         │
-      ¦                    └───────────────┐                                         │
-      ¦                                    │                                         │
-      ¦                                    │   ┌────────────────────────────────┐    │
-┌─────┴──────────────────────┐             │   │ <<Interface>>                  │    │
-│ <<Interface>>              │             │   │ ComponentHub                   │    │
-│ IComponentManagerPlugin    │             │ 1 ├────────────────────────────────┤    │
-├────────────────────────────┤             └───┤ SitemapManager:ISitemapManager │    │
-│ Register(IPluginContext)   │             ┌───┤ RestApiManager:IRestApiManager │    │
-│ Remove(IPluginContext)     │             │ 1 │ …                              │    │
-└────────────────────────────┘             │   └────────────────────────────────┘    │
-             ▲                             └─────────────────┐                       │
-             ¦                                               │                       │
-             ¦                                             1 V                       │
-   ┌─────────┴────────────────────────────────────────────────────────────┐          │
-   │ RestApiManager                                                       │          │
-   ├──────────────────────────────────────────────────────────────────────┤          │
-   │ AddRestApi:Event                                                     │          │
-   │ RemoveRestApi:Event                                                  │          │
- 1 ├──────────────────────────────────────────────────────────────────────┤          │
-┌──┤ RestApis:IEnumerable<IRestApiContext>                                │          │
-│  ├──────────────────────────────────────────────────────────────────────┤          │
-│  │ Register(IPluginContext)                                             ├----┐     │
-│  │ Remove(IPluginContext)                                               │    ¦     │
-│  │ GetResorces(IApplicationContext,ModuleId,RestApiId):IResourceContext │    ¦     │
-│  └──────────────────────────────────────────────────────────────────────┘    ¦     │
-│                                                                              ¦     │
-│                        ┌────────────────┐                                    ¦     │
-│                        │ <<Interface>>  │                                    ¦     │
-│                        │ IContext       │                                    ¦     │
-│                        ├────────────────┤                                    ¦     │
-│                        └────────────────┘                                    ¦     │
-│                                ▲                                             ¦     │
-│                                ¦                                             ¦     │
-│                                ¦                                             ¦     │
-│               ┌────────────────┴───────────────────┐                         ¦     │
-│               │ <<Interface>>                      │                         ¦     │
-│               │ IEndpointContext                   │                         ¦     │
-│               ├────────────────────────────────────┤                         ¦     │
-│               │ EndpointId:String                  │                         ¦     │
-│               │ PluginContext:IPluginContext       │                         ¦     │
-│               │ ModuleContext:IModuleContext       │                         ¦     │
-│               │ Conditions:IEnumerable<ICondition> │                         ¦     │
-│               │ ParentContext:IEndpointContext     │                         ¦     │
-│               │ Cache:Bool                         │                         ¦     │
-│               │ ContextPath:UriResource            │                         ¦     │
-│               │ Uri:UriResource                    │                         ¦     │
-│               └────────────────────────────────────┘                         ¦     │
-│                                ▲                                             ¦     │
-│                                ¦                                             ¦     │
-│                                ¦                                             ¦     │
-│             * ┌────────────────┴───────────────────┐                         ¦     │
-└──────────────>│ <<Interface>>                      │ *                       ¦     │
-   ┌----------->│ IRestApiContext                    │<──────────────────────────────┘
-   ¦            ├────────────────────────────────────┤                         ¦
-   ¦            │ Version:String                     │ 1                       ¦
-   ¦            │ Methode:CrudMethode                ├──────────┐              ¦
-   ¦            │ Version:UInt                       │          │              ¦
-   ¦            └────────────────────────────────────┘          │              ¦
-   ¦                                                            │              ¦
-   ¦                     ┌────────────────┐                     │              ¦
-   ¦                     │ <<Interface>>  │                     │              ¦
-   ¦                     │ IComponent     │                   1 V              ¦
-   ¦                     ├────────────────┤            ┌──────────────────┐    ¦
-   ¦                     └────────────────┘            │ <<Enumeration>>  │    ¦
-   ¦                             ▲                     │ CrudMethod       │    ¦
-   ¦                             ¦                     ├──────────────────┤    ¦
-   ¦                             ¦                     │ POST             │    ¦
-   ¦                     ┌───────┴────────┐            │ GET              │    ¦
-   ¦                     │ <<Interface>>  │            │ PATCH            │    ¦
-   ¦                     │ IEndpoint      │            │ DELETE           │    ¦
-   ¦                     ├────────────────┤            └──────────────────┘    ¦
-   ¦                     └────────────────┘                                    ¦
-   ¦                             ▲                                             ¦
-   ¦                             ¦                                             ¦
-   ¦                             ¦                                             ¦
-   ¦              ┌──────────────┴──────────────┐                              ¦
-   ¦              │ <<Interface>>               │                              ¦
-   ¦              │ IRestApi                    │                              ¦
-   ¦              ├─────────────────────────────┤                              ¦
-   ¦              │ CreateData(Request)         │                              ¦
-   ¦              │ GetData(Request):Object     │                              ¦
-   ¦              │ UpdateData(Request)         │                              ¦
-   ¦              │ DeleteData(Request)         │                              ¦
-   ¦              └─────────────────────────────┘                              ¦
-   ¦                              ▲                                            ¦
-   ¦                              ¦                                            ¦
-   ¦                              ¦                                            ¦
-   ¦         uses ┌───────────────┴─────────────┐                       create ¦
-   └--------------┤ MyRestApi                   │<-----------------------------┘
-                  ├─────────────────────────────┤
-                  │ CreateData(Request)         │
-                  │ GetData(Request):Object     │
-                  │ UpdateData(Request)         │
-                  │ DeleteData(Request)         │
-                  └─────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌────────────────────────────────────┐                                             ║
+║   │ <<Interface>>                      │                                             ║
+║   │ IComponentManager                  │                                             ║
+║   ├────────────────────────────────────┤                                             ║
+║   └────────────────────────────────────┘                                             ║
+║         ▲                       ▲                                                    ║
+║         ¦                       ¦                                                    ║
+║         ¦                       └-----------------┐                                  ║
+║         ¦                                         ¦                                  ║
+║         ¦                * ┌──────────────────────┴────────────────────────┐         ║
+║         ¦                  │ <<Interface>>                                 │         ║
+║         ¦            ┌────>│ ISitemapManager                               │         ║
+║         ¦            │     ├───────────────────────────────────────────────┤ 1       ║
+║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
+║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
+║         ¦            │     │ Refresh()                                     │   │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║         ¦            │     └───────────────────────────────────────────────┘   │     ║
+║         ¦            │                                                         │     ║
+║         ¦            └───────────────┐                                         │     ║
+║         ¦                            │                                         │     ║
+║         ¦                            │   ┌────────────────────────────────┐    │     ║
+║         ¦                            │   │ <<Interface>>                  │    │     ║
+║         ¦                            │   │ IComponentHub                  │    │     ║
+║         ¦                            │ 1 ├────────────────────────────────┤    │     ║
+║         ¦                            └───┤ SitemapManager:ISitemapManager │    │     ║
+║         └--------------┐             ┌───┤ RestApiManager:IRestApiManager │    │     ║
+║                        ¦             │ 1 │ …                              │    │     ║
+║                        ¦             │   └────────────────────────────────┘    │     ║
+║                        ¦             └────┐                                    │     ║
+║                        ¦                  │                                    │     ║
+║                        ¦                1 V                                    │     ║
+║              ┌─────────┴───────────────────────────────────┐                   │     ║
+║              │ <<Interface>>                               │                   │     ║
+║              │ IRestApiManager                             ├--------------┐    │     ║
+║              ├─────────────────────────────────────────────┤              ¦    │     ║
+║              │ AddRestApi:Event                            │              ¦    │     ║
+║              │ RemoveRestApi:Event                         │              ¦    │     ║
+║            1 ├─────────────────────────────────────────────┤              ¦    │     ║
+║   ┌──────────┤ RestApis:IEnumerable<IRestApiContext>       │              ¦    │     ║
+║   │          ├─────────────────────────────────────────────┤              ¦    │     ║
+║   │          │ GetResorces(IApplicationContext,RestApiId): │              ¦    │     ║
+║   │          │   :IResourceContext                         │              ¦    │     ║
+║   │          └─────────────────────────────────────────────┘              ¦    │     ║
+║   │                                                                       ¦    │     ║
+║   │                        ┌────────────────┐                             ¦    │     ║
+║   │                        │ <<Interface>>  │                             ¦    │     ║
+║   │                        │ IContext       │                             ¦    │     ║
+║   │                        ├────────────────┤                             ¦    │     ║
+║   │                        └────────────────┘                             ¦    │     ║
+║   │                                ▲                                      ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │            ┌───────────────────┴────────────────────┐                 ¦    │     ║
+║   │            │ <<Interface>>                          │                 ¦    │     ║
+║   │            │ IEndpointContext                       │                 ¦    │     ║
+║   │            ├────────────────────────────────────────┤                 ¦    │     ║
+║   │            │ EndpointId:String                      │                 ¦    │     ║
+║   │            │ PluginContext:IPluginContext           │                 ¦    │     ║
+║   │            │ ApplicationContext:IApplicationContext │                 ¦    │     ║
+║   │            │ Conditions:IEnumerable<ICondition>     │                 ¦    │     ║
+║   │            │ ParentContext:IEndpointContext         │                 ¦    │     ║
+║   │            │ Cache:Bool                             │                 ¦    │     ║
+║   │            │ ContextPath:UriResource                │                 ¦    │     ║
+║   │            │ Uri:UriResource                        │                 ¦    │     ║
+║   │            └────────────────────────────────────────┘                 ¦    │     ║
+║   │                                ▲                                      ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │             * ┌────────────────┴───────────────────┐                  ¦    │     ║
+║   └──────────────>│ <<Interface>>                      │ *                ¦    │     ║
+║            ┌----->│ IRestApiContext                    │<──────────────────────┘     ║
+║            ¦      ├────────────────────────────────────┤                  ¦          ║
+║            ¦      │ Version:String                     │ 1                ¦          ║
+║            ¦      │ Methode:CrudMethode                ├─────┐            ¦          ║
+║            ¦      │ Version:UInt                       │     │            ¦          ║
+║            ¦      └────────────────────────────────────┘     │            ¦          ║
+║            ¦                                                 │            ¦          ║
+║            ¦               ┌────────────────┐                │            ¦          ║
+║            ¦               │ <<Interface>>  │                │            ¦          ║
+║            ¦               │ IComponent     │              1 V            ¦          ║
+║            ¦               ├────────────────┤       ┌──────────────────┐  ¦          ║
+║            ¦               └────────────────┘       │ <<Enumeration>>  │  ¦          ║
+║            ¦                       ▲                │ CrudMethod       │  ¦          ║
+║            ¦                       ¦                ├──────────────────┤  ¦          ║
+║            ¦                       ¦                │ POST             │  ¦          ║
+║            ¦               ┌───────┴────────┐       │ GET              │  ¦          ║
+║            ¦               │ <<Interface>>  │       │ PATCH            │  ¦          ║
+║            ¦               │ IEndpoint      │       │ DELETE           │  ¦          ║
+║            ¦               ├────────────────┤       └──────────────────┘  ¦          ║
+║            ¦               └────────────────┘                             ¦          ║
+║            ¦                       ▲                                      ¦          ║
+║            ¦                       ¦                                      ¦          ║
+║            ¦                       ¦                                      ¦          ║
+║            ¦        ┌──────────────┴──────────────┐                       ¦          ║
+║            ¦        │ <<Interface>>               │                       ¦          ║
+║            ¦        │ IRestApi                    │                       ¦          ║
+║            ¦        ├─────────────────────────────┤                       ¦          ║
+║            ¦        │ CreateData(Request)         │                       ¦          ║
+║            ¦        │ GetData(Request):Object     │                       ¦          ║
+║            ¦        │ UpdateData(Request)         │                       ¦          ║
+║            ¦        │ DeleteData(Request)         │                       ¦          ║
+║            ¦        └─────────────────────────────┘                       ¦          ║
+║            ¦                        ▲                                     ¦          ║
+║            ¦                        ¦                                     ¦          ║
+╚════════════¦════════════════════════¦═════════════════════════════════════¦══════════╝
+             ¦                        ¦                                     ¦
+╔MyPlugin════¦════════════════════════¦═════════════════════════════════════¦══════════╗
+║            ¦                        ¦                                     ¦          ║
+║            ¦   uses ┌───────────────┴─────────────┐                create ¦          ║
+║            └--------┤ MyRestApi                   │<----------------------┘          ║
+║                     ├─────────────────────────────┤                                  ║
+║                     │ CreateData(Request)         │                                  ║
+║                     │ GetData(Request):Object     │                                  ║
+║                     │ UpdateData(Request)         │                                  ║
+║                     │ DeleteData(Request)         │                                  ║
+║                     └─────────────────────────────┘                                  ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ## Sitemap model
@@ -1515,38 +1501,24 @@ regular expressions). Furthermore, a partial URI can refer to a resource.
 The sitemap is implemented as a tree. Multiple paths to the same resource are resolved by creating a copy of the affected 
 resource. For example, the URIs `/B/E/G`, `/B/X/G`, and `/C/D/G` point to the same resource `G`.
 
-Context paths can be specified in the configuration of WebExpress, the applications and the modules. The context paths are 
+Context paths can be specified in the configuration of WebExpress and the applications. The context paths are 
 prefixed to the URIs. The following possible combinations exist:
 
-|WebExpress |Application |Module | Resource | URI
-|-----------|------------|-------|----------|----
-|-          |-           |-      |/         |/
-|-          |-           |-      |/a/b/c    |/a/b/c
-|-          |-           |/      |/         |/
-|-          |-           |/z     |/         |/z
-|-          |-           |/z     |/a/b/c    |/z/a/b/c
-|-          |/           |/      |/         |/
-|-          |/           |/z     |/         |/z
-|-          |/y          |/      |/         |/y
-|-          |/y          |/z     |/         |/y/z
-|-          |/y          |/      |/a/b/c    |/y/a/b/c
-|-          |/y          |/z     |/a/b/c    |/y/z/a/b/c
-|/          |/           |/      |/         |/
-|/          |/           |/z     |/         |/z
-|/          |/y          |/      |/         |/y
-|/          |/y          |/z     |/         |/y/z
-|/          |/           |/      |/a/b/c    |/a/b/c
-|/          |/           |/z     |/a/b/c    |/z/a/b/c
-|/          |/y          |/      |/a/b/c    |/y/a/b/c
-|/          |/y          |/z     |/a/b/c    |/y/z/a/b/c
-|/x         |/           |/      |/         |/x
-|/x         |/           |/z     |/         |/x/z
-|/x         |/y          |/      |/         |/x/y
-|/x         |/y          |/z     |/         |/x/y/z
-|/x         |/           |/      |/a/b/c    |/x/a/b/c
-|/x         |/           |/z     |/a/b/c    |/x/z/a/b/c
-|/x         |/y          |/      |/a/b/c    |/x/y/a/b/c
-|/x         |/y          |/z     |/a/b/c    |/x/y/z/a/b/c
+|WebExpress |Application | Resource | URI
+|-----------|------------|----------|----
+|-          |-           |/         |/
+|-          |-           |/a/b/c    |/a/b/c
+|-          |/           |/         |/
+|-          |/y          |/         |/y
+|-          |/y          |/a/b/c    |/y/a/b/c
+|/          |/           |/         |/
+|/          |/y          |/         |/y
+|/          |/           |/a/b/c    |/a/b/c
+|/          |/y          |/a/b/c    |/y/a/b/c
+|/x         |/           |/         |/x
+|/x         |/y          |/         |/x/y
+|/x         |/           |/a/b/c    |/x/a/b/c
+|/x         |/y          |/a/b/c    |/x/y/a/b/c
 
 The insertion into the sitemap is done by sorting the number of URI segments in ascending order. Only one resource can 
 be assigned per sitemap node. In a competing situation, the first resource is used. All other resources are not 
@@ -1593,89 +1565,92 @@ When creating a response that differs from status 200, the corresponding status 
 StatusPageManager and an instance is created. To do this, the following order is used to determine the status page:
 
 - Search in the plugin of the called resource.
-- Search in the plugin of the module of the called resource.
 - Search in the plugin of the application of the called resource.
 - Use the status pages from the plugin "webexpress.webapp".
 - Use the system status pages.
 
 ```
-                                             ┌──────────────────────────────────────┐
-                                             │ <<Interface>>                        │
-┌────────────────────────────────────┐       │ IComponentHub                        │
-│ <<Interface>>                      │     1 ├──────────────────────────────────────┤
-│ IComponentManagerPlugin            │   ┌───┤ StatusPageManager:IStatusPageManager │
-├────────────────────────────────────┤   │   │ …                                    │
-│ Register(IPluginContext)           │   │   └──────────────────────────────────────┘
-│ Remove(IPluginContext)             │   │
-└────────────────────────────────────┘   │
-                 ▲                       │
-           ┌-----┘                       │
-           ¦                           1 V
-    ┌──────┴──────────────────────────────────────┐
-    │ StatusPageManager                           │
-    ├─────────────────────────────────────────────┤
-    │ AddStatusPage:Event                         │
-    │ RemoveStatusPage:Event                      │
-  1 ├─────────────────────────────────────────────┤
-┌───┤ StatusPages:IEnumerable<IStatusPageContext> │
-│   ├─────────────────────────────────────────────┤
-│   │ Register(IPluginContext)                    ├---------┐
-│   │ Remove(IPluginContext)                      │         ¦
-│   │ CreateStatusResponse(Message,Status,        │         ¦
-│   │   ApplicationContext, Request):Response     │         ¦
-│   └─────────────────────────────────────────────┘         ¦
-│                                                           ¦
-└────────────┐                                              ¦
-             │                 ┌────────────────┐           ¦
-             │                 │ <<Interface>>  │           ¦
-             │                 │ IContext       │           ¦
-             │                 ├────────────────┤           ¦
-             │                 └────────────────┘           ¦
-             │                         ▲                    ¦
-             │                         ¦                    ¦
-           * V                         ¦                    ¦ 
-      ┌────────────────────────────────────────┐            ¦
-      │ <<Interface>>                          │            ¦
-┌---->│ IStatusPageContext                     │            ¦
-¦     ├────────────────────────────────────────┤            ¦
-¦     │ PluginContext:IPluginContext           │            ¦
-¦     │ ApplicationContext:IApplicationContext │            ¦
-¦     │ StatusId:String                        │            ¦
-¦     │ StatusCode:Int                         │            ¦
-¦     │ StatusTitle:String                     │            ¦
-¦     │ StatusIcon:UriResource                 │            ¦
-¦     └────────────────────────────────────────┘            ¦
-¦                                                           ¦
-¦            ┌────────────────┐                             ¦
-¦            │ <<Interface>>  │                             ¦
-¦            │ IComponent     │                             ¦
-¦            ├────────────────┤                             ¦
-¦            └────────────────┘                             ¦
-¦                    ▲                                      ¦
-¦                    ¦                                      ¦
-¦                    ¦                                      ¦
-¦     ┌──────────────┴───────────────────┐                  ¦
-¦     │ <<Interface>>                    │                  ¦
-¦     │ IStatusPage                      │                  ¦
-¦     ├──────────────────────────────────┤                  ¦
-¦     │ ResourceContext:IResourceContext │                  ¦
-¦     │ StatusCode:Int                   │                  ¦
-¦     │ StatusTitle:String               │                  ¦
-¦     │ StatusMessage:String             │                  ¦
-¦     │ StatusIcon:UriResource           │                  ¦
-¦     ├──────────────────────────────────┤                  ¦
-¦     │ Process(IRenderContext)          │                  ¦
-¦     │ Dispose()                        │                  ¦
-¦     └──────────────────────────────────┘                  ¦
-¦                      ▲                                    ¦
-¦                      ¦                                    ¦
-¦                      ¦                                    ¦
-¦uses ┌────────────────────────────────────┐        create  ¦
-└-----┤ MyStatusPage                       │<---------------┘
-      ├────────────────────────────────────┤
-      │ Process(IRenderContext)            │
-      │ Dispose()                          │
-      └────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║            ┌──────────────────────────────────────┐                                  ║
+║            │ <<Interface>>                        │                                  ║
+║            │ IComponentHub                        │                                  ║
+║            ├──────────────────────────────────────┤ 1                                ║
+║            │ StatusPageManager:IStatusPageManager ├──┐                               ║
+║            │ …                                    │  │                               ║
+║            └──────────────────────────────────────┘  │                               ║
+║                                                      │                               ║
+║            ┌────────────────────────────────────┐    │                               ║
+║            │ <<Interface>>                      │    │                               ║
+║            │ IComponentManager                  │    │                               ║
+║            ├────────────────────────────────────┤    │                               ║
+║            └────────────────────────────────────┘    │                               ║
+║                             ▲                        │                               ║
+║                       ┌-----┘                        │                               ║
+║                       ¦                            1 V                               ║
+║                ┌──────┴──────────────────────────────────────┐                       ║
+║                │ <<Interface>>                               │                       ║
+║                │ IStatusPageManager                          ├---------┐             ║
+║                ├─────────────────────────────────────────────┤         ¦             ║
+║                │ AddStatusPage:Event                         │         ¦             ║
+║                │ RemoveStatusPage:Event                      │         ¦             ║
+║              1 ├─────────────────────────────────────────────┤         ¦             ║
+║            ┌───┤ StatusPages:IEnumerable<IStatusPageContext> │         ¦             ║
+║            │   ├─────────────────────────────────────────────┤         ¦             ║
+║            │   │ CreateStatusResponse(Message,Status,        │         ¦             ║
+║            │   │   ApplicationContext, Request):Response     │         ¦             ║
+║            │   └─────────────────────────────────────────────┘         ¦             ║
+║            │                                                           ¦             ║
+║            └────────────┐                                              ¦             ║
+║                         │                 ┌────────────────┐           ¦             ║
+║                         │                 │ <<Interface>>  │           ¦             ║
+║                         │                 │ IContext       │           ¦             ║
+║                         │                 ├────────────────┤           ¦             ║
+║                         │                 └────────────────┘           ¦             ║
+║                         │                         ▲                    ¦             ║
+║                         │                         ¦                    ¦             ║
+║                       * V                         ¦                    ¦             ║
+║                  ┌────────────────────────────────┴───────┐            ¦             ║
+║                  │ <<Interface>>                          │            ¦             ║
+║            ┌---->│ IStatusPageContext                     │            ¦             ║
+║            ¦     ├────────────────────────────────────────┤            ¦             ║
+║            ¦     │ PluginContext:IPluginContext           │            ¦             ║
+║            ¦     │ ApplicationContext:IApplicationContext │            ¦             ║
+║            ¦     │ StatusId:String                        │            ¦             ║
+║            ¦     │ StatusCode:Int                         │            ¦             ║
+║            ¦     │ StatusTitle:String                     │            ¦             ║
+║            ¦     │ StatusIcon:UriResource                 │            ¦             ║
+║            ¦     └────────────────────────────────────────┘            ¦             ║
+║            ¦                                                           ¦             ║
+║            ¦                  ┌────────────────┐                       ¦             ║
+║            ¦                  │ <<Interface>>  │                       ¦             ║
+║            ¦                  │ IComponent     │                       ¦             ║
+║            ¦                  ├────────────────┤                       ¦             ║
+║            ¦                  └────────────────┘                       ¦             ║
+║            ¦                          ▲                                ¦             ║
+║            ¦                          ¦                                ¦             ║
+║            ¦                          ¦                                ¦             ║
+║            ¦             ┌────────────┴────────────┐                   ¦             ║
+║            ¦             │ <<Interface>>           │                   ¦             ║
+║            ¦             │ IStatusPage             │                   ¦             ║
+║            ¦             ├─────────────────────────┤                   ¦             ║
+║            ¦             │ Process(IRenderContext) │                   ¦             ║
+║            ¦             │ Dispose()               │                   ¦             ║
+║            ¦             └─────────────────────────┘                   ¦             ║
+║            ¦                          ▲                                ¦             ║
+║            ¦                          ¦                                ¦             ║
+╚════════════¦══════════════════════════¦════════════════════════════════¦═════════════╝
+             ¦                          ¦                                ¦
+╔MyPlugin════¦══════════════════════════¦════════════════════════════════¦═════════════╗
+║            ¦                          ¦                                ¦             ║
+║            ¦uses         ┌────────────┴────────────┐           create  ¦             ║
+║            └-------------┤ MyStatusPage            │<------------------┘             ║
+║                          ├─────────────────────────┤                                 ║
+║                          │ Process(IRenderContext) │                                 ║
+║                          │ Dispose()               │                                 ║
+║                          └─────────────────────────┘                                 ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 If no status page is found in the current application, a default page is created and delivered by `WebExpress`.
@@ -1686,73 +1661,86 @@ different sources (plugins). When a resource is loaded, the fragments stored in 
 instantiated and integrated into the resource. A section is a named area within a page (e.g. `Property.Primary`).
 
 ```
-                                                 ┌────────────────────────────────────┐
-                                                 │ <<Interface>>                      │
-   ┌────────────────────────────────────┐        │ IComponentHub                      │
-   │ <<Interface>>                      │      1 ├────────────────────────────────────┤
-   │ IComponentManagerPlugin            │    ┌───┤ StatusPageManager:IFragmentManager │
-   ├────────────────────────────────────┤    │   │ …                                  │
-   │ Register(IPluginContext)           │    │   └────────────────────────────────────┘
-   │ Remove(IPluginContext)             │    │
-   └────────────────────────────────────┘    │
-                     ▲                       │
-           ┌---------┘                ┌──────┘
-           ¦                        1 V
-   ┌───────┴─────────────────────────────────────┐
-   │ FragmentManager                             │
-   ├─────────────────────────────────────────────┤
-   │ AddFragment:Event                           │
-   │ RemoveFragment:Event                        │
-   ├─────────────────────────────────────────────┤ 1
-   │ Fragments:IEnumerable<IFragmentContext>     ├─────────┐
-   ├─────────────────────────────────────────────┤         │
-   │ Register(IPluginContext)                    ├----┐    │
-   │ Remove(IPluginContext)                      │    ¦    │
-   └─────────────────────────────────────────────┘    ¦    │
-                                                      ¦    │
-                                                      ¦    │
-                  ┌────────────────┐                  ¦    │
-                  │ <<Interface>>  │                  ¦    │
-                  │ IContext       │                  ¦    │
-                  ├────────────────┤                  ¦    │
-                  └────────────────┘                  ¦    │
-                          ▲                           ¦    │
-                          ¦                           ¦    │
-                          ¦                           ¦    │                                                      
-       ┌──────────────────┴─────────────────┐         ¦    │
-       │ <<Interface>>                      │ *       ¦    │
-┌----->│ IFragmentContext                   │<─────────────┘
-¦      ├────────────────────────────────────┤         ¦
-¦      │ PluginContext:IPluginContext       │         ¦
-¦      │ ModuleContext:IModuleContext       │         ¦
-¦      │ Conditions:IEnumerable<ICondition> │         ¦
-¦      │ Cache:Bool                         │         ¦
-¦      └────────────────────────────────────┘         ¦
-¦                                                     ¦
-¦                                                     ¦
-¦                 ┌────────────────┐                  ¦
-¦                 │ <<Interface>>  │                  ¦
-¦                 │ IComponent     │                  ¦
-¦                 ├────────────────┤                  ¦
-¦                 └────────────────┘                  ¦
-¦                         ▲                           ¦
-¦                         ¦                           ¦
-¦                         ¦                           ¦
-¦       ┌─────────────────┴─────────────────┐         ¦
-¦       │ <<Interface>>                     │         ¦
-¦       │ IFragment                         │         ¦
-¦       ├───────────────────────────────────┤         ¦
-¦       │ Render(IRenderContext):IHtmlNode  │         ¦
-¦       └───────────────────────────────────┘         ¦
-¦                         ▲                           ¦
-¦                         ¦                           ¦
-¦                         ¦                           ¦
-¦ uses  ┌─────────────────┴─────────────────┐  create ¦
-└-------┤ MyFragment                        │<--------┘
-        ├───────────────────────────────────┤
-        │ Process(IRenderContext):IHtmlNode │
-        │ Dispose()                         │
-        └───────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║       ┌────────────────────────────────────┐                                         ║
+║       │ <<Interface>>                      │                                         ║
+║       │ IComponentHub                      │                                         ║
+║       ├────────────────────────────────────┤ 1                                       ║
+║       │ StatusPageManager:IFragmentManager ├─────┐                                   ║
+║       │ …                                  │     │                                   ║
+║       └────────────────────────────────────┘     │                                   ║
+║                                                  │                                   ║
+║              ┌───────────────────┐               │                                   ║
+║              │ <<Interface>>     │               │                                   ║
+║              │ IComponentManager │               │                                   ║
+║              ├───────────────────┤               │                                   ║
+║              └───────────────────┘               │                                   ║
+║                       ▲                          │                                   ║
+║                       ¦                          │                                   ║
+╚═══════════════════════¦══════════════════════════│═══════════════════════════════════╝
+                        ¦                          │
+╔WebExpress.UI══════════¦══════════════════════════│═══════════════════════════════════╗
+║                       ¦                          │                                   ║
+║                       ¦                        1 V                                   ║
+║               ┌───────┴──────────────────────────────────┐                           ║
+║               │ FragmentManager                          ├-----------------┐         ║
+║               ├──────────────────────────────────────────┤                 ¦         ║
+║               │ AddFragment:Event                        │                 ¦         ║
+║               │ RemoveFragment:Event                     │                 ¦         ║
+║               ├──────────────────────────────────────────┤ 1               ¦         ║
+║               │ Fragments:IEnumerable<IFragmentContext>  ├──────────┐      ¦         ║
+║               ├──────────────────────────────────────────┤          │      ¦         ║
+║               │ GetFragmentContexts(Section)             │          │      ¦         ║
+║               │   :IEnumerable<IFragmentContext>         │          │      ¦         ║
+║               └──────────────────────────────────────────┘          │      ¦         ║
+║                                                                     │      ¦         ║
+║                            ┌────────────────┐                       │      ¦         ║
+║                            │ <<Interface>>  │                       │      ¦         ║
+║                            │ IContext       │                       │      ¦         ║
+║                            ├────────────────┤                       │      ¦         ║
+║                            └────────────────┘                       │      ¦         ║
+║                                    ▲                                │      ¦         ║
+║                                    ¦                                │      ¦         ║
+║                                    ¦                                │      ¦         ║                                      
+║               ┌────────────────────┴───────────────────┐            │      ¦         ║
+║               │ <<Interface>>                          │ *          │      ¦         ║
+║          ┌--->│ IFragmentContext                       │<───────────┘      ¦         ║
+║          ¦    ├────────────────────────────────────────┤                   ¦         ║
+║          ¦    │ PluginContext:IPluginContext           │                   ¦         ║
+║          ¦    │ ApplicationContext:IApplicationContext │                   ¦         ║
+║          ¦    │ Conditions:IEnumerable<ICondition>     │                   ¦         ║
+║          ¦    │ Cache:Bool                             │                   ¦         ║
+║          ¦    └────────────────────────────────────────┘                   ¦         ║
+║          ¦                                                                 ¦         ║
+║          ¦                 ┌────────────────┐                              ¦         ║
+║          ¦                 │ <<Interface>>  │                              ¦         ║
+║          ¦                 │ IComponent     │                              ¦         ║
+║          ¦                 ├────────────────┤                              ¦         ║
+║          ¦                 └────────────────┘                              ¦         ║
+║          ¦                         ▲                                       ¦         ║
+║          ¦                         ¦                                       ¦         ║
+║          ¦                         ¦                                       ¦         ║
+║          ¦       ┌─────────────────┴─────────────────┐                     ¦         ║
+║          ¦       │ <<Interface>>                     │                     ¦         ║
+║          ¦       │ IFragment                         │                     ¦         ║
+║          ¦       ├───────────────────────────────────┤                     ¦         ║
+║          ¦       │ Render(IRenderContext):IHtmlNode  │                     ¦         ║
+║          ¦       └───────────────────────────────────┘                     ¦         ║
+║          ¦                         ▲                                       ¦         ║
+║          ¦                         ¦                                       ¦         ║
+╚══════════¦═════════════════════════¦═══════════════════════════════════════¦═════════╝
+           ¦                         ¦                                       ¦
+╔MyPlugin══¦═════════════════════════¦═══════════════════════════════════════¦═════════╗
+║          ¦                         ¦                                       ¦         ║
+║          ¦ uses  ┌─────────────────┴─────────────────┐              create ¦         ║
+║          └-------┤ MyFragment                        │<--------------------┘         ║
+║                  ├───────────────────────────────────┤                               ║
+║                  │ Process(IRenderContext):IHtmlNode │                               ║
+║                  │ Dispose()                         │                               ║
+║                  └───────────────────────────────────┘                               ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 Fragments are derived from the `IFragment` interface and are identified by attributes:
@@ -1760,7 +1748,6 @@ Fragments are derived from the `IFragment` interface and are identified by attri
 ```csharp
 [Section("mysection")]
 [Order(0)]
-[Module<MyModule>]
 [Scope<ScopeGeneral>]
 [Authorization(Permission.RW, IdentityRoleDefault.Authenticated)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
@@ -1775,7 +1762,6 @@ The following attributes are available:
 |--------------|-------------|-------------|---------|-----------------
 |Section       |String       |1            |No       |The section of the Web page where the fragment is rendered.
 |Order         |Int          |1            |Yes      |The order within the section. If no value is specified, the order "0" is set as the default.
-|Module        |`IModule`    |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Scope         |`IScope`     |n            |Yes      |The scope in which the fragment is valid.
 |Authorization |Int, String  |n            |Yes      |Grants authority to a role (specifying the id).       
 |Condition     |`ICondition` |1            |Yes      |Condition that must be met for the fragment to be available.
@@ -1785,7 +1771,6 @@ If the fragments are to be created dynamically at runtime, it is necessary to cr
 
 ```csharp
 [Section("section name")]
-[Module<MyModule>]
 [Scope<ScopeGeneral>]
 public sealed class MyFragment : IFragmentDynamic
 {
@@ -1803,47 +1788,54 @@ Controls are units of the web page that are translated into HTML source code by 
 of nested controls.
 
 ```
-  ┌─────────────────────────────────────────┐
-  │ <<Interface>>                           │
-  │ IControl                                │
-  ├─────────────────────────────────────────┤
-  │ Id:String                               │
-  ├─────────────────────────────────────────┤
-  │ Render(IRenderContext):IHtmlNode        │
-  └─────────────────────────────────────────┘
-                     ▲
-                     ¦
-                     ¦
-┌────────────────────┴────────────────────────┐
-│ Control                                     │
-├─────────────────────────────────────────────┤
-│ Id:String                                   │
-│ Classes:List<String>                        │
-│ Styles:List<String>                         │
-│ HorizontalAlignment:TypeHorizontalAlignment │
-│ TextColor:PropertyColorText                 │
-│ BackgroundColor:PropertyColorBackground     │
-│ BorderColor:PropertyColorBorder             │
-│ Padding:PropertySpacingPadding              │
-│ Margin:PropertySpacingMargin                │
-│ Border:PropertyBorder                       │
-│ GridColumn:PropertyGrid                     │
-│ Width:TypeWidth                             │
-│ Height:TypeHeight                           │
-│ Role:String                                 │
-│ OnClick:PropertyOnClick                     │
-│ Enable:Bool                                 │
-├─────────────────────────────────────────────┤
-│ Render(IRenderContext):IHtmlNode            │
-└─────────────────────────────────────────────┘
-                     ▲
-                     ¦
-                     ¦
-  ┌──────────────────┴──────────────────────┐
-  │ MyControl                               │
-  ├─────────────────────────────────────────┤
-  │ Render(IRenderContext):IHtmlNode        │
-  └─────────────────────────────────────────┘
+╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                  ┌─────────────────────────────────────────┐                         ║
+║                  │ <<Interface>>                           │                         ║
+║                  │ IControl                                │                         ║
+║                  ├─────────────────────────────────────────┤                         ║
+║                  │ Id:String                               │                         ║
+║                  ├─────────────────────────────────────────┤                         ║
+║                  │ Render(IRenderContext):IHtmlNode        │                         ║
+║                  └─────────────────────────────────────────┘                         ║
+║                                     ▲                                                ║
+║                                     ¦                                                ║
+║                                     ¦                                                ║
+║                ┌────────────────────┴────────────────────────┐                       ║
+║                │ Control                                     │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ Id:String                                   │                       ║
+║                │ Classes:List<String>                        │                       ║
+║                │ Styles:List<String>                         │                       ║
+║                │ HorizontalAlignment:TypeHorizontalAlignment │                       ║
+║                │ TextColor:PropertyColorText                 │                       ║
+║                │ BackgroundColor:PropertyColorBackground     │                       ║
+║                │ BorderColor:PropertyColorBorder             │                       ║
+║                │ Padding:PropertySpacingPadding              │                       ║
+║                │ Margin:PropertySpacingMargin                │                       ║
+║                │ Border:PropertyBorder                       │                       ║
+║                │ GridColumn:PropertyGrid                     │                       ║
+║                │ Width:TypeWidth                             │                       ║
+║                │ Height:TypeHeight                           │                       ║
+║                │ Role:String                                 │                       ║
+║                │ OnClick:PropertyOnClick                     │                       ║
+║                │ Enable:Bool                                 │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ Render(IRenderContext):IHtmlNode            │                       ║
+║                └─────────────────────────────────────────────┘                       ║
+║                                     ▲                                                ║
+║                                     ¦                                                ║
+╚═════════════════════════════════════¦════════════════════════════════════════════════╝
+                                      ¦
+╔MyPlugin═════════════════════════════¦════════════════════════════════════════════════╗
+║                                     ¦                                                ║
+║                    ┌────────────────┴─────────────────┐                              ║
+║                    │ MyControl                        │                              ║
+║                    ├──────────────────────────────────┤                              ║
+║                    │ Render(IRenderContext):IHtmlNode │                              ║
+║                    └──────────────────────────────────┘                              ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 A control provides the following properties:
@@ -1873,53 +1865,59 @@ are organized into tabs and groups for better structure and usability. By groupi
 tabs to separate different sections, users can navigate and complete the form more efficiently.
 
 ```
-┌─────────────────────────────────────────┐
-│ Control                                 │
-└─────────────────────────────────────────┘
-                   ▲
-                   ¦
-                   ¦
-┌──────────────────┴──────────────────────┐
-│ ControlForm                             │
-├─────────────────────────────────────────┤
-│ Name:String                             │
-├─────────────────────────────────────────┤
-│ OnValidation():Bool                     │
-│ Render(RenderFormContext):IHtmlNode     │
-└─────────────────────────────────────────┘
-                 1 ∧
-                   │
-                 * │
-┌──────────────────┴──────────────────────┐
-│ ControlFormTab                          │
-├─────────────────────────────────────────┤
-│ Name:String                             │
-├─────────────────────────────────────────┤
-│ Render(RenderFormContext):IHtmlNode     │
-└─────────────────────────────────────────┘
-                 1 ∧
-                   │
-                 * │
-┌──────────────────┴──────────────────────┐
-│ ControlFormGroup                        │
-├─────────────────────────────────────────┤
-│ Name:String                             │
-├─────────────────────────────────────────┤
-│ Render(RenderFormContext):IHtmlNode     │
-└─────────────────────────────────────────┘
-                 1 ∧
-                   │
-                 * │
-┌──────────────────┴──────────────────────┐
-│ ControlFormItem                         │
-├─────────────────────────────────────────┤
-│ Label:String                            │
-│ Name:String                             │
-│ Description:String                      │
-├─────────────────────────────────────────┤
-│ OnValidation():Bool                     │
-│ Render(RenderFormContext):IHtmlNode     │
-└─────────────────────────────────────────┘
+╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                                   ┌─────────┐                                        ║
+║                                   │ Control │                                        ║
+║                                   ├─────────┤                                        ║
+║                                   │ …       │                                        ║
+║                                   └─────────┘                                        ║
+║                                        ▲                                             ║
+║                                        ¦                                             ║
+║                                        ¦                                             ║
+║                    ┌───────────────────┴─────────────────┐                           ║
+║                    │ ControlForm                         │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ Name:String                         │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ OnValidation():Bool                 │                           ║
+║                    │ Render(RenderFormContext):IHtmlNode │                           ║
+║                    └─────────────────────────────────────┘                           ║
+║                                     1 ∧                                              ║
+║                                       │                                              ║
+║                                     * │                                              ║
+║                    ┌──────────────────┴──────────────────┐                           ║
+║                    │ ControlFormTab                      │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ Name:String                         │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ Render(RenderFormContext):IHtmlNode │                           ║
+║                    └─────────────────────────────────────┘                           ║
+║                                     1 ∧                                              ║
+║                                       │                                              ║
+║                                     * │                                              ║
+║                    ┌──────────────────┴──────────────────┐                           ║
+║                    │ ControlFormGroup                    │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ Name:String                         │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ Render(RenderFormContext):IHtmlNode │                           ║
+║                    └─────────────────────────────────────┘                           ║
+║                                     1 ∧                                              ║
+║                                       │                                              ║
+║                                     * │                                              ║
+║                    ┌──────────────────┴──────────────────┐                           ║
+║                    │ ControlFormItem                     │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ Label:String                        │                           ║
+║                    │ Name:String                         │                           ║
+║                    │ Description:String                  │                           ║
+║                    ├─────────────────────────────────────┤                           ║
+║                    │ OnValidation():Bool                 │                           ║
+║                    │ Render(RenderFormContext):IHtmlNode │                           ║
+║                    └─────────────────────────────────────┘                           ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 A form takes user input and forwards it to the web server for processing:
@@ -2202,54 +2200,68 @@ protocol. The session is assigned to a cookie and is personalized. The cookie co
 stored in the cookie, but on the server side in the `session` object. 
 
 ```
-                                                   ┌────────────────────────────────┐
-     ┌────────────────────────────────────┐        │ <<Interface>>                  │
-     │ <<Interface>>                      │        │ IComponentHub                  │
-     │ IComponentManager                  │      1 ├────────────────────────────────┤
-     ├────────────────────────────────────┤    ┌───┤ SessionManager:ISessionManager │
-     └────────────────────────────────────┘    │   │ …                              │
-                       ▲                       │   └────────────────────────────────┘
-                       ¦                       │
-                       ¦                       │
-    ┌──────────────────┴───────────────────┐ 1 │
-    │ SessionManager                       │<──┘
-    ├──────────────────────────────────────┤ 1
-    │ Sessions:IEnumerable<Session>        ├────┐
-    ├──────────────────────────────────────┤    │   
-    │ GetSession(Request):Session          │    │   
-    │ Remove(Session)                      │    │
-    └──────────────────────────────────────┘    │
-                                                │
-                       ┌────────────────────────┘
-                     * V
-┌────────────────────────────────────────────────┐
-│ Session                                        │
-├────────────────────────────────────────────────┤
-│ Id:Guid                                        │
-│ Created:DateTime                               │
-│ Updated:DateTime                               │
-│ Properties:IEnumerable<ISessionProperty>       ├────┐
-├────────────────────────────────────────────────┤    │
-│ GetProperty():ISessionProperty                 │    │
-│ GetOrCreateProperty():ISessionProperty         │    │
-│ SetProperty(ISessionProperty):IResourceContext │    │
-│ RemoveProperty(ISessionProperty)               │    │
-└────────────────────────────────────────────────┘    │
-                                                      │
-                     ┌────────────────────────────────┘
-                   * V
-┌─────────────────────────────────────────┐
-│ <<Interface>>                           │
-│ ISessionProperty                        │
-├─────────────────────────────────────────┤
-└─────────────────────────────────────────┘
-                     ▲
-                     ¦
-                     ¦
-┌────────────────────┴────────────────────┐
-│ MySessionProperty                       │
-├─────────────────────────────────────────┤
-└─────────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                ┌────────────────────────────────┐                                    ║
+║                │ <<Interface>>                  │                                    ║
+║                │ IComponentHub                  │                                    ║
+║                ├────────────────────────────────┤ 1                                  ║
+║                │ SessionManager:ISessionManager ├──────┐                             ║
+║                │ …                              │      │                             ║
+║                └────────────────────────────────┘      │                             ║             
+║                                                        │                             ║
+║           ┌────────────────────────────────────┐       │                             ║
+║           │ <<Interface>>                      │       │                             ║
+║           │ IComponentManager                  │       │                             ║
+║           ├────────────────────────────────────┤       │                             ║
+║           └────────────────────────────────────┘       │                             ║
+║                            ▲                           │                             ║
+║                            ¦                           │                             ║
+║                            ¦                         1 V                             ║
+║                      ┌─────┴────────────────────────────────┐                        ║
+║                      │ SessionManager                       │                        ║
+║                      ├──────────────────────────────────────┤ 1                      ║
+║                      │ Sessions:IEnumerable<Session>        ├────┐                   ║
+║                      ├──────────────────────────────────────┤    │                   ║
+║                      │ GetSession(Request):Session          │    │                   ║
+║                      │ Remove(Session)                      │    │                   ║
+║                      └──────────────────────────────────────┘    │                   ║
+║                                                                  │                   ║
+║                                         ┌────────────────────────┘                   ║
+║                                       * V                                            ║
+║                  ┌────────────────────────────────────────────────┐                  ║
+║                  │ Session                                        │                  ║
+║                  ├────────────────────────────────────────────────┤                  ║
+║                  │ Id:Guid                                        │                  ║
+║                  │ Created:DateTime                               │                  ║
+║                  │ Updated:DateTime                               │ 1                ║
+║                  │ Properties:IEnumerable<ISessionProperty>       ├────┐             ║
+║                  ├────────────────────────────────────────────────┤    │             ║
+║                  │ GetProperty():ISessionProperty                 │    │             ║
+║                  │ GetOrCreateProperty():ISessionProperty         │    │             ║
+║                  │ SetProperty(ISessionProperty):IResourceContext │    │             ║
+║                  │ RemoveProperty(ISessionProperty)               │    │             ║
+║                  └────────────────────────────────────────────────┘    │             ║
+║                                                                        │             ║
+║                                       ┌────────────────────────────────┘             ║
+║                                     * V                                              ║
+║                  ┌─────────────────────────────────────────┐                         ║
+║                  │ <<Interface>>                           │                         ║
+║                  │ ISessionProperty                        │                         ║
+║                  ├─────────────────────────────────────────┤                         ║
+║                  └─────────────────────────────────────────┘                         ║
+║                                       ▲                                              ║
+║                                       ¦                                              ║
+╚═══════════════════════════════════════¦══════════════════════════════════════════════╝
+                                        ¦
+╔MyPlugin═══════════════════════════════¦══════════════════════════════════════════════╗
+║                                       ¦                                              ║
+║                  ┌────────────────────┴────────────────────┐                         ║
+║                  │ MySessionProperty                       │                         ║
+║                  ├─────────────────────────────────────────┤                         ║
+║                  └─────────────────────────────────────────┘                         ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 The session manager delivers the currently used session based on the cookie stored in the request. The session, in 
@@ -2259,69 +2271,82 @@ turn, stores instances of the `ISessionProperty` interface in which the informat
 Events are notifications from the `WebExpress` API or web applications that can be subscribed to and evaluated.
 
 ```
-                                               ┌────────────────────────────┐
-                                               │ <<Interface>>              │
-                                               │ IComponentHub              │
-                                             1 ├────────────────────────────┤
-                                         ┌─────┤ EventManager:IEventManager │
-         ┌──────────────────────────┐    │     │ …                          │
-         │ <<Interface>>            │    │     └────────────────────────────┘
-         │ IComponentManagerPlugin  │    │
-         ├──────────────────────────┤    │                    ┌────────────────┐
-         │ Register(IPluginContext) │    │                    │ <<Interface>>  │
-         │ Remove(IPluginContext)   │    │                    │ IContext       │
-         └──────────────────────────┘    │                    ├────────────────┤
-                         ▲               │                    └────────────────┘
-                         ¦               │                            ▲
-                         ¦             1 V                            ¦
-┌────────────────────────┴────────────────────────┐                   ¦
-│ EventManager                                    │     ┌──────────────────────────────┐
-├─────────────────────────────────────────────────┤   * │ <<Interface>>                │
-│ AddEvent:Event                                  │  ┌─>│ IEventHandlerContext         │
-│ RemoveEvent:Event                               │  │  ├──────────────────────────────┤
-├─────────────────────────────────────────────────┤ 1│  │ PluginContext:IPluginContext │
-│ EventHandlers:IEnumerable<IEventHandlerContext> ├──┘  │ ModuleContext:IModuleContext │
-├─────────────────────────────────────────────────┤     │ EventID:String               │
-│ Register(IPluginContext)                        ├---┐ │ EventHandlerId:String        │
-│ Remove(IPluginContext)                          │   ¦ └──────────────────────────────┘
-│ GetEventHandlers<IEvent>(IApplicationContext):  │   ¦              ∧
-│   IEnumerable<IEventHandlerContext>             │   ¦              ¦
-│ RaiseEvent<IEvent>(IApplicationContext)         │   ¦              ¦
-└─────────────────────────────────────────────────┘   ¦              ¦
-                                                      ¦              ¦
-              ┌────────────────┐                      ¦              ¦
-              │ <<Interface>>  │                      ¦              ¦
-              │ IComponent     │                      ¦              ¦
-              ├────────────────┤                      ¦              ¦
-              └────────────────┘                      ¦              ¦
-                      ▲                               ¦              ¦
-                      ¦                               ¦              ¦
-                      ¦  ┌────────────────┐           ¦              ¦
-    ┌─────────────────┴──│ IEventArgument │─┐         ¦              ¦
-    │ <<Interface>>      └────────────────┘ │         ¦              ¦
-    │ IEventHandler                         │         ¦              ¦
-    ├───────────────────────────────────────┤         ¦              ¦
-    │ Process(Sender,EventArgument)         │         ¦              ¦
-    └───────────────────────────────────────┘         ¦              ¦
-                      ▲                               ¦              ¦
-                      ¦                               ¦              ¦
-                      ¦                               ¦              ¦
-     ┌────────────────┴────────────────┐       create ¦              ¦
-     │ MyEventHandler                  │<-------------┘         uses ¦
-     ├─────────────────────────────────┤-----------------------------┘
-     │ Process(Sender,MyEventArgument) │
-     │ Dispose()                       │
-     └─────────────────────────────────┘
-
-
-
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                                         ┌────────────────────────────┐               ║
+║                                         │ <<Interface>>              │               ║
+║                                         │ IComponentHub              │               ║
+║                                       1 ├────────────────────────────┤               ║
+║                                   ┌─────┤ EventManager:IEventManager │               ║
+║                                   │     │ …                          │               ║
+║                                   │     └────────────────────────────┘               ║
+║                                   │                                                  ║
+║                                   │                 ┌────────────────┐               ║
+║                                   │                 │ <<Interface>>  │               ║
+║                                   │                 │ IContext       │               ║
+║                                   │                 ├────────────────┤               ║
+║                                   │                 └────────────────┘               ║
+║                                   │                         ▲                        ║
+║                                   │                         ¦                        ║
+║                                   │                         ¦                        ║
+║                                   │     ┌────────────────────────────────────────┐   ║
+║                                   │     │ <<Interface>>                          │   ║
+║       ┌───────────────────┐       │     │ IEventHandlerContext                   │   ║
+║       │ <<Interface>>     │       │     ├────────────────────────────────────────┤   ║
+║       │ IComponentManager │       │     │ PluginContext:IPluginContext           │   ║
+║       ├───────────────────┤       │     │ ApplicationContext:IApplicationContext │   ║
+║       └───────────────────┘       │     │ EventID:String                         │   ║
+║                ▲                  │     │ EventHandlerId:String                  │   ║
+║                ¦                  │     └────────────────────────────────────────┘   ║
+║                ¦                * V                       * ∧          ∧            ║
+║   ┌────────────┴────────────────────────────────────┐       │          ¦             ║
+║   │ <<Interface>>                                   │       │          ¦             ║
+║   │ IEventManager                                   ├---┐   │          ¦             ║
+║   ├─────────────────────────────────────────────────┤   ¦   │          ¦             ║
+║   │ AddEvent:Event                                  │   ¦   │          ¦             ║
+║   │ RemoveEvent:Event                               │   ¦   │          ¦             ║
+║   ├─────────────────────────────────────────────────┤ 1 ¦   │          ¦             ║
+║   │ EventHandlers:IEnumerable<IEventHandlerContext> ├───────┘          ¦             ║
+║   ├─────────────────────────────────────────────────┤   ¦              ¦             ║
+║   │ GetEventHandlers<IEvent>(IApplicationContext):  │   ¦              ¦             ║
+║   │   IEnumerable<IEventHandlerContext>             │   ¦              ¦             ║
+║   │ RaiseEvent<IEvent>(IApplicationContext)         │   ¦              ¦             ║
+║   └─────────────────────────────────────────────────┘   ¦              ¦             ║
+║                                                         ¦              ¦             ║
+║                 ┌────────────────┐                      ¦              ¦             ║
+║                 │ <<Interface>>  │                      ¦              ¦             ║
+║                 │ IComponent     │                      ¦              ¦             ║
+║                 ├────────────────┤                      ¦              ¦             ║
+║                 └────────────────┘                      ¦              ¦             ║
+║                         ▲                               ¦              ¦             ║
+║                         ¦                               ¦              ¦             ║
+║                         ¦  ┌────────────────┐           ¦              ¦             ║
+║       ┌─────────────────┴──│ IEventArgument │─┐         ¦              ¦             ║
+║       │ <<Interface>>      └────────────────┘ │         ¦              ¦             ║
+║       │ IEventHandler                         │         ¦              ¦             ║
+║       ├───────────────────────────────────────┤         ¦              ¦             ║
+║       │ Process(Sender,EventArgument)         │         ¦              ¦             ║
+║       └───────────────────────────────────────┘         ¦              ¦             ║
+║                         ▲                               ¦              ¦             ║
+║                         ¦                               ¦              ¦             ║
+╚═════════════════════════¦═══════════════════════════════¦══════════════¦═════════════╝
+                          ¦                               ¦              ¦
+╔MyPlugin═════════════════¦═══════════════════════════════¦══════════════¦═════════════╗
+║                         ¦                               ¦              ¦             ║
+║        ┌────────────────┴────────────────┐       create ¦              ¦             ║
+║        │ MyEventHandler                  │<-------------┘         uses ¦             ║
+║        ├─────────────────────────────────┤-----------------------------┘             ║
+║        │ Process(Sender,MyEventArgument) │                                           ║
+║        │ Dispose()                       │                                           ║
+║        └─────────────────────────────────┘                                           ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 A eventhandler is created by creating a class that inherits from `IEventHandler`.
 
 ```csharp
 [Event<Event>] 
-[Application<MyApplication>]
 public sealed class MyEventHandler : IEventHandler
 {
   public void Process(object sender)
@@ -2335,82 +2360,97 @@ The following attributes are available:
 |Attribute   |Type           |Multiplicity |Optional |Description
 |------------|---------------|-------------|---------|------------
 |Event       |`IEvent`       |1            |No       |The event at which you want to listen.
-|Application |`IApplication` |1            |No       |The class of the application.
 
 ## Job modell
 Jobs are tasks that are executed in a time-controlled and repetitive manner. When a plugin is loaded, all jobs containing 
 it are determined by the ScheduleManager and instantiated and started at the specified execution time.
 
 ```
-                                         ┌────────────────────────┐
-                                         │ <<Interface>>          │
-    ┌──────────────────────────┐         │ IComponentHub          │
-    │ <<Interface>>            │       1 ├────────────────────────┤
-    │ IComponentManagerPlugin  │      ┌──┤ JobManager:IJobManager │
-    ├──────────────────────────┤      │  │ …                      │
-    │ Register(IPluginContext) │      │  └────────────────────────┘
-    │ Remove(IPluginContext)   │      │
-    └──────────────────────────┘      │
-                 ▲                    │
-                 ¦                    │                ┌────────────────┐
-          ┌------┘           ┌────────┘                │ <<Interface>>  │
-          ¦                  │                         │ IContext       │
-          ¦                  │                         ├────────────────┤
-          ¦                  │                         └────────────────┘
-          ¦                1 V                                 ▲
-   ┌──────┴────────────────────────┐                           ¦
-   │ JobManager                    │                           ¦
-   ├───────────────────────────────┤            ┌──────────────┴───────────────┐
-   │ AddJob:Event                  │          * │ <<Interface>>                │
-   │ RemoveJob:Event               │       ┌───>│ IJobContext                  │
-   ├───────────────────────────────┤       │    ├──────────────────────────────┤
- 1 │ Jobs:IEnumerable<JobContext>  ├───────┘    │ PluginContext:IPluginContext │
-┌──┤ Clock:Clock                   │            │ ModuleContext:IModuleContext │
-│  ├───────────────────────────────┤            │ JobId:String                 │
-│  │ Register(IPluginContext)      ├---------┐  │ Cron:Cron                    │
-│  │ Remove(IPluginContext)        │         ¦  └──────────────────────────────┘
-│  └───────────────────────────────┘         ¦          ∧          1 │
-│                                            ¦          ¦            │
-│                                            ¦          ¦            │
-│                   ┌────────────────┐       ¦          ¦            │
-│                   │ <<Interface>>  │       ¦          ¦            │
-│                   │ IComponent     │       ¦          ¦            │
-│                   ├────────────────┤       ¦          ¦            │
-│                   └────────────────┘       ¦          ¦            │
-│                           ▲                ¦          ¦            │
-│                           ¦                ¦          ¦            │
-│                           ¦                ¦          ¦            │
-│         ┌─────────────────┴─────────────┐  ¦          ¦            │
-│         │ <<Interface>>                 │  ¦          ¦            │
-│         │ IJob                          │  ¦          ¦            │
-│         ├───────────────────────────────┤  ¦          ¦            │
-│         │ Process()                     │  ¦          ¦            │
-│         │ Dispose()                     │  ¦          ¦            │
-│         └───────────────────────────────┘  ¦          ¦            │
-│                         ▲                  ¦          ¦            │
-│                         ¦                  ¦          ¦            │
-│                         ¦                  ¦          ¦            │
-│        ┌────────────────┴──────────────┐   ¦ create   ¦            │
-│        │ MyJob                         │<--┘          ¦ uses       │
-│        ├───────────────────────────────┤--------------┘            │
-│        │ Process()                     │                           │
-│        │ Dispose()                     │                         1 V
-│        └───────────────────────────────┘    ┌──────────────────────────────────────┐
-│                                             │ Cron                                 │
-│                                             ├──────────────────────────────────────┤
-│                                             │ HttpServerContext:IHttpServerContext │
-│    1 ┌──────────────────────────────────┐   │ Minute:IEnumerable<Int>              │
-└─────>│ Clock                            │   │ Hour:IEnumerable<Int>                │
-       ├──────────────────────────────────┤   │ Day:IEnumerable<Int>                 │
-       │ Minute:Int                       │   │ Month:IEnumerable<Int>               │
-       │ Hour:Int                         │   │ Weekday:IEnumerable<Int>             │
-       │ Day:Int                          │   ├──────────────────────────────────────┤
-       │ Month:Int                        │   │ Matching(Clock):Bool                 │
-       │ Weekday:Int                      │   └──────────────────────────────────────┘
-       ├──────────────────────────────────┤
-       │ Synchronize():IEnumerable<Clock> │
-       │ Equals(Object):Bool              │
-       └──────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                                         ┌────────────────────────┐                   ║
+║                                         │ <<Interface>>          │                   ║
+║                                         │ IComponentHub          │                   ║
+║                                       1 ├────────────────────────┤                   ║
+║      ┌──────────────────────────┐    ┌──┤ JobManager:IJobManager │                   ║
+║      │ <<Interface>>            │    │  │ …                      │                   ║
+║      │ IComponentManager        │    │  └────────────────────────┘                   ║
+║      ├──────────────────────────┤    │                                               ║
+║      └──────────────────────────┘    │                                               ║
+║                   ▲                  │                                               ║
+║                   ¦                  │                                               ║
+║                   ¦                1 V                                               ║
+║            ┌──────┴────────────────────────┐                                         ║
+║            │ <<Interface>>                 │ create                                  ║
+║            │ IJobManager                   ├-------------------------------------┐   ║
+║            ├───────────────────────────────┤                                     ¦   ║
+║            │ AddJob:Event                  │                                     ¦   ║
+║            │ RemoveJob:Event               │                                     ¦   ║
+║            ├───────────────────────────────┤ 1                                   ¦   ║
+║          1 │ Jobs:IEnumerable<JobContext>  ├───────┐                             ¦   ║
+║         ┌──┤ Clock:Clock                   │       │                             ¦   ║
+║         │  ├───────────────────────────────┤       │                             ¦   ║
+║         │  │ GetJob(IApplicationContext,   │       │                             ¦   ║
+║         │  │   JobType):IJobContext        │       │                             ¦   ║
+║         │  └───────────────────────────────┘       │                             ¦   ║
+║         │                                          │                             ¦   ║
+║         │                  ┌────────────────┐      │                             ¦   ║
+║         │                  │ <<Interface>>  │      │                             ¦   ║
+║         │                  │ IContext       │      │                             ¦   ║
+║         │                  ├────────────────┤      │                             ¦   ║
+║         │                  └────────────────┘      │                             ¦   ║
+║         │                           ▲              │                             ¦   ║
+║         │                           ¦              │                             ¦   ║
+║         │                           ¦            * V                             ¦   ║
+║         │       ┌───────────────────┴────────────────────┐                       ¦   ║
+║         │       │ <<Interface>>                          │                       ¦   ║
+║   ┌-----│------>│ IJobContext                            │                       ¦   ║
+║   ¦     │       ├────────────────────────────────────────┤                       ¦   ║
+║   ¦     │       │ PluginContext:IPluginContext           │                       ¦   ║
+║   ¦     │       │ ApplicationContext:IApplicationContext │                       ¦   ║
+║   ¦     │     1 │ JobId:String                           │                       ¦   ║
+║   ¦     │    ┌──┤ Cron:Cron                              │                       ¦   ║
+║   ¦     │    │  └────────────────────────────────────────┘                       ¦   ║
+║   ¦     │    │                                                                   ¦   ║
+║   ¦     │    │ 1 ┌──────────────────────────────────────┐                        ¦   ║
+║   ¦     │    └──>│ Cron                                 │                        ¦   ║
+║   ¦     │        ├──────────────────────────────────────┤                        ¦   ║
+║   ¦     │        │ HttpServerContext:IHttpServerContext │                        ¦   ║
+║   ¦     │        │ Minute:IEnumerable<Int>              │                        ¦   ║
+║   ¦     │        │ Hour:IEnumerable<Int>                │                        ¦   ║
+║   ¦     │        │ Day:IEnumerable<Int>                 │                        ¦   ║
+║   ¦     │        │ Month:IEnumerable<Int>               │                        ¦   ║
+║   ¦     │        │ Weekday:IEnumerable<Int>             │                        ¦   ║
+║   ¦     │        ├──────────────────────────────────────┤                        ¦   ║
+║   ¦     │        │ Matching(Clock):Bool                 │    ┌────────────────┐  ¦   ║
+║   ¦     │        └──────────────────────────────────────┘    │ <<Interface>>  │  ¦   ║
+║   ¦     │                                                    │ IComponent     │  ¦   ║
+║   ¦     │ 1 ┌──────────────────────────────────┐             ├────────────────┤  ¦   ║
+║   ¦     └──>│ Clock                            │             └────────────────┘  ¦   ║
+║   ¦         ├──────────────────────────────────┤                     ▲           ¦   ║
+║   ¦         │ Minute:Int                       │                     ¦           ¦   ║
+║   ¦         │ Hour:Int                         │                     ¦           ¦   ║
+║   ¦         │ Day:Int                          │             ┌───────┴───────┐   ¦   ║
+║   ¦         │ Month:Int                        │             │ <<Interface>> │   ¦   ║
+║   ¦         │ Weekday:Int                      │             │ IJob          │   ¦   ║
+║   ¦         ├──────────────────────────────────┤             ├───────────────┤   ¦   ║
+║   ¦         │ Synchronize():IEnumerable<Clock> │             │ Process()     │   ¦   ║
+║   ¦         │ Equals(Object):Bool              │             │ Dispose()     │   ¦   ║
+║   ¦         └──────────────────────────────────┘             └───────────────┘   ¦   ║
+║   ¦                                                                 ▲            ¦   ║
+║   ¦                                                                 ¦            ¦   ║
+╚═══¦═════════════════════════════════════════════════════════════════¦════════════¦═══╝
+    ¦                             ┌-----------------------------------┘            ¦
+╔MyPlugin═════════════════════════¦════════════════════════════════════════════════¦═══╗
+║   ¦                             ¦                                                ¦   ║
+║   ¦ uses       ┌────────────────┴──────────────┐                                 ¦   ║
+║   └------------┤ MyJob                         │<--------------------------------┘   ║
+║                ├───────────────────────────────┤                                     ║
+║                │ Process()                     │                                     ║
+║                │ Dispose()                     │                                     ║
+║                └───────────────────────────────┘                                     ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 A job is created by a class that inherits from `Job`.
@@ -2418,7 +2458,6 @@ A job is created by a class that inherits from `Job`.
 ```csharp
 // The job starts at 0:30 a.m. on the first day of each month
 [Job("30", "0", "1", "*", "*")] 
-[Module<MyModule>]
 public sealed class MyJob : Job
 {
   public override void Initialization(JobContext context)
@@ -2438,7 +2477,6 @@ The following attributes are available:
 |Attribute |Type      |Multiplicity |Optional |Description
 |----------|----------|-------------|---------|------------
 |Job       |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
-|Module    |`IModule` |1            |No       |The class of the module. The module must be defined in the same plugin as the job.
 
 ## Task model
 Tasks are another form of concurrent code execution. In contrast to jobs, tasks are executed ad-hoc (e.g. an export task 
@@ -2446,69 +2484,92 @@ that was triggered by the user). The result may not be available until a later d
 be fully used. If the result is available, information is usually provided (e.g. by means of a notification).
 
 ```
-                                                            ┌──────────────────────────┐
-                                                            │ <<Interface>>            │
-         ┌────────────────────────────────────┐             │ IComponentHub            │
-         │ <<Interface>>                      │           1 ├──────────────────────────┤
-         │ IComponentManager                  │          ┌──┤ TaskManager:ITaskManager │
-         ├────────────────────────────────────┤          │  │ …                        │
-         └────────────────────────────────────┘          │  └──────────────────────────┘
-                            ▲                            │
-                            ¦                            │
-                            ¦                            │
-┌───────────────────────────┴────────────────────────┐ 1 │
-│ TaskManager                                        │<──┘
-├────────────────────────────────────────────────────┤
-│ AddTask:Event                                      │
-│ RemoveTask:Event                                   │
-├────────────────────────────────────────────────────┤ 1
-│ ActiveTasks:IEnumerable<ITask>                     ├───┐
-├────────────────────────────────────────────────────┤   │
-│ CreateTask(Id):ITask                               │   │
-│ CreateTask(Id,Arguments):ITask                     │   │
-│ CreateTask(Id,EventHandler,Arguments):ITask        │   │
-│ CreateTask<ITask>(Id,EventHandler,Arguments):ITask │   │
-│ RemoveTask(ITask)                                  │   │
-│ GetTask(Id):ITask                                  │   │
-│ ContainsTask(Id):Bool                              │   │
-└────────────────────────────────────────────────────┘   │
-                                                         │
-                                                         │
-                                                         │
-         ┌───────────────────────────────┐               │
-         │ <<Interface>>                 │ *             │
-         │ ITask                         │<──────────────┘
-         ├───────────────────────────────┤
-         │ Start:Event                   │
-         │ Finish:Event                  │
-         ├───────────────────────────────┤
-         │ Id:String                     │
-    ┌────┤ State:TaskState               │
-    │    │ Progress:Int                  │
-    │    │ Message:String                │
-    │    │ Arguments:IEnumerable<Object> │
-    │    ├───────────────────────────────┤
-    │    │ Process()                     │
-    │    │ Cancel()                      │
-    │    └───────────────────────────────┘
-    │                   ▲
-    └───┐               └--------------┐
-      1 V                              ¦
-┌─────────────────┐     ┌──────────────┴────────────────┐
-│ <<Enumeration>> │     │ MyTask                        │
-│ TaskState       │     ├───────────────────────────────┤
-├─────────────────┤     │ Start:Event                   │
-│ Created         │     │ Finish:Event                  │
-│ Run             │     ├───────────────────────────────┤
-│ Canceled        │     │ Id:String                     │
-│ Finish          │     │ State:TaskState               │
-└─────────────────┘     │ Progress:Int                  │
-                        │ Message:String                │
-                        │ Arguments:IEnumerable<Object> │
-                        ├───────────────────────────────┤
-                        │ Process()                     │
-                        │ Cancel()                      │
-                        └───────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                            ┌──────────────────────────┐                              ║
+║                            │ <<Interface>>            │                              ║
+║                            │ IComponentHub            │                              ║
+║                            ├──────────────────────────┤ 1                            ║
+║                            │ TaskManager:ITaskManager ├───┐                          ║
+║                            │ …                        │   │                          ║
+║                            └──────────────────────────┘   │                          ║
+║                                                           │                          ║
+║              ┌───────────────────┐                        │                          ║
+║              │ <<Interface>>     │                        │                          ║
+║              │ IComponentManager │                        │                          ║
+║              ├───────────────────┤                        │                          ║
+║              └───────────────────┘                        │                          ║
+║                       ▲                                   │                          ║
+║                       ¦                                   │                          ║
+║                       ¦                                 1 V                          ║
+║              ┌────────┴───────────────────────────────────────────┐                  ║
+║              │ <<Interface>>                                      │                  ║
+║              │ TaskManager                                        │                  ║
+║              ├────────────────────────────────────────────────────┤                  ║
+║              │ AddTask:Event                                      │                  ║
+║              │ RemoveTask:Event                                   │                  ║
+║            1 ├────────────────────────────────────────────────────┤                  ║
+║       ┌──────┤ ActiveTasks:IEnumerable<ITask>                     │                  ║
+║       │      ├────────────────────────────────────────────────────┤                  ║
+║       │      │ CreateTask(Id):ITask                               │                  ║
+║       │      │ CreateTask(Id,Arguments):ITask                     │                  ║
+║       │      │ CreateTask(Id,EventHandler,Arguments):ITask        │                  ║
+║       │      │ CreateTask<ITask>(Id,EventHandler,Arguments):ITask ├-------┐          ║
+║       │      │ RemoveTask(ITask)                                  │       ¦          ║
+║       │      │ GetTask(Id):ITask                                  │       ¦          ║
+║       │      │ ContainsTask(Id):Bool                              │       ¦          ║
+║       │      └────────────────────────────────────────────────────┘       ¦          ║
+║       │                                                                   ¦          ║
+║       │               ┌───────────────────────────────┐                   ¦          ║
+║       │             * │ <<Interface>>                 │                   ¦          ║
+║       └──────────────>│ ITask                         │                   ¦          ║
+║                       ├───────────────────────────────┤                   ¦          ║
+║                       │ Start:Event                   │                   ¦          ║
+║                       │ Finish:Event                  │                   ¦          ║
+║                       ├───────────────────────────────┤                   ¦          ║
+║                       │ Id:String                     │                   ¦          ║
+║              ┌────────┤ State:TaskState               │                   ¦          ║
+║              │        │ Progress:Int                  │                   ¦          ║
+║              │        │ Message:String                │                   ¦          ║
+║              │        │ Arguments:IEnumerable<Object> │                   ¦          ║
+║              │        ├───────────────────────────────┤                   ¦          ║
+║              │        │ Process()                     │                   ¦          ║
+║              │        │ Cancel()                      │                   ¦          ║
+║              │        └───────────────────────────────┘                   ¦          ║
+║              │                       ▲                                    ¦          ║
+║              │                       ¦                                    ¦          ║
+║            1 V                       ¦                                    ¦          ║
+║     ┌─────────────────┐              ¦                                    ¦          ║
+║     │ <<Enumeration>> │              ¦                                    ¦          ║
+║     │ TaskState       │              ¦                                    ¦          ║
+║     ├─────────────────┤              ¦                                    ¦          ║
+║     │ Created         │              ¦                                    ¦          ║
+║     │ Run             │              ¦                                    ¦          ║
+║     │ Canceled        │              ¦                                    ¦          ║
+║     │ Finish          │              ¦                                    ¦          ║
+║     └─────────────────┘              ¦                                    ¦          ║
+║                                      ¦                                    ¦          ║
+╚══════════════════════════════════════¦════════════════════════════════════¦══════════╝
+                                       ¦                                    ¦
+╔MyPlugin══════════════════════════════¦════════════════════════════════════¦══════════╗
+║                                      ¦                                    ¦          ║
+║                       ┌──────────────┴────────────────┐            create ¦          ║
+║                       │ MyTask                        │<------------------┘          ║
+║                       ├───────────────────────────────┤                              ║
+║                       │ Start:Event                   │                              ║
+║                       │ Finish:Event                  │                              ║
+║                       ├───────────────────────────────┤                              ║
+║                       │ Id:String                     │                              ║
+║                       │ State:TaskState               │                              ║
+║                       │ Progress:Int                  │                              ║
+║                       │ Message:String                │                              ║
+║                       │ Arguments:IEnumerable<Object> │                              ║
+║                       ├───────────────────────────────┤                              ║
+║                       │ Process()                     │                              ║
+║                       │ Cancel()                      │                              ║
+║                       └───────────────────────────────┘                              ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 Tasks are created dynamically by instantiating a class derived from `Task` and starting it from the `TaskManager`.
@@ -2540,59 +2601,72 @@ are displayed in the upper right corner and are retained when a page is changed.
 at the end of the display period. Notifications that are visible to multiple users are removed by closing a user.
 
 ```
-                                            ┌──────────────────────────────────────────┐
-┌────────────────────────────────────┐      │ <<Interface>>                            │
-│ <<Interface>>                      │      │ IComponentHub                            │
-│ IComponentManager                  │    1 ├──────────────────────────────────────────┤
-├────────────────────────────────────┤   ┌──┤ NotificationManager:INotificationManager │
-│ Initialization(IHttpServerContext) │   │  │ …                                        │
-└────────────────────────────────────┘   │  └──────────────────────────────────────────┘
-              ▲                          │
-              ¦                          └──────────────────────────┐
-              ¦                                                   1 V
-┌─────────────┴───────────────────────────────────────────────────────────────────┐
-│ NotificationManager                                                             │
-├─────────────────────────────────────────────────────────────────────────────────┤
-│ CreateNotification:Event                                                        │
-│ DestroyNotification:Event                                                       │
-├─────────────────────────────────────────────────────────────────────────────────┤ 1
-│ GlobalNotifications:IEnumerable<INotification>                                  ├──┐
-├─────────────────────────────────────────────────────────────────────────────────┤  │
-│ AddNotification(Message,Durability,Heading,Icon,TypeNotification):INotification │  │
-│ AddNotification(Request,Message,Durability,Heading,Icon,TypeNotification)       │  │
-│   :INotification                                                                │  │
-│ GetNotifications(Request):IEnumerable<INotification>                            │  │
-│ RemoveNotification(Id)                                                          │  │
-│ RemoveNotification(Request)                                                     │  │
-└─────────────────────────────────────────────────────────────────────────────────┘  │
-                                                                                     │
-                                                                         ┌───────────┘
-                                                                       * V
-                                             ┌───────────────────────────────────┐
-                                             │ <<Interface>>                     │
-                                             │ INotification                     │
-                                             ├───────────────────────────────────┤
-                                             │ Id:Guid                           │
-                                             │ Heading:String                    │
-                                             │ Message:String                    │
-                                             │ Durability:Int                    │
-                                             │ Icon:String                       │
-          ┌──────────────────┐               │ Created:DateTime                  │
-          │ <<Enumeration>>  │ 1           1 │ Progress:Int                      │
-          │ TypeNotification │<──────────────┤ TypeNotification:TypeNotification │
-          ├──────────────────┤               └───────────────────────────────────┘
-          │ Default          │
-          │ Primary          │
-          │ Secondary        │
-          │ Success          │
-          │ Info             │
-          │ Warning          │
-          │ Danger           │
-          │ Dark             │
-          │ Light            │
-          │ White            │
-          │ Transparent      │
-          └──────────────────┘
+╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║  ┌──────────────────────────────────────────┐                                        ║
+║  │ <<Interface>>                            │                                        ║
+║  │ IComponentHub                            │                                        ║
+║  ├──────────────────────────────────────────┤ 1                                      ║
+║  │ NotificationManager:INotificationManager ├────────────────────────┐               ║
+║  │ …                                        │                        │               ║
+║  └──────────────────────────────────────────┘                        │               ║
+║                                                                      │               ║
+║  ┌────────────────────────────────────┐                              │               ║
+║  │ <<Interface>>                      │                              │               ║
+║  │ IComponentManager                  │                              │               ║
+║  ├────────────────────────────────────┤                              │               ║
+║  │ Initialization(IHttpServerContext) │                              │               ║
+║  └────────────────────────────────────┘                              │               ║
+║                ▲                                                     │               ║
+║                ¦                                                     │               ║
+║                ¦                                                   1 V               ║
+║  ┌─────────────┴─────────────────────────────────────────────────────────────┐       ║
+║  │ <<Interface>>                                                             │       ║
+║  │ INotificationManager                                                      │       ║
+║  ├───────────────────────────────────────────────────────────────────────────┤       ║
+║  │ CreateNotification:Event                                                  │       ║
+║  │ DestroyNotification:Event                                                 │       ║
+║  ├───────────────────────────────────────────────────────────────────────────┤ 1     ║
+║  │ GlobalNotifications:IEnumerable<INotification>                            ├─────┐ ║
+║  ├───────────────────────────────────────────────────────────────────────────┤     │ ║
+║  │ AddNotification(Message,Durability,Heading,Icon,TypeNotification)         │     │ ║
+║  │   :INotification                                                          │     │ ║
+║  │ AddNotification(Request,Message,Durability,Heading,Icon,TypeNotification) │     │ ║
+║  │   :INotification                                                          │     │ ║
+║  │ GetNotifications(Request):IEnumerable<INotification>                      │     │ ║
+║  │ RemoveNotification(Id)                                                    │     │ ║
+║  │ RemoveNotification(Request)                                               │     │ ║
+║  └───────────────────────────────────────────────────────────────────────────┘     │ ║
+║                                                                                    │ ║
+║                                                                           ┌────────┘ ║
+║                                                                         * V          ║
+║                                               ┌───────────────────────────────────┐  ║
+║                                               │ <<Interface>>                     │  ║
+║                                               │ INotification                     │  ║
+║                                               ├───────────────────────────────────┤  ║
+║                                               │ Id:Guid                           │  ║
+║                                               │ Heading:String                    │  ║
+║                                               │ Message:String                    │  ║
+║                                               │ Durability:Int                    │  ║
+║                                               │ Icon:String                       │  ║
+║            ┌──────────────────┐               │ Created:DateTime                  │  ║
+║            │ <<Enumeration>>  │ 1           1 │ Progress:Int                      │  ║
+║            │ TypeNotification │<──────────────┤ TypeNotification:TypeNotification │  ║
+║            ├──────────────────┤               └───────────────────────────────────┘  ║
+║            │ Default          │                                                      ║
+║            │ Primary          │                                                      ║
+║            │ Secondary        │                                                      ║
+║            │ Success          │                                                      ║
+║            │ Info             │                                                      ║
+║            │ Warning          │                                                      ║
+║            │ Danger           │                                                      ║
+║            │ Dark             │                                                      ║
+║            │ Light            │                                                      ║
+║            │ White            │                                                      ║
+║            │ Transparent      │                                                      ║
+║            └──────────────────┘                                                      ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 The `NotificationManager` is the central class for notifications. The `AddNotification` method is used to create notifications.
@@ -2621,16 +2695,6 @@ NotificationManager.AddNotification
     durability: 30000
 );
 
-```
-
-The NotificationManager must be enabled in the application. For this purpose, webexpress.webapp with the ResourceId or 
-all webexpress.webapp.* must be included.
-
-```csharp
-[Option<WebExpress.WebApp.ApiPopupNotificationV1>]
-public sealed class MyApplication : IApplication
-{
-}
 ```
 
 The functions of the `NotificationManager` can also be accessed via the REST API interface `{base path}/wxapp/api/v1/popupnotifications`
@@ -2699,7 +2763,7 @@ To create a reverse index, the data type to be indexed must be registered in
 the `IndexManager`.
 
 ```csharp
-/// DataType must implement the IIndexItem interface.
+// DataType must implement the IIndexItem interface.
 public class DataType : IIndexItem
 {
     [IndexIgnore]
@@ -2811,91 +2875,110 @@ from external identity management (e.g. LDAP). The roles and identity resources 
 hard-implementing them.
 
 ```
-       ┌────────────────────────────────────┐
-       │ <<Interface>>                      │
-       │ IComponentManagerPlugin            │
-       ├────────────────────────────────────┤
-       │ Register(IPluginContext)           │
-       │ Remove(IPluginContext)             │
-       └────────────────────────────────────┘
-                         ▲                          ┌──────────────────────────────────┐
-               ┌---------┘                          │ <<Interface>>                    │
-               ¦                                    │ IComponentHub                    │
-               ¦                                  1 ├──────────────────────────────────┤
-               ¦                               ┌────┤ IdentityManager:IIdentityManager │
-               ¦                               │    │ …                                │
-               ¦                               │    └──────────────────────────────────┘
-               ¦                               │
-               ¦                               │
-               ¦                             1 V
-       ┌───────┴───────────────────────────────────────────┐
-       │ IdentityManager                                   │
-       ├───────────────────────────────────────────────────┤
-       │ AddDomain:Event                                   │
-       │ RemoveDomain:Event                                │
-       ├───────────────────────────────────────────────────┤ 1
-       │ Jobs:IEnumerable<IIdentityDomain>                 ├───┐
-       ├───────────────────────────────────────────────────┤   │
-┌------┤ Register(IPluginContext)                          │   │
-¦      │ Remove(IPluginContext)                            │   │
-¦      │ GetIdentityDomain(IPluginContext):IIdentityDomain │   │
-¦      └───────────────────────────────────────────────────┘   │
-¦                                                              │
-¦                                                              │
-¦          ┌──────────────────────────────────────────┐        │
-¦          │ <<Interface>>                            │ *      │
-¦          │ IIdentityDomain                          │<───────┘
-¦          ├──────────────────────────────────────────┤
-¦          │ PluginContext:IPluginContext             │
-¦          │ ModuleContext:IModuleContext             │
-¦          │ Identities:IEnumerable<IIdentity>        │
-¦          │ Groups:IEnumerable<IIdentityGroup>       │
-¦          │ Roles:IEnumerable<IIdentityRole>         │
-¦          │ Resources:IEnumerable<IIdentityResource> │
-¦          ├──────────────────────────────────────────┤
-¦          │ AddIdentity(IIdentity)                   │
-¦          │ AddGroup(IIdentityGroup)                 │
-¦          │ RemoveIdentity(IIdentity)                │
-¦          │ RemoveGroup(IIdentityGroup)              │
-¦          └───┬──────────┬───────────┬──────────┬────┘
-¦            1 │        1 │         1 │        1 │
-¦           ┌──┘          │           │          └──────────────────────────┐
-¦           │             │           └────────────────┐                    │
-¦           │             └───────┐                    │                    │
-¦         * V                   * V                  * V                  * V
-¦ ┌────────────────────┐  ┌────────────────┐    ┌───────────────┐  ┌───────────────────┐
-¦ │ <<Interface>>      │  │ <<Interface>>  │    │ <<Interface>> │  │ <<Interface>>     │
-¦ │ IIdentity          │  │ IIdentityGroup │    │ IIdentityRole │  │ IIdentityResource │
-¦ ├────────────────────┤  ├────────────────┤    ├───────────────┤  ├───────────────────┤
-¦ │ Id:Guid            │  │ Id:Guid        │    │ Id:Guid       │  │ Id:Guid           │
-¦ │ Name:String        │  │ Name:String    │  1 │ Name:String   │  │ Name:String       │
-¦ │ State:AccountState │  ├────────────────┤ ┌──┤ Access:Access │  ├───────────────────┤
-¦ ├────────────────────┤  └────────────────┘ │  ├───────────────┤  └───────────────────┘
-¦ │ Login()            │         ▲           │  └───────────────┘           ▲
-¦ │ Logout()           │         ¦         1 V         ▲                    ¦
-¦ └────────────────────┘         ¦ ┌─────────────────┐ ¦                    ¦
-¦           ▲                    ¦ │ <<Enumeration>> │ ¦                    ¦
-¦           ¦                    ¦ │ Access          │ ¦                    ¦
-¦           ¦                    ¦ ├─────────────────┤ ¦                    ¦
-¦           ¦                    ¦ │ Read            │ ¦                    ¦
-¦           ¦                    ¦ │ Write           │ ¦                    ¦
-¦           ¦                    ¦ │ Execute         │ ¦                    ¦
-¦           ¦                    ¦ └─────────────────┘ ¦                    ¦
-¦           ¦                    ¦                     ¦                    ¦
-¦  create   ¦                    ¦                     ¦                    ¦
-└-----------¦--------------------¦-----------------┬---¦---------------┐    ¦
-            ¦                    ¦                 V   ¦               V    ¦
-  ┌─────────┴──────────┐ ┌───────┴─────────┐  ┌────────┴───────┐ ┌──────────┴─────────┐
-  │ MyIdentity         │ │ MyIdentityGroup │  │ MyIdentityRole │ │ MyIdentityResource │
-  ├────────────────────┤ ├─────────────────┤  ├────────────────┤ ├────────────────────┤
-  │ Id:Guid            │ │ Id:Guid         │  │ Id:Guid        │ │ Id:Guid            │
-  │ Name:String        │ │ Name:String     │  │ Name:String    │ │ Name:String        │
-  │ Password:String    │ ├─────────────────┤  │ Access:Access  │ ├────────────────────┤
-  │ State:AccountState │ └─────────────────┘  ├────────────────┤ └────────────────────┘
-  ├────────────────────┤                      └────────────────┘
-  │ Login()            │
-  │ Logout()           │
-  └────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║         ┌──────────────────────────────────┐                                         ║
+║         │ <<Interface>>                    │                                         ║
+║         │ IComponentHub                    │                                         ║
+║         ├──────────────────────────────────┤ 1                                       ║
+║         │ IdentityManager:IIdentityManager ├───────────┐                             ║
+║         │ …                                │           │                             ║
+║         └──────────────────────────────────┘           │                             ║
+║                                                        │                             ║
+║                ┌──────────────────────────┐            │                             ║
+║                │ <<Interface>>            │            │      ┌─────────────────┐    ║
+║                │ IComponentManagerPlugin  │            │      │ <<Enumeration>> │    ║
+║                ├──────────────────────────┤            │      │ Access          │    ║
+║                │ Register(IPluginContext) │            │      ├─────────────────┤    ║
+║                │ Remove(IPluginContext)   │            │      │ Read            │    ║
+║                └──────────────────────────┘            │      │ Write           │    ║
+║                            ▲                           │      │ Execute         │    ║
+║                        ┌---┘                           │      └─────────────────┘    ║
+║                        ¦                               │             1 ∧             ║
+║                        ¦                             1 V               │             ║
+║                ┌───────┴───────────────────────────────────────────┐   └────────┐    ║
+║                │ <<Interface>>                                     │            │    ║
+║         ┌------┤ IIdentityManager                                  │            │    ║
+║         ¦      ├───────────────────────────────────────────────────┤            │    ║
+║         ¦      │ AddDomain:Event                                   │            │    ║
+║         ¦      │ RemoveDomain:Event                                │            │    ║
+║         ¦      ├───────────────────────────────────────────────────┤ 1          │    ║
+║         ¦      │ Jobs:IEnumerable<IIdentityDomain>                 ├───┐        │    ║
+║         ¦      ├───────────────────────────────────────────────────┤   │        │    ║
+║         ¦      │ GetIdentityDomain(IPluginContext):IIdentityDomain │   │        │    ║
+║         ¦      └───────────────────────────────────────────────────┘   │        │    ║
+║         ¦                                                              │        │    ║
+║         ¦          ┌──────────────────────────────────────────┐        │        │    ║
+║         ¦          │ <<Interface>>                            │ *      │        │    ║
+║         ¦          │ IIdentityDomain                          │<───────┘        │    ║
+║         ¦          ├──────────────────────────────────────────┤                 │    ║
+║         ¦          │ PluginContext:IPluginContext             │                 │    ║
+║         ¦          │ ApplicationContext:IApplicationContext   │                 │    ║
+║         ¦          │ Identities:IEnumerable<IIdentity>        │                 │    ║
+║         ¦          │ Groups:IEnumerable<IIdentityGroup>       │                 │    ║
+║         ¦          │ Roles:IEnumerable<IIdentityRole>         │                 │    ║
+║         ¦          │ Resources:IEnumerable<IIdentityResource> │                 │    ║
+║         ¦          ├──────────────────────────────────────────┤                 │    ║
+║         ¦          │ AddIdentity(IIdentity)                   │                 │    ║
+║         ¦          │ AddGroup(IIdentityGroup)                 │                 │    ║
+║         ¦          │ RemoveIdentity(IIdentity)                │                 │    ║
+║         ¦          │ RemoveGroup(IIdentityGroup)              │                 │    ║
+║         ¦          └───┬──────────┬───────────┬──────────┬────┘                 │    ║
+║ ┌-------┘            1 │        1 │         1 │        1 │                      │    ║
+║ ¦              ┌───────┘          │           │          └─────────────┐        │    ║
+║ ¦              │                  │           └───┐                    │        │    ║
+║ ¦              │               ┌──┘               │                    │        │    ║
+║ ¦            * V               │                * V                    │        │    ║
+║ ¦    ┌────────────────────┐    │          ┌───────────────┐            │        │    ║
+║ ¦    │ <<Interface>>      │    │          │ <<Interface>> │            │        │    ║
+║ ¦    │ IIdentity          │    │          │ IIdentityRole │            │        │    ║
+║ ¦    ├────────────────────┤    │          ├───────────────┤            │        │    ║
+║ ¦    │ Id:Guid            │    │          │ Id:Guid       │            │        │    ║
+║ ¦    │ Name:String        │    │          │ Name:String   │ 1          │        │    ║
+║ ¦    │ State:AccountState │    │          │ Access:Access ├────────────│────────┘    ║
+║ ¦    ├────────────────────┤    │          ├───────────────┤            │             ║
+║ ¦    │ Login()            │    │          └───────────────┘            │             ║
+║ ¦    │ Logout()           │    │                  ▲                    │             ║
+║ ¦    └────────────────────┘    │                  ¦                    │             ║
+║ ¦              ▲             * V                  ¦                  * V             ║
+║ ¦              ¦      ┌────────────────┐          ¦        ┌───────────────────┐     ║
+║ ¦              ¦      │ <<Interface>>  │          ¦        │ <<Interface>>     │     ║
+║ ¦              ¦      │ IIdentityGroup │          ¦        │ IIdentityResource │     ║
+║ ¦              ¦      ├────────────────┤          ¦        ├───────────────────┤     ║
+║ ¦              ¦      │ Id:Guid        │          ¦        │ Id:Guid           │     ║
+║ ¦              ¦      │ Name:String    │          ¦        │ Name:String       │     ║
+║ ¦              ¦      ├────────────────┤          ¦        ├───────────────────┤     ║
+║ ¦              ¦      └────────────────┘          ¦        └───────────────────┘     ║
+║ ¦              ¦              ▲                   ¦                  ▲               ║
+║ ¦  create      ¦              ¦                   ¦                  ¦               ║
+║ └--------------¦--------------¦-------------┬-----¦----------┐       ¦               ║
+║                ¦              ¦             ¦     ¦          ¦       ¦               ║
+╚════════════════¦══════════════¦═════════════¦═════¦══════════¦═══════¦═══════════════╝
+                 ¦              ¦             ¦     ¦          ¦       ¦     
+╔MyPlugin════════¦══════════════¦═════════════¦═════¦══════════¦═══════¦═══════════════╗
+║                ¦              ¦             ¦     ¦          ¦       ¦               ║
+║                ¦              ¦             V     ¦          ¦       ¦               ║
+║      ┌─────────┴──────────┐   ¦          ┌────────┴───────┐  ¦       ¦               ║
+║      │ MyIdentity         │   ¦          │ MyIdentityRole │  ¦       ¦               ║
+║      ├────────────────────┤   ¦          ├────────────────┤  ¦       ¦               ║
+║      │ Id:Guid            │   ¦          │ Id:Guid        │  ¦       ¦               ║
+║      │ Name:String        │   ¦          │ Name:String    │  ¦       ¦               ║
+║      │ Password:String    │   ¦          │ Access:Access  │  ¦       ¦               ║
+║      │ State:AccountState │   ¦          ├────────────────┤  ¦       ¦               ║
+║      ├────────────────────┤   ¦          └────────────────┘  ¦       ¦               ║
+║      │ Login()            │   ¦                              ¦       ¦               ║
+║      │ Logout()           │   ¦                              ¦       ¦               ║
+║      └────────────────────┘   ¦                              ¦       ¦               ║
+║                               ¦                              V       ¦               ║
+║                       ┌───────┴─────────┐                 ┌──────────┴─────────┐     ║
+║                       │ MyIdentityGroup │                 │ MyIdentityResource │     ║
+║                       ├─────────────────┤                 ├────────────────────┤     ║
+║                       │ Id:Guid         │                 │ Id:Guid            │     ║
+║                       │ Name:String     │                 │ Name:String        │     ║
+║                       ├─────────────────┤                 ├────────────────────┤     ║
+║                       └─────────────────┘                 └────────────────────┘     ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 WebExpress provides the following default groups:
@@ -2916,7 +2999,6 @@ WebExpress provides the following roles:
 In addition to the listed standard roles, self-defined roles from definition classes can be provided. 
 
 ```csharp
-[Module<MyModule>]
 [Name("myRole")]
 [Role(IdentityRoleDefault.Authenticated)]
 public sealed class MyIdentityRole : IIdentityRole
@@ -2929,7 +3011,6 @@ The role definition classes have the following attributes:
 |Attribute   |Type    |Multiplicity |Optional |Description
 |------------|--------|-------------|---------|-------------
 |Id          |String  |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
-|Module      |IModule |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Name        |String  |1            |No       |The human-readable name of the role or an internationalization key.
 |Description |String  |1            |Yes      |The description of the role. This can be a key to internationalization.
 |Role        |String  |1            |Yes      |Inherits the characteristics of the specified role.
@@ -2938,7 +3019,6 @@ Identity resources are usually automatically discovered from the metadata of the
 assigned to roles. In addition, identity resources can also be created from definition classes.
 
 ```csharp
-[Module<MyModule>]
 [Name("Reset password")]
 [Authorization(Permission.RW, IdentityRoleDefault.Authenticated)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
@@ -2952,7 +3032,6 @@ The identity resource definition classes have the following attributes:
 |Attribute     |Type        |Multiplicity |Optional |Description
 |--------------|------------|-------------|---------|-------------
 |Id            |String      |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
-|Module        |IModule     |1            |No       |The class of the module. The module must be defined in the same plugin as the resource.
 |Name          |String      |1            |No       |The human-readable name of the role or an internationalization key.
 |Description   |String      |1            |Yes      |The description of the role. This can be a key to internationalization.
 |Authorization |Int, String |1            |Yes      |Grants authority for a role (specifying the id).
@@ -3409,77 +3488,109 @@ Setting page templates are used to administer the web applications. Settings pag
 the `IPageSetting` interface.
 
 ```
-                                            ┌────────────────────────────────────────┐
-                                            │ <<Interface>>                          │
-┌────────────────────────────────────┐      │ IComponentHub                          │
-│ <<Interface>>                      │    1 ├────────────────────────────────────────┤
-│ IComponentManagerPlugin            │   ┌──┤ SettingPageManager:ISettingPageManager │
-├────────────────────────────────────┤   │  │ …                                      │
-│ Register(IPluginContext)           │   │  └────────────────────────────────────────┘
-│ Remove(IPluginContext)             │   │
-└────────────────────────────────────┘   │
-                 ▲                       │
-              ┌--┘                       └─┐
-              ¦                          1 V
-     ┌────────┴──────────────────────────────────────┐
-     │ SettingPageManager                            │
-     ├───────────────────────────────────────────────┤
-     │ AddSettingPage:Event                          │
-     │ RemoveSettingPage:Event                       │
-     ├───────────────────────────────────────────────┤ 1
-     │ SettingPages:IEnumerable<ISettingPageContext> ├───┐
-     ├───────────────────────────────────────────────┤   │
-┌----┤ Register(IPluginContext)                      │   │
-¦    │ Remove(IPluginContext)                        │   │
-¦    └───────────────────────────────────────────────┘   │
-¦                                                        │
-¦                          ┌─────────────────────────────┘
-¦                        * V                              
-¦          ┌──────────────────────────────────┐              
-¦          │ <<Interface>>                    │              
-¦          │ ISettingPageContext              │<----------------------------------┐
-¦          ├──────────────────────────────────┤                                   ¦
-¦          │ PluginContext:IPluginContext     │                                   ¦
-¦          │ ResourceContext:IResourceContext │                                   ¦
-¦          │ Id:String                        │                                   ¦
-¦          │ Hide:Bool                        │                                   ¦
-¦          │ Icon:PropertyIcon                │             ┌──────────────────┐  ¦
-¦          │ Context:String                   │ 1         1 │ <<Enumeration>>  │  ¦
-¦          │ Section:SettingSection           ├────────────>│ SettingSection   │  ¦
-¦          │ Group:Group                      │             ├──────────────────┤  ¦
-¦          └──────────────────────────────────┘             │ Preferences      │  ¦
-¦                                                           │ Primary          │  ¦
-¦                                                           │ Secondary        │  ¦
-¦                                                           └──────────────────┘  ¦
-¦                                                                                 ¦
-¦                                                                                 ¦
-¦                                      ┌───────────────────────────────┐          ¦
-¦  ┌───────────────────────────────┐   │ <<Interface>>                 │          ¦
-¦  │ PageWebApp                    │   │ ISettingPage                  │          ¦
-¦  ├───────────────────────────────┤   ├───────────────────────────────┤          ¦
-¦  │ Process(RenderContext)        │   └───────────────────────────────┘          ¦
-¦  │ Dispose()                     │                  ▲                           ¦
-¦  └───────────────────────────────┘                  ¦                           ¦
-¦                  ▲                                  ¦                           ¦
-¦                  ¦                                  ¦                           ¦
-¦            ┌-----┘                       ┌----------┘                           ¦
-¦            ¦                             ¦                                      ¦
-¦        ┌───┴─────────────────────────────┴───┐                                  ¦
-¦        │ WebAppPageSetting                   │                                  ¦
-¦        ├─────────────────────────────────────┤                                  ¦
-¦        │ Process(RenderContext)              │                                  ¦
-¦        │ Dispose()                           │                                  ¦
-¦        └─────────────────────────────────────┘                                  ¦
-¦                           ▲                                                     ¦
-¦                           ¦                                                     ¦
-¦                           ¦                                                     ¦
-¦                           ¦                                                     ¦
-¦ create ┌──────────────────┴──────────────────┐                             uses ¦
-└------->│ MyWebAppPageSetting                 ├----------------------------------┘
-         ├─────────────────────────────────────┤
-         │ Process(RenderContext)              │
-         │ Dispose()                           │
-         └─────────────────────────────────────┘
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌────────────────────────────────────────┐                                         ║
+║   │ <<Interface>>                          │                                         ║
+║   │ IComponentHub                          │                                         ║
+║   ├────────────────────────────────────────┤ 1                                       ║
+║   │ SettingPageManager:ISettingPageManager ├────┐                                    ║
+║   │ …                                      │    │                                    ║
+║   └────────────────────────────────────────┘    │                                    ║
+║                                                 │                                    ║
+║                                                 │                                    ║
+║   ┌────────────────────────────────────┐        │                                    ║
+║   │ <<Interface>>                      │        │                                    ║
+║   │ IComponentManager                  │        │                                    ║
+║   ├────────────────────────────────────┤        │                                    ║
+║   └────────────────────────────────────┘        │                                    ║
+║                    ▲                            │                                    ║
+║                 ┌--┘                            │                                    ║
+║                 ¦                             1 V                                    ║
+║        ┌────────┴──────────────────────────────────────┐                             ║
+║        │ <<Interface>>                                 │                             ║
+║   ┌----┤ ISettingPageManager                           │                             ║
+║   ¦    ├───────────────────────────────────────────────┤                             ║
+║   ¦    │ AddSettingPage:Event                          │                             ║
+║   ¦    │ RemoveSettingPage:Event                       │                             ║
+║   ¦    ├───────────────────────────────────────────────┤ 1                           ║
+║   ¦    │ SettingPages:IEnumerable<ISettingPageContext> ├───┐                         ║
+║   ¦    ├───────────────────────────────────────────────┤   │                         ║
+║   ¦    │                                               │   │                         ║
+║   ¦    └───────────────────────────────────────────────┘   │                         ║
+║   ¦                                                        │                         ║
+║   ¦                   ┌────────────────┐                   │                         ║
+║   ¦                   │ <<Interface>>  │                   │                         ║
+║   ¦                   │ IContext       │                   │                         ║
+║   ¦                   ├────────────────┤                   │                         ║
+║   ¦                   └────────────────┘                   │                         ║
+║   ¦                           ▲                            │                         ║
+║   ¦                           ¦                            │                         ║
+║   ¦                           ¦                            │                         ║
+║   ¦       ┌───────────────────┴────────────────────┐       │                         ║
+║   ¦       │ <<Interface>>                          │       │                         ║
+║   ¦       │ IEndpointContext                       │       │                         ║
+║   ¦       ├────────────────────────────────────────┤       │                         ║
+║   ¦       │ EndpointId:String                      │       │                         ║
+║   ¦       │ PluginContext:IPluginContext           │       │                         ║
+║   ¦       │ ApplicationContext:IApplicationContext │       │                         ║
+║   ¦       │ Conditions:IEnumerable<ICondition>     │       │                         ║
+║   ¦       │ ParentContext:IEndpointContext         │       │                         ║
+║   ¦       │ Cache:Bool                             │       │                         ║
+║   ¦       │ ContextPath:UriResource                │       │                         ║
+║   ¦       │ Uri:UriResource                        │       │                         ║
+║   ¦       └────────────────────────────────────────┘       │                         ║
+║   ¦                           ▲                            │                         ║
+║   ¦                           ¦          ┌─────────────────┘                         ║
+║   ¦                           ¦        * V                                           ║
+║   ¦          ┌────────────────┴─────────────────┐                                    ║
+║   ¦          │ <<Interface>>                    │                                    ║
+║   ¦          │ ISettingPageContext              │<---------------------------┐       ║
+║   ¦          ├──────────────────────────────────┤                            ¦       ║
+║   ¦          │ Hide:Bool                        │                            ¦       ║
+║   ¦          │ Icon:PropertyIcon                │      ┌──────────────────┐  ¦       ║
+║   ¦          │ Context:String                   │ 1  1 │ <<Enumeration>>  │  ¦       ║
+║   ¦          │ Section:SettingSection           ├─────>│ SettingSection   │  ¦       ║
+║   ¦          │ Group:Group                      │      ├──────────────────┤  ¦       ║
+║   ¦          └──────────────────────────────────┘      │ Preferences      │  ¦       ║
+║   ¦                                                    │ Primary          │  ¦       ║
+║   ¦                        ┌────────────────┐          │ Secondary        │  ¦       ║
+║   └-------┐                │ <<Interface>>  │          └──────────────────┘  ¦       ║
+║           ¦                │ IComponent     │                                ¦       ║
+║           ¦                ├────────────────┤                                ¦       ║
+║           ¦                └────────────────┘                                ¦       ║
+║           ¦                        ▲                                         ¦       ║
+║           ¦                        ¦                                         ¦       ║
+║           ¦                        ¦                                         ¦       ║
+║           ¦                ┌───────┴────────┐                                ¦       ║
+║           ¦                │ <<Interface>>  │                                ¦       ║
+║           ¦                │ IEndpoint      │                                ¦       ║
+║           ¦                ├────────────────┤                                ¦       ║
+║           ¦                └────────────────┘                                ¦       ║
+║           ¦                        ▲                                         ¦       ║
+║           ¦                        ¦                                         ¦       ║
+║           ¦                        ¦  ┌────────────────┐                     ¦       ║
+║           ¦     ┌──────────────────┴──│ IRenderContext │─┐                   ¦       ║
+║           ¦     │ <<Interface>>       └────────────────┘ │                   ¦       ║
+║           ¦     │ ISettingPage                           │                   ¦       ║
+║           ¦     ├────────────────────────────────────────┤                   ¦       ║
+║           ¦     │ Process(IRenderContext)                │                   ¦       ║
+║           ¦     └────────────────────────────────────────┘                   ¦       ║
+║           ¦                         ▲                                        ¦       ║
+╚═══════════¦═════════════════════════¦════════════════════════════════════════¦═══════╝
+            ¦                         ¦                                        ¦
+╔MyPlugin═══¦═════════════════════════¦════════════════════════════════════════¦═══════╗
+║           ¦                         ¦                                        ¦       ║
+║           ¦                         ¦                                        ¦       ║
+║           ¦                         ¦                                        ¦       ║
+║           ¦ create      ┌───────────┴────────────┐                      uses ¦       ║
+║           └------------>│ MySettingPage          ├---------------------------┘       ║
+║                         ├────────────────────────┤                                   ║
+║                         │ Process(RenderContext) │                                   ║
+║                         │ Dispose()              │                                   ║
+║                         └────────────────────────┘                                   ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 When the settings page is generated, the class is enriched with meta information by attributes.
@@ -3600,65 +3711,80 @@ application. The configuration of the topics can be done via definition classes 
 `WebExpress.WebApp`.
 
 ```
-                                            ┌────────────────────────────┐
-                                            │ <<Interface>>              │
-┌────────────────────────────────────┐      │ IComponentHub              │
-│ <<Interface>>                      │    1 ├────────────────────────────┤
-│ IComponentManagerPlugin            │ ┌────┤ ThemeManager:IThemeManager │
-├────────────────────────────────────┤ │    │ …                          │
-│ Register(IPluginContext)           │ │    └────────────────────────────┘
-│ Remove(IPluginContext)             │ │
-└────────────────────────────────────┘ │
-                  ▲                    │
-      ┌-----------┘                    │
-      ¦                                │
-      ¦                              1 V
-┌─────┴───────────────────────────────────────┐
-│ ThemeManager                                │        ┌──────────────────────────────┐
-├─────────────────────────────────────────────┤      * │ <<Interface>>                │
-│ AddTheme:Event                              │   ┌───>│ IThemeContext                │
-│ RemoveTheme:Event                           │   │    ├──────────────────────────────┤
-├─────────────────────────────────────────────┤ 1 │    │ PluginContext:IPluginContext │
-│ Themes:IEnumerable<IThemeContext>           ├───┘    │ ModuleContext:IModuleContext │
-├─────────────────────────────────────────────┤        └──────────────────────────────┘
-│ Initialization(IHttpServerContext)          │                        ∧
-│ Register(IPluginContext)                    ├--------┐               ¦
-│ Remove(IPluginContext)                      │        ¦               ¦
-└─────────────────────────────────────────────┘        ¦               ¦
-                                                       ¦               ¦
-                                                       ¦               ¦
- ┌──────────────────────────────────────────┐          ¦               ¦
- │ <<Interface>>                            │          ¦               ¦
- │ ITheme                                   │          ¦               ¦
- ├──────────────────────────────────────────┤          ¦               ¦
- │ HeaderBackground:PropertyColorBackground │          ¦               ¦
- │ HeaderTitle:PropertyColorText            │          ¦               ¦
- │ HeaderNavigationLink:PropertyColorText   │          ¦               ¦
- │ …                                        │          ¦               ¦
- ├──────────────────────────────────────────┤          ¦               ¦
- └──────────────────────────────────────────┘          ¦               ¦
-                       ▲                               ¦               ¦
-                       ¦                               ¦               ¦
-                       ¦                               ¦               ¦
- ┌─────────────────────┴────────────────────┐   create ¦               ¦
- │ MyTheme                                  │<---------┘               ¦
- ├──────────────────────────────────────────┤                          ¦
- │ HeaderBackground:PropertyColorBackground │                          ¦
- │ HeaderTitle:PropertyColorText            │                          ¦
- │ HeaderNavigationLink:PropertyColorText   │                          ¦
- │ …                                        │                          ¦
- ├──────────────────────────────────────────┤                   uses   ¦
- │                                          ├--------------------------┘
- └──────────────────────────────────────────┘
+╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌────────────────────────────┐                    ┌────────────────┐               ║
+║   │ <<Interface>>              │                    │ <<Interface>>  │               ║
+║   │ IComponentHub              │                    │ IContext       │               ║
+║   ├────────────────────────────┤ 1                  ├────────────────┤               ║
+║   │ ThemeManager:IThemeManager ├─┐                  └────────────────┘               ║
+║   │ …                          │ │                          ▲                        ║
+║   └────────────────────────────┘ │                          ¦                        ║
+║                                  │                          ¦                        ║
+║   ┌───────────────────┐          │       ┌──────────────────┴─────────────────────┐  ║
+║   │ <<Interface>>     │          │       │ <<Interface>>                          │  ║
+║   │ IComponentManager │          │       │ IThemeContext                          │  ║
+║   ├───────────────────┤          │       ├────────────────────────────────────────┤  ║
+║   └───────────────────┘          │       │ PluginContext:IPluginContext           │  ║
+║             ▲                    │       │ ApplicationContext:IApplicationContext │  ║
+║             ¦                    │       └────────────────────────────────────────┘  ║
+║             ¦                    │              * ∧                   ∧              ║
+║             ¦                  1 V                │                   ¦              ║
+║       ┌─────┴──────────────────────────────┐      │                   ¦              ║
+║       │ <<Interface>>                      │      │                   ¦              ║
+║   ┌---┤ IThemeManager                      │      │                   ¦              ║
+║   ¦   ├────────────────────────────────────┤      │                   ¦              ║
+║   ¦   │ AddTheme:Event                     │      │                   ¦              ║
+║   ¦   │ RemoveTheme:Event                  │      │                   ¦              ║
+║   ¦   ├────────────────────────────────────┤ 1    │                   ¦              ║
+║   ¦   │ Themes:IEnumerable<IThemeContext>  ├──────┘                   ¦              ║
+║   ¦   ├────────────────────────────────────┤                          ¦              ║
+║   ¦   └────────────────────────────────────┘                          ¦              ║
+║   ¦                                                                   ¦              ║
+║   ¦                       ┌────────────────┐                          ¦              ║
+║   ¦                       │ <<Interface>>  │                          ¦              ║
+║   ¦                       │ IComponent     │                          ¦              ║
+║   ¦                       ├────────────────┤                          ¦              ║
+║   ¦                       └────────────────┘                          ¦              ║
+║   ¦                               ▲                                   ¦              ║
+║   ¦                               ¦                                   ¦              ║
+║   ¦                               ¦                                   ¦              ║
+║   ¦         ┌─────────────────────┴────────────────────┐              ¦              ║
+║   ¦         │ <<Interface>>                            │              ¦              ║
+║   ¦         │ ITheme                                   │              ¦              ║
+║   ¦         ├──────────────────────────────────────────┤              ¦              ║
+║   ¦         │ HeaderBackground:PropertyColorBackground │              ¦              ║
+║   ¦         │ HeaderTitle:PropertyColorText            │              ¦              ║
+║   ¦         │ HeaderNavigationLink:PropertyColorText   │              ¦              ║
+║   ¦         │ …                                        │              ¦              ║
+║   ¦         ├──────────────────────────────────────────┤              ¦              ║
+║   ¦         └──────────────────────────────────────────┘              ¦              ║
+║   ¦                               ▲                                   ¦              ║
+║   ¦                               ¦                                   ¦              ║
+╚═══¦═══════════════════════════════¦═══════════════════════════════════¦══════════════╝
+    ¦                               ¦                                   ¦
+╔MyPlugin═══════════════════════════¦═══════════════════════════════════¦══════════════╗
+║   ¦                               ¦                                   ¦              ║
+║   ¦ create  ┌─────────────────────┴────────────────────┐         uses ¦              ║
+║   └-------->│ MyTheme                                  │--------------┘              ║
+║             ├──────────────────────────────────────────┤                             ║
+║             │ HeaderBackground:PropertyColorBackground │                             ║
+║             │ HeaderTitle:PropertyColorText            │                             ║
+║             │ HeaderNavigationLink:PropertyColorText   │                             ║
+║             │ …                                        │                             ║
+║             ├──────────────────────────────────────────┤                             ║
+║             │                                          │                             ║
+║             └──────────────────────────────────────────┘                             ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-A color scheme is defined in a class that implements the ITheme interface and is associated with an application.
+A color scheme is defined in a class that implements the `ITheme` interface and is associated with an application.
 
 ```csharp
-[Name("MyLayout")]
+[Name("MyTheme")]
 [Description("example")]
 [Image("/assets/img/mytheme.png")]
-[Application<MyApplication>]
 public sealed class MyTheme : ITheme
 {
     public static PropertyColorBackground HeaderBackground => 
@@ -3679,8 +3805,6 @@ The following attributes are available:
 |Name        |String |1            |No       |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
 |Description |String |1            |Yes      |The description of the topic. This can be a key to internationalization.
 |Image       |String |1            |Yes      |Link to an image that visually represents the topic.
-|Application |String |n            |No       |A specific ApplicationId, regular expression, or * for any application.
-|            |Type   |             |         |The class of the application.
 
 # Example
 The classic example of the Hello World application is intended to show in the simplest possible way which instructions and components are needed for a complete program.
@@ -3688,29 +3812,26 @@ The classic example of the Hello World application is intended to show in the si
 ```csharp
 using WebExpress.Core.WebAttribute;
 using WebExpress.Core.WebApplication;
-using WebExpress.Core.WebModule;
 using WebExpress.Core.WebPlugin;
 using WebExpress.Core.WebPage;
 
 namespace Sample
 {
+    [Application<MyApplication>]
     public sealed class MyPlugin : IPlugin
     {
+        public void Run() {}
+        public void Dispose() {}
     }
 
     public sealed class MyApplication : IApplication
     {
+        public void Run() {}
+        public void Dispose() {}
     }
 
-    [Application<MyApplication>]
-    public sealed class MyModule : IModule
-    {
-    }
-
-    [Module<MyModule>]
     public sealed class Home : IPage
     {
-        public Home () { }
         public void Render(IRenderContext context)
         {
             var control = new ControlText(){Text = "Hello World!"};
