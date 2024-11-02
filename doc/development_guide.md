@@ -811,8 +811,8 @@ the presentation and functionality of the application.
 These assets are added as embedded resources in the plugin and are converted into endpoints by the `AssetManager`, which 
 are then integrated into the application's sitemap.
 The `AssetManager` is a central component responsible for managing and providing static resources within the application. It 
-takes on the task of collecting, organizing, and converting the embedded resources from plugins, WebExpress.WebApp, and 
-WebExpress.UI into endpoints that can be used by the application. The `AssetManager` ensures that the resources are processed 
+takes on the task of collecting, organizing, and converting the embedded resources from plugins, `WebExpress.WebApp`, and 
+`WebExpress.UI` into endpoints that can be used by the application. The `AssetManager` ensures that the resources are processed 
 in a defined order to avoid conflicts and maintain the consistency of the provided resources.
 
 The `AssetManager` builds the asset endpoints in the following order:
@@ -825,35 +825,37 @@ The following asset types are supported by the `WebExpress` system:
 
 | Type  | Description           
 |-------|-----------------------
-| .bmp  | BMP Image             
-| .css  | CSS Stylesheet        
-| .csv  | CSV File              
-| .doc  | Microsoft Word Doc    
-| .docx | Microsoft Word Doc    
-| .gif  | GIF Image             
-| .htm  | HTML File             
-| .html | HTML File             
-| .ico  | Icon File             
-| .jpeg | JPEG Image            
-| .jpg  | JPEG Image            
-| .json | JSON File             
-| .mp3  | MP3 Audio             
-| .mp4  | MP4 Video             
-| .pdf  | PDF Document          
-| .png  | PNG Image             
+| .bmp  | BMP image             
+| .css  | CSS stylesheet        
+| .csv  | CSV file               
+| .doc  | Microsoft Word    
+| .docx | Microsoft Word    
+| .gif  | GIF image             
+| .htm  | HTML file             
+| .html | HTML file             
+| .ico  | Icon file             
+| .jpeg | JPEG image            
+| .jpg  | JPEG image      
+| .js   | Java script file     
+| .json | JSON file             
+| .mp3  | MP3 audio             
+| .mp4  | MP4 video             
+| .pdf  | PDF document          
+| .png  | PNG image             
 | .ppt  | Microsoft PowerPoint  
-| .svg  | SVG Image             
-| .txt  | Text File             
-| .wav  | WAV Audio             
+| .svg  | SVG image             
+| .txt  | Text file             
+| .wav  | WAV audio             
 | .xls  | Microsoft Excel       
 | .xlx  | Microsoft Excel       
-| .xml  | XML File              
-| .zip  | ZIP Archive           
+| .xml  | XML file              
+| .zip  | ZIP archive           
 
-
-If an asset appears multiple times, the first occurrence is used. This ensures that the desired version of the asset is 
+If an asset appears multiple times, the last occurrence is used. This ensures that the desired version of the asset is 
 used. All assets are placed under the "assets" path, which is located within the main directory of the application. This 
-facilitates the organization and access to the necessary resources.
+facilitates the organization and access to the necessary resources. It is important to note that the size of embedded 
+resources increases the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, 
+large files should not be delivered as embedded resources.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1121,9 +1123,9 @@ interaction of the classes involved is illustrated in the following figure:
 ║  │                               Δ                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
-║  │                    * ┌────────┴─────────┐                               ¦   │     ║
-║  └─────────────────────►│ <<Interface>>    │ *                             ¦   │     ║
-║                         │ IResourceContext │◄──────────────────────────────────┘     ║
+║  │                      ┌────────┴─────────┐                               ¦   │     ║
+║  │                    * │ <<Interface>>    │ *                             ¦   │     ║
+║  └─────────────────────►│ IResourceContext │◄──────────────────────────────────┘     ║
 ║                         ├──────────────────┤                               ¦         ║
 ║                         └──────────────────┘                               ¦         ║
 ║                                                                            ¦         ║
@@ -1274,9 +1276,9 @@ in the `RenderContext`, is responsible for the display of the page.
 ║   │                                 Δ                                 ¦         │    ║
 ║   │                                 ¦                                 ¦         │    ║
 ║   │                                 ¦                                 ¦         │    ║
-║   │                * ┌──────────────┴─────────────┐                   ¦         │    ║
-║   └─────────────────►│ <<Interface>>              │ *                 ¦         │    ║
-║                      │ IPageContext               │◄────────────────────────────┘    ║
+║   │                  ┌──────────────┴─────────────┐                   ¦         │    ║
+║   │                * │ <<Interface>>              │ *                 ¦         │    ║
+║   └─────────────────►│ IPageContext               │◄────────────────────────────┘    ║
 ║                      ├────────────────────────────┤                   ¦              ║
 ║                      │ PageTitle:String           │                   ¦              ║
 ║                      │ Scopes:IEnumerable<String> │                   ¦              ║
