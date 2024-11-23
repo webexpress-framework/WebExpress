@@ -164,7 +164,7 @@ and elements are illustrated in the following figure:
 ```
 
 ## Component model
-The components of `WebExpress` and its applications are centrally managed by ComponentManagers in the `ComponentHub`.
+The components of `WebExpress` and its applications are centrally managed in the `ComponentHub`.
 The following component managers are available in `WebExpress`:
 
 |Component                   |Description
@@ -187,7 +187,7 @@ The following component managers are available in `WebExpress`:
 |IdentityManager             |Users or technical objects that are used for identity and access management.
 |SettingPageManager          |Manages the settings of the application.
 
-In addition, you can create your own components and register them in the `ComponentManager`.
+In addition, you can create your own components and register them in the `ComponentHub`.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2930,7 +2930,7 @@ public class DataType : IIndexItem
     public string Text { get; set;}
 } 
 
-ComponentManager.GetComponent<IndexManager>().Register<DataType>();
+WebEx.ComponentHub.GetComponent<IndexManager>().Register<DataType>();
 ```
 
 The reverse index is built by using the `ReBuild` method for all objects or `Add` for an object.
@@ -2942,13 +2942,13 @@ var records = new []
     new DataType(){ Id=1, Text="lorem scelerisque ornare" } 
 };
 
-ComponentManager.GetComponent<IndexManager>().ReIndex(records);
+WebEx.ComponentHub.GetComponent<IndexManager>().ReIndex(records);
 ```
 
 To access the reverse index, WQL (see below) is used.
 
 ```csharp
-var wql = ComponentManager.GetComponent<IndexManager>().ExecuteWql("Text ~ "lorem"");
+var wql = WebEx.ComponentHub.GetComponent<IndexManager>().ExecuteWql("Text ~ \"lorem\"");
 var res = wql?.Apply();
 ```
 
