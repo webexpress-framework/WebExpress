@@ -951,7 +951,6 @@ to provide and support content and functionalities within an application.
 ```csharp
 [Segment("E")]
 [ContextPath("/C/D")]
-[Scope<ScopeGeneral>]
 [Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
 public sealed class MyResource : IResource
@@ -1197,7 +1196,7 @@ The following attributes are available:
 |ContextPath     |String            |1            |Yes      |The URI path from the Application to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
 |Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Scope           |`IScope`          |n            |Yes      |The scope of the resource
+|Scope           |`IScope`          |n            |Yes      |The scope of the page.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
@@ -3015,12 +3014,12 @@ user account can be in one of two states, `Active` and `Deactivated`. If the eve
 Entities (people, technical objects, etc.) have one or more identities, which distinguishes them from other entities. 
 An identity is used for identification and consists of a collection of attributes (properties e.g. name, password), which 
 individualizes an entity. Identities can be grouped according to certain characteristics. Furthermore, each group can be 
-assigned one or more roles (e.g. administrator, programmer). The roles determine access to identity resources. In the 
+assigned one or more roles (e.g. administrator, programmer). The roles determine access to identity permissions. In the 
 following figure, the concept of identity is defined in terms of a UML model.
 
 ```
   O   1   *  ┌────────────┐ *    * ┌─────────┐ *    * ┌────────┐ *    * ┌────────────┐
- /░\ ───────►│  Identity  ├───────►│  Group  ├───────►│  Role  ├───────►│  Resource  │
+ /░\ ───────►│  Identity  ├───────►│  Group  ├───────►│  Role  ├───────►│ Permission │
  /‾\         └─────┬──────┘        └─────────┘        └────────┘        └────────────┘
 Entity           1 │
                    │
@@ -3045,109 +3044,150 @@ hard-implementing them.
 ║         │ …                                │           │                             ║
 ║         └──────────────────────────────────┘           │                             ║
 ║                                                        │                             ║
-║                ┌──────────────────────────┐            │                             ║
-║                │ <<Interface>>            │            │      ┌─────────────────┐    ║
-║                │ IComponentManagerPlugin  │            │      │ <<Enumeration>> │    ║
-║                ├──────────────────────────┤            │      │ Access          │    ║
-║                │ Register(IPluginContext) │            │      ├─────────────────┤    ║
-║                │ Remove(IPluginContext)   │            │      │ Read            │    ║
-║                └──────────────────────────┘            │      │ Write           │    ║
-║                            Δ                           │      │ Execute         │    ║
-║                        ┌---┘                           │      └─────────────────┘    ║
-║                        ¦                               │             1 ▲             ║
-║                        ¦                             1 ▼               │             ║
-║                ┌───────┴───────────────────────────────────────────┐   └────────┐    ║
-║                │ <<Interface>>                                     │            │    ║
-║         ┌------┤ IIdentityManager                                  │            │    ║
-║         ¦      ├───────────────────────────────────────────────────┤            │    ║
-║         ¦      │ AddDomain:Event                                   │            │    ║
-║         ¦      │ RemoveDomain:Event                                │            │    ║
-║         ¦      ├───────────────────────────────────────────────────┤ 1          │    ║
-║         ¦      │ Jobs:IEnumerable<IIdentityDomain>                 ├───┐        │    ║
-║         ¦      ├───────────────────────────────────────────────────┤   │        │    ║
-║         ¦      │ GetIdentityDomain(IPluginContext):IIdentityDomain │   │        │    ║
-║         ¦      └───────────────────────────────────────────────────┘   │        │    ║
-║         ¦                                                              │        │    ║
-║         ¦          ┌──────────────────────────────────────────┐        │        │    ║
-║         ¦          │ <<Interface>>                            │ *      │        │    ║
-║         ¦          │ IIdentityDomain                          │◄───────┘        │    ║
-║         ¦          ├──────────────────────────────────────────┤                 │    ║
-║         ¦          │ PluginContext:IPluginContext             │                 │    ║
-║         ¦          │ ApplicationContext:IApplicationContext   │                 │    ║
-║         ¦          │ Identities:IEnumerable<IIdentity>        │                 │    ║
-║         ¦          │ Groups:IEnumerable<IIdentityGroup>       │                 │    ║
-║         ¦          │ Roles:IEnumerable<IIdentityRole>         │                 │    ║
-║         ¦          │ Resources:IEnumerable<IIdentityResource> │                 │    ║
-║         ¦          ├──────────────────────────────────────────┤                 │    ║
-║         ¦          │ AddIdentity(IIdentity)                   │                 │    ║
-║         ¦          │ AddGroup(IIdentityGroup)                 │                 │    ║
-║         ¦          │ RemoveIdentity(IIdentity)                │                 │    ║
-║         ¦          │ RemoveGroup(IIdentityGroup)              │                 │    ║
-║         ¦          └───┬──────────┬───────────┬──────────┬────┘                 │    ║
-║ ┌-------┘            1 │        1 │         1 │        1 │                      │    ║
-║ ¦              ┌───────┘          │           │          └─────────────┐        │    ║
-║ ¦              │                  │           └───┐                    │        │    ║
-║ ¦              │               ┌──┘               │                    │        │    ║
-║ ¦            * ▼               │                * ▼                    │        │    ║
-║ ¦    ┌────────────────────┐    │          ┌───────────────┐            │        │    ║
-║ ¦    │ <<Interface>>      │    │          │ <<Interface>> │            │        │    ║
-║ ¦    │ IIdentity          │    │          │ IIdentityRole │            │        │    ║
-║ ¦    ├────────────────────┤    │          ├───────────────┤            │        │    ║
-║ ¦    │ Id:Guid            │    │          │ Id:Guid       │            │        │    ║
-║ ¦    │ Name:String        │    │          │ Name:String   │ 1          │        │    ║
-║ ¦    │ State:AccountState │    │          │ Access:Access ├────────────│────────┘    ║
-║ ¦    ├────────────────────┤    │          ├───────────────┤            │             ║
-║ ¦    │ Login()            │    │          └───────────────┘            │             ║
-║ ¦    │ Logout()           │    │                  Δ                    │             ║
-║ ¦    └────────────────────┘    │                  ¦                    │             ║
-║ ¦              Δ             * ▼                  ¦                  * ▼             ║
-║ ¦              ¦      ┌────────────────┐          ¦        ┌───────────────────┐     ║
-║ ¦              ¦      │ <<Interface>>  │          ¦        │ <<Interface>>     │     ║
-║ ¦              ¦      │ IIdentityGroup │          ¦        │ IIdentityResource │     ║
-║ ¦              ¦      ├────────────────┤          ¦        ├───────────────────┤     ║
-║ ¦              ¦      │ Id:Guid        │          ¦        │ Id:Guid           │     ║
-║ ¦              ¦      │ Name:String    │          ¦        │ Name:String       │     ║
-║ ¦              ¦      ├────────────────┤          ¦        ├───────────────────┤     ║
-║ ¦              ¦      └────────────────┘          ¦        └───────────────────┘     ║
-║ ¦              ¦              Δ                   ¦                  Δ               ║
-║ ¦  create      ¦              ¦                   ¦                  ¦               ║
-║ └--------------¦--------------¦-------------┬-----¦----------┐       ¦               ║
-║                ¦              ¦             ¦     ¦          ¦       ¦               ║
-╚════════════════¦══════════════¦═════════════¦═════¦══════════¦═══════¦═══════════════╝
-                 ¦              ¦             ¦     ¦          ¦       ¦     
-╔MyPlugin════════¦══════════════¦═════════════¦═════¦══════════¦═══════¦═══════════════╗
-║                ¦              ¦             ¦     ¦          ¦       ¦               ║
-║                ¦              ¦             ▼     ¦          ¦       ¦               ║
-║      ┌─────────┴──────────┐   ¦          ┌────────┴───────┐  ¦       ¦               ║
-║      │ MyIdentity         │   ¦          │ MyIdentityRole │  ¦       ¦               ║
-║      ├────────────────────┤   ¦          ├────────────────┤  ¦       ¦               ║
-║      │ Id:Guid            │   ¦          │ Id:Guid        │  ¦       ¦               ║
-║      │ Name:String        │   ¦          │ Name:String    │  ¦       ¦               ║
-║      │ Password:String    │   ¦          │ Access:Access  │  ¦       ¦               ║
-║      │ State:AccountState │   ¦          ├────────────────┤  ¦       ¦               ║
-║      ├────────────────────┤   ¦          └────────────────┘  ¦       ¦               ║
-║      │ Login()            │   ¦                              ¦       ¦               ║
-║      │ Logout()           │   ¦                              ¦       ¦               ║
-║      └────────────────────┘   ¦                              ¦       ¦               ║
-║                               ¦                              ▼       ¦               ║
-║                       ┌───────┴─────────┐                 ┌──────────┴─────────┐     ║
-║                       │ MyIdentityGroup │                 │ MyIdentityResource │     ║
-║                       ├─────────────────┤                 ├────────────────────┤     ║
-║                       │ Id:Guid         │                 │ Id:Guid            │     ║
-║                       │ Name:String     │                 │ Name:String        │     ║
-║                       ├─────────────────┤                 ├────────────────────┤     ║
-║                       └─────────────────┘                 └────────────────────┘     ║
+║                  ┌───────────────────┐                 │                             ║
+║                  │ <<Interface>>     │                 │                             ║
+║                  │ IComponentManager │                 │                             ║
+║                  ├───────────────────┤                 │                             ║
+║                  └───────────────────┘                 │                             ║
+║                            Δ                           │                             ║
+║                          ┌-┘                           │                             ║
+║                          ¦                             │                             ║
+║                          ¦                           1 ▼                             ║
+║                  ┌───────┴─────────────────────────────────────┐                     ║
+║                  │ <<Interface>>                               │                     ║
+║ ┌----------------┤ IIdentityManager                            │                     ║
+║ ¦                ├─────────────────────────────────────────────┤                     ║
+║ ¦                │ AddDomain:Event                             │                     ║
+║ ¦                │ RemoveDomain:Event                          │                     ║
+║ ¦                ├─────────────────────────────────────────────┤                     ║
+║ ¦                │ Identities:IEnumerable<IIdentity>           │                     ║
+║ ¦                │ Groups:IEnumerable<IIdentityGroup>          │                     ║
+║ ¦                │ Roles:IEnumerable<IIdentityRole>            │                     ║
+║ ¦                │ Permission:IEnumerable<IIdentityPermission> │                     ║
+║ ¦                ├─────────────────────────────────────────────┤                     ║
+║ ¦                │ AddIdentity(IIdentity)                      │                     ║
+║ ¦                │ AddGroup(IIdentityGroup)                    │                     ║
+║ ¦                │ RemoveIdentity(IIdentity)                   │                     ║
+║ ¦                │ RemoveGroup(IIdentityGroup)                 │                     ║
+║ ¦                └─────┬──────────┬───────────┬──────────┬─────┘                     ║
+║ ¦                    1 │        1 │         1 │        1 │                           ║
+║ ¦              ┌───────┘          │           │          └─────────────┐             ║
+║ ¦              │                  │           │                        │             ║
+║ ¦              │                  └────┐      │                        │             ║
+║ ¦            * ▼                       │      └───────────┐            │             ║
+║ ¦  ┌───────────────────────────────┐   │                  │            │             ║
+║ ¦  │ <<Interface>>                 │   │                  │            │             ║
+║ ¦  │ IIdentity                     │   │                  │            │             ║
+║ ¦  ├───────────────────────────────┤   │                  │            │             ║
+║ ¦  │ Id:Guid                       │   │                  │            │             ║
+║ ¦  │ Name:String                   │   │                  │            │             ║
+║ ¦  │ EMail:String                  │   │                  │            │             ║
+║ ¦  │ State:AccountState            │   │                  │            │             ║
+║ ¦  │ Groups:                       │   │                  │            │             ║
+║ ¦  │   IEnumerable<IIdentityGroup> │   │                  │            │             ║
+║ ¦  ├───────────────────────────────┤   │                  │            │             ║
+║ ¦  │ Login()                       │   │                  │            │             ║
+║ ¦  │ Logout()                      │   │                  │            │             ║
+║ ¦  └───────────────────────────────┘   │                  │            │             ║
+║ ¦              Δ                       │                  │            │             ║
+║ ¦              ¦                     * ▼                  │            │             ║
+║ ¦              ¦    ┌──────────────────────────────┐      │            │             ║
+║ ¦              ¦    │ <<Interface>>                │      │            │             ║
+║ ¦              ¦    │ IIdentityGroup               │      │            │             ║
+║ ¦              ¦    ├──────────────────────────────┤      │            │             ║
+║ ¦              ¦    │ Id:Guid                      │      │            │             ║
+║ ¦              ¦    │ Name:String                  │      │            │             ║
+║ ¦              ¦    │ Roles:                       │      │            │             ║
+║ ¦              ¦    │   IEnumerable<IIdentityRole> │      │            │             ║
+║ ¦              ¦    ├──────────────────────────────┤      │            │             ║
+║ ¦              ¦    └──────────────────────────────┘      │            │             ║
+║ ¦              ¦         Δ                                │            │             ║
+║ ¦              ¦         ¦                                │            │             ║
+║ ¦              ¦         ¦                              * ▼            │             ║
+║ ¦              ¦         ¦   ┌───────────────────────────────────┐     │             ║
+║ ¦              ¦         ¦   │ <<Interface>>                     │     │             ║
+║ ¦              ¦         ¦   │ IIdentityRole                     │     │             ║
+║ ¦              ¦         ¦   ├───────────────────────────────────┤     │             ║
+║ ¦              ¦         ¦   │ Id:String                         │     │             ║
+║ ¦              ¦         ¦   │ Name:String                       │     │             ║
+║ ¦              ¦         ¦   │ Description:String                │     │             ║
+║ ¦              ¦         ¦   │ Permissions:                      │     │             ║
+║ ¦              ¦         ¦   │  IEnumerable<IIdentityPermission> │     │             ║
+║ ¦              ¦         ¦   ├───────────────────────────────────┤     │             ║
+║ ¦              ¦         ¦   └───────────────────────────────────┘     │             ║
+║ ¦              ¦         ¦                      Δ                    * ▼             ║
+║ ¦              ¦         ¦                      ¦          ┌─────────────────────┐   ║
+║ ¦              ¦         ¦                      ¦          │ <<Interface>>       │   ║
+║ ¦              ¦         ¦                      ¦          │ IIdentityPermission │   ║
+║ ¦              ¦         ¦                      ¦          ├─────────────────────┤   ║
+║ ¦              ¦         ¦                      ¦          │ Id:String           │   ║
+║ ¦              ¦         ¦                      ¦          │ Name:String         │   ║
+║ ¦              ¦         ¦                      ¦          │ Description:String  │   ║
+║ ¦              ¦         ¦                      ¦          ├─────────────────────┤   ║
+║ ¦              ¦         └-------------┐        ¦          └─────────────────────┘   ║
+║ ¦              ¦                       ¦        ¦                    Δ               ║
+║ ¦              ¦                       ¦        ¦                    ¦               ║
+╚═¦══════════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╝
+  ¦              ¦                       ¦        ¦                    ¦     
+╔MyPlugin════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╗
+║ ¦              ¦                       ¦        ¦                    ¦               ║
+║ ¦  ┌───────────┴───────────────────┐   ¦        ¦                    └-┐             ║
+║ ¦  │ MyIdentity                    │   ¦        ¦                      ¦             ║
+║ ¦  ├───────────────────────────────┤   ¦        └---------┐            ¦             ║
+║ ¦  │ Id:Guid                       │   ¦                  ¦            ¦             ║
+║ ¦  │ Name:String                   │   ¦                  ¦            ¦             ║
+║ ¦  │ EMail:String                  │   ¦                  ¦            ¦             ║
+║ ¦  │ State:AccountState            │1  ¦                  ¦            ¦             ║
+║ ¦  │ Groups:                       ├───¦─────┐            ¦            ¦             ║
+║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │            ¦            ¦             ║
+║ ¦  ├───────────────────────────────┤   ¦     │            ¦            ¦             ║
+║ ¦  │ Login()                       │   ¦     │            ¦            ¦             ║
+║ ¦  │ Logout()                      │   ¦     │            ¦            ¦             ║
+║ ¦  └───────────────────────────────┘   ¦     │            ¦            ¦             ║
+║ ¦                                      ¦     │            ¦            ¦             ║
+║ ¦                                    * ¦   * ▼            ¦            ¦             ║
+║ ¦                   ┌──────────────────┴───────────┐      ¦            ¦             ║
+║ ¦                   │ MyIdentityGroup              │      ¦            ¦             ║
+║ ¦                   ├──────────────────────────────┤      ¦            ¦             ║
+║ ¦                   │ Id:Guid                      │      ¦            ¦             ║
+║ ¦                   │ Name:String                  │1     ¦            ¦             ║
+║ ¦                   │ Roles:                       ├──┐   ¦            ¦             ║
+║ ¦                   │   IEnumerable<IIdentityRole> │  │   ¦            ¦             ║
+║ ¦                   ├──────────────────────────────┤  │   ¦            ¦             ║
+║ ¦                   └──────────────────────────────┘  │   ¦            ¦             ║
+║ ¦                                                     │   ¦            ¦             ║
+║ ¦                                                     │   ¦            ¦             ║
+║ ¦                                                   * ▼   ¦            ¦             ║
+║ ¦                 create     ┌────────────────────────────┴──────┐     ¦             ║
+║ ├---------------------------►│ MyIdentityRole                    │     ¦             ║
+║ ¦                            ├───────────────────────────────────┤     ¦             ║
+║ ¦                            │ Id:String                         │     ¦             ║
+║ ¦                            │ Name:String                       │     ¦             ║
+║ ¦                            │ Description:String                │1    ¦             ║
+║ ¦                            │ Permissions:                      ├─────¦────┐        ║
+║ ¦                            │  IEnumerable<IIdentityPermission> │     ¦    │        ║
+║ ¦                            ├───────────────────────────────────┤     ¦    │        ║
+║ ¦                            └───────────────────────────────────┘     ¦    │        ║
+║ ¦                                                                      ¦  * ▼        ║
+║ ¦                                             create       ┌───────────┴──────────┐  ║
+║ └---------------------------------------------------------►│ MyIdentityPermission │  ║
+║                                                            ├──────────────────────┤  ║
+║                                                            │ Id:String            │  ║
+║                                                            │ Name:String          │  ║
+║                                                            │ Description:String   │  ║
+║                                                            ├──────────────────────┤  ║
+║                                                            └──────────────────────┘  ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-WebExpress provides the following default groups:
+`WebExpress` provides the following default groups:
 
 |Group |Description
 |------|------------------
 |All   | All identities are members of the group.
 
-WebExpress provides the following roles:
+`WebExpress` provides the following roles:
 
 |Role                   |Description
 |-----------------------|----------------------
@@ -3160,50 +3200,46 @@ In addition to the listed standard roles, self-defined roles from definition cla
 
 ```csharp
 [Name("myRole")]
-[Role(IdentityRoleDefault.Authenticated)]
+[Permission<MyIdentityPermission>()]
 public sealed class MyIdentityRole : IIdentityRole
-{
-}
-````
-
-The role definition classes have the following attributes:
-
-|Attribute   |Type    |Multiplicity |Optional |Description
-|------------|--------|-------------|---------|-------------
-|Id          |String  |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
-|Name        |String  |1            |No       |The human-readable name of the role or an internationalization key.
-|Description |String  |1            |Yes      |The description of the role. This can be a key to internationalization.
-|Role        |String  |1            |Yes      |Inherits the characteristics of the specified role.
-
-Identity resources are usually automatically discovered from the metadata of the web resources and web components and 
-assigned to roles. In addition, identity resources can also be created from definition classes.
-
-```csharp
-[Name("Reset password")]
-[Authorization(Permission.RW, IdentityRoleDefault.Authenticated)]
-[Authorization(Permission.R, IdentityRoleDefault.Everyone)]
-public sealed class MyIdentityResource : IIdentityResource
 {
 }
 ```
 
-The identity resource definition classes have the following attributes:
+The role definition classes have the following attributes:
 
-|Attribute     |Type        |Multiplicity |Optional |Description
-|--------------|------------|-------------|---------|-------------
-|Id            |String      |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
-|Name          |String      |1            |No       |The human-readable name of the role or an internationalization key.
-|Description   |String      |1            |Yes      |The description of the role. This can be a key to internationalization.
-|Authorization |Int, String |1            |Yes      |Grants authority for a role (specifying the id).
+|Attribute   |Type                  |Multiplicity |Optional |Description
+|------------|----------------------|-------------|---------|-------------
+|Name        |String                |1            |No       |The human-readable name of the role or an internationalization key.
+|Description |String                |1            |Yes      |The description of the role. This can be a key to internationalization.
+|Permission  |`IIdentityPermission` |n            |Yes      |Inherits the characteristics of the specified permission.
+
+Permissions are specific rights or access rights that are assigned to one or more roles.
+
+```csharp
+[Name("Write content")]
+[Role<MyIdentityRole>()]
+public sealed class MyIdentityPermission : IIdentityPermission
+{
+}
+```
+
+The permission definition classes have the following attributes:
+
+|Attribute   |Type            |Multiplicity |Optional |Description
+|------------|----------------|-------------|---------|-------------
+|Name        |String          |1            |No       |The human-readable name of the permission or an internationalization key.
+|Description |String          |1            |Yes      |The description of the permission. This can be a key to internationalization.
+|Role        |`IIdentityRole` |n            |Yes      |Inherits the characteristics of the specified role.
 
 In the case of an authorization check (can an identity be accessed by an identity resource (e.g. page)), it must be 
-checked whether there is at least one transition (identity -> group -> role -> identity resource). This is done by the 
-function `CheckAccess: (Identity, Identity Resource, Right) > Bool ` of the `IdentityManager`. A return value 
+checked whether there is at least one transition (identity -> group -> role -> permission). This is done by the 
+function `CheckAccess: (Identity, Permission) > Bool ` of the `IdentityManager`. A return value 
 of `true` means that access can be made.
 
 ```
 ╔═══════════════════════════════════════════╗
-║ Determine requested resource or component ║
+║ Determine requested endpoint or component ║
 ╚═══════════════════════════════════════════╝
                      │ 
   ┌──────────────────┴──────────────────────────┐
@@ -3218,49 +3254,30 @@ of `true` means that access can be made.
   │                          │   Is current identity authenticated?    │        │
   │                      Yes │                                         │        │
   │                          ▼                                         │        │
-  │  ┌──────────────────────────────────────────────┐                  │        │
-  │  │ Determine Identity/Group/Role/Resource paths │                  │        │
-  │  └───────────────────────┬──────────────────────┘                  │        │
-  │                          │                                         │        │
-  │                 ┌────────┴──────────────────────────────────┐      │        │
+  │  ┌────────────────────────────────────────────────┐                │        │
+  │  │ Determine Identity/Group/Role/Permission paths │                │        │
+  │  └────────────────────────┬───────────────────────┘                │        │
+  │                           │                                        │        │
+  │                 ┌─────────┴─────────────────────────────────┐      │        │
   │                 │  Is there at least one path?              │      │        │
   │                 │                                        No │      │ No     │
   │                 │                                           ▼      ▼        │
-  └──────────┐      │                                       ┌──────────────┐    │
-             │      │                                       │    Type?     │    │
-             │      │                              resource │              │    │
-             │      │                                       ▼              │    │
-             │      │                               ┌──────────────┐       │    │
-             │      │                               │ Login dialog │       │    │
-             │      │                               └───────┬──────┘       │    │
-             │      │                                       │              │    │
-             │      │                        ┌──────────────┴──────────────│────┘
-             │      │                        │     Login successful?       │
-          No │      │ Yes                 No │                             │ component
-             ▼      ▼                        ▼                             ▼
+  └──────────┐      │                     ┌─────────────────┬──────────────┐    │
+             │      │                     │                 │    Type?     │    │
+             │      │                     │            page │              │    │
+             │      │                     │                 ▼              │    │
+             │      │                     │         ┌──────────────┐       │    │
+             │      │                     │         │ Login dialog │       │    │
+             │      │                     │         └───────┬──────┘       │    │
+             │      │                     │                 │              │    │
+             │      │                     │      ┌──────────┴──────────────│────┘
+             │      │                     │      │  Login successful?      │
+          No │      │ Yes        endpoint │   No │                         │ component
+             ▼      ▼                     ▼      ▼                         ▼
          ╔══════════════╗           ╔══════════════════╗           ╔════════════════╗
-         ║ Grant access ║           ║ Stautus page 403 ║           ║ Hide component ║
+         ║ Grant access ║           ║ Stautus page 401 ║           ║ Hide component ║
          ╚══════════════╝           ╚══════════════════╝           ╚════════════════╝
 ```
-
-During the authorization check, a distinction is made between the following types of access:
-
-|Value |Rights |Description
-|------|-------|------------------
-|7     |RWX    |Read, Write, Delete and Execute (Full Control)
-|6     |RW     |Reading and Writing
-|5     |RX     |Read and Execute
-|4     |R      |Read only
-|3     |WX     |Write, Delete and Run
-|2     |W      |Write only
-|1     |X      |Run only
-|0     |None   |None
-
-The rights have the following meanings:
-
-- read - The "read" right means that an identity resource can be opened for reading. The user who has this right can read the content, but cannot modify or delete it.
-- write - The "write" right allows the user to modify the content. As a result, he does not have the right to delete.
-- execute - The "execute" privilege allows a user to perform an action (e.g. start a process). In combination with the "write" right, the user is allowed to delete elements.
 
 # WebApp template
 The `WebExpress.WebApp.dll` package provides a template for creating business applications.
