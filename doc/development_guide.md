@@ -25,7 +25,7 @@ available as open source:
 ```
 The MIT License (MIT)
 
-Copyright (c) 2023 René Schwarzer
+Copyright (c) 2024 René Schwarzer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -151,7 +151,8 @@ and elements are illustrated in the following figure:
 ║                      ¦  ┌────┴─────┐        ┌────┴─────┐ ┌────┴─────┐ ┌────┴─────┐  ¦║
 ║                      ¦  │ Fragment │        │   Job    │ │ Endpoint │ │   Event  │  ¦║
 ║                      ¦  └──────────┘        └──────────┘ └──────────┘ └──────────┘  ¦║
-║                      ¦     * ▲        ┌------------------Δ  Δ  Δ  Δ                 ¦║
+║                      ¦     * ▲                           Δ  Δ  Δ  Δ                 ¦║
+║                      ¦       │        ┌------------------┘  │  │  │                 ¦║
 ║                      ¦       │        │           ┌---------┘  │  └--------┐        ¦║
 ║                      ¦       │   ┌────┴────┐ ┌────┴─────┐ ┌────┴─────┐ ┌───┴───┐    ¦║
 ║                      ¦       │   │ RestAPI │ │   Page   │ │ Resource │ │ Asset │    ¦║
@@ -3057,9 +3058,6 @@ hard-implementing them.
 ║                  │ <<Interface>>                               │                     ║
 ║ ┌----------------┤ IIdentityManager                            │                     ║
 ║ ¦                ├─────────────────────────────────────────────┤                     ║
-║ ¦                │ AddDomain:Event                             │                     ║
-║ ¦                │ RemoveDomain:Event                          │                     ║
-║ ¦                ├─────────────────────────────────────────────┤                     ║
 ║ ¦                │ Identities:IEnumerable<IIdentity>           │                     ║
 ║ ¦                │ Groups:IEnumerable<IIdentityGroup>          │                     ║
 ║ ¦                │ Roles:IEnumerable<IIdentityRole>            │                     ║
@@ -3069,6 +3067,9 @@ hard-implementing them.
 ║ ¦                │ AddGroup(IIdentityGroup)                    │                     ║
 ║ ¦                │ RemoveIdentity(IIdentity)                   │                     ║
 ║ ¦                │ RemoveGroup(IIdentityGroup)                 │                     ║
+║ ¦                │ Login(IApplicationContext,Login,Password)   │                     ║
+║ ¦                │ Logout(IApplicationContext)                 │                     ║
+║ ¦                │ ComputeHash(SecureString):String            │                     ║
 ║ ¦                └─────┬──────────┬───────────┬──────────┬─────┘                     ║
 ║ ¦                    1 │        1 │         1 │        1 │                           ║
 ║ ¦              ┌───────┘          │           │          └─────────────┐             ║
@@ -3097,8 +3098,7 @@ hard-implementing them.
 ║ ¦              ¦    ├──────────────────────────────┤      │            │             ║
 ║ ¦              ¦    │ Id:Guid                      │      │            │             ║
 ║ ¦              ¦    │ Name:String                  │      │            │             ║
-║ ¦              ¦    │ Roles:                       │      │            │             ║
-║ ¦              ¦    │   IEnumerable<IIdentityRole> │      │            │             ║
+║ ¦              ¦    │ Roles:IEnumerable<String>    │      │            │             ║
 ║ ¦              ¦    ├──────────────────────────────┤      │            │             ║
 ║ ¦              ¦    └──────────────────────────────┘      │            │             ║
 ║ ¦              ¦         Δ                                │            │             ║
@@ -3111,8 +3111,6 @@ hard-implementing them.
 ║ ¦              ¦         ¦   │ Id:String                         │     │             ║
 ║ ¦              ¦         ¦   │ Name:String                       │     │             ║
 ║ ¦              ¦         ¦   │ Description:String                │     │             ║
-║ ¦              ¦         ¦   │ Permissions:                      │     │             ║
-║ ¦              ¦         ¦   │  IEnumerable<IIdentityPermission> │     │             ║
 ║ ¦              ¦         ¦   ├───────────────────────────────────┤     │             ║
 ║ ¦              ¦         ¦   └───────────────────────────────────┘     │             ║
 ║ ¦              ¦         ¦                      Δ                    * ▼             ║
@@ -3151,8 +3149,7 @@ hard-implementing them.
 ║ ¦                   ├──────────────────────────────┤      ¦            ¦             ║
 ║ ¦                   │ Id:Guid                      │      ¦            ¦             ║
 ║ ¦                   │ Name:String                  │1     ¦            ¦             ║
-║ ¦                   │ Roles:                       ├──┐   ¦            ¦             ║
-║ ¦                   │   IEnumerable<IIdentityRole> │  │   ¦            ¦             ║
+║ ¦                   │ Roles:IEnumerable<String>    ├──┐   ¦            ¦             ║
 ║ ¦                   ├──────────────────────────────┤  │   ¦            ¦             ║
 ║ ¦                   └──────────────────────────────┘  │   ¦            ¦             ║
 ║ ¦                                                     │   ¦            ¦             ║
@@ -3163,12 +3160,10 @@ hard-implementing them.
 ║ ¦                            ├───────────────────────────────────┤     ¦             ║
 ║ ¦                            │ Id:String                         │     ¦             ║
 ║ ¦                            │ Name:String                       │     ¦             ║
-║ ¦                            │ Description:String                │1    ¦             ║
-║ ¦                            │ Permissions:                      ├─────¦────┐        ║
-║ ¦                            │  IEnumerable<IIdentityPermission> │     ¦    │        ║
-║ ¦                            ├───────────────────────────────────┤     ¦    │        ║
-║ ¦                            └───────────────────────────────────┘     ¦    │        ║
-║ ¦                                                                      ¦  * ▼        ║
+║ ¦                            │ Description:String                │     ¦             ║
+║ ¦                            ├───────────────────────────────────┤     ¦             ║
+║ ¦                            └───────────────────────────────────┘     ¦             ║
+║ ¦                                                                      ¦             ║
 ║ ¦                                             create       ┌───────────┴──────────┐  ║
 ║ └---------------------------------------------------------►│ MyIdentityPermission │  ║
 ║                                                            ├──────────────────────┤  ║
@@ -3984,13 +3979,14 @@ The following attributes are available:
 |Image       |String |1            |Yes      |Link to an image that visually represents the topic.
 
 # Example
-The classic example of the Hello World application is intended to show in the simplest possible way which instructions and components are needed for a complete program.
+The classic example of the Hello World application is intended to show in the simplest possible way which instructions and components are needed for a complete application.
 
 ```csharp
 using WebExpress.Core.WebAttribute;
 using WebExpress.Core.WebApplication;
 using WebExpress.Core.WebPlugin;
 using WebExpress.Core.WebPage;
+using WebExpress.WebUI.WebControl;
 
 namespace Sample
 {
@@ -4012,7 +4008,7 @@ namespace Sample
         public void Render(IRenderContext context)
         {
             var control = new ControlText(){Text = "Hello World!"};
-            return control.Render(new RenderContext(this));
+            return control.Render(context);
         }
     }
 }
