@@ -556,14 +556,14 @@ for "internationalization", where the number 18 stands for the 18 letters betwee
 
 ```csharp
 // Language, PluginId, Key
-var text = InternationalizationManager.I18N("de", "<PlginId>", "logout.button"); 
+var text = I18N.Translate("de", "<PlginId>", "logout.button"); 
 
 // Culture, PluginId:key
-var text = InternationalizationManager.I18N(culture, "<PlginId>:logout.button"); 
+var text = I18N.Translate(culture, "<PlginId>:logout.button"); 
 
 // Language, PluginId, Key, Placeholders for dynamic content in texts
 var user = "Max";
-var text = InternationalizationManager.I18N("de", "<PlginId>:welcome.message", user); 
+var text = I18N.Translate("de", "<PlginId>:welcome.message", user); 
 ```
 
 The `I18N` function works as follows:
@@ -574,7 +574,7 @@ The `I18N` function works as follows:
 If a key is not found, the I18N function returns the key itself by default. This can be replaced with a custom error message:
 
 ```csharp
-var text = InternationalizationManager.I18N("en", "<PluginId>", "non.existent.key") ??
+var text = I18N.Translate("en", "<PluginId>", "non.existent.key") ??
     "Translation not found";
 ```
 
@@ -1823,13 +1823,13 @@ instantiated and integrated into the resource. A section is a named area within 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║       ┌────────────────────────────────────┐                                         ║
-║       │ <<Interface>>                      │                                         ║
-║       │ IComponentHub                      │                                         ║
-║       ├────────────────────────────────────┤ 1                                       ║
-║       │ StatusPageManager:IFragmentManager ├─────┐                                   ║
-║       │ …                                  │     │                                   ║
-║       └────────────────────────────────────┘     │                                   ║
+║         ┌──────────────────────────────────┐                                         ║
+║         │ <<Interface>>                    │                                         ║
+║         │ IComponentHub                    │                                         ║
+║         ├──────────────────────────────────┤ 1                                       ║
+║         │ FragmentManager:IFragmentManager ├─────┐                                   ║
+║         │ …                                │     │                                   ║
+║         └──────────────────────────────────┘     │                                   ║
 ║                                                  │                                   ║
 ║              ┌───────────────────┐               │                                   ║
 ║              │ <<Interface>>     │               │                                   ║
@@ -1838,13 +1838,10 @@ instantiated and integrated into the resource. A section is a named area within 
 ║              └───────────────────┘               │                                   ║
 ║                       Δ                          │                                   ║
 ║                       ¦                          │                                   ║
-╚═══════════════════════¦══════════════════════════│═══════════════════════════════════╝
-                        ¦                          │
-╔WebExpress.UI══════════¦══════════════════════════│═══════════════════════════════════╗
-║                       ¦                          │                                   ║
 ║                       ¦                        1 ▼                                   ║
 ║               ┌───────┴──────────────────────────────────┐                           ║
-║               │ FragmentManager                          ├-----------------┐         ║
+║               │ <<Interface>>                            │                           ║
+║               │ IFragmentManager                         ├-----------------┐         ║
 ║               ├──────────────────────────────────────────┤                 ¦         ║
 ║               │ AddFragment:Event                        │                 ¦         ║
 ║               │ RemoveFragment:Event                     │                 ¦         ║
@@ -1909,8 +1906,7 @@ Fragments are derived from the `IFragment` interface and are identified by attri
 [Section("mysection")]
 [Order(0)]
 [Scope<ScopeGeneral>]
-[Authorization(Permission.RW, IdentityRoleDefault.Authenticated)]
-[Authorization(Permission.R, IdentityRoleDefault.Everyone)]
+[Permission<MyIdentityPermission>()]
 public sealed class MyFragment : IFragment
 {
 }
@@ -1920,28 +1916,12 @@ The following attributes are available:
 
 |Attribute     |Type         |Multiplicity |Optional |Description
 |--------------|-------------|-------------|---------|-----------------
-|Section       |String       |1            |No       |The section of the Web page where the fragment is rendered.
-|Order         |Int          |1            |Yes      |The order within the section. If no value is specified, the order "0" is set as the default.
+|Section       |`Section`    |n            |No       |The section of the Web page where the fragment is rendered.
 |Scope         |`IScope`     |n            |Yes      |The scope in which the fragment is valid.
-|Authorization |Int, String  |n            |Yes      |Grants authority to a role (specifying the id).       
+|Order         |Int          |1            |Yes      |The order within the section. If no value is specified, the order "0" is set as the default.
+|Permission    |`Permission` |n            |Yes      |Grants access to the fragment.       
 |Condition     |`ICondition` |1            |Yes      |Condition that must be met for the fragment to be available.
-|Cache         |-            |1            |Yes      |Determines whether the fragment is created once and reused each time it is called. This attribute is active only if the associated page also has the cache attribute. 
-
-If the fragments are to be created dynamically at runtime, it is necessary to create a class that implements `IFragmentDynamic`.
-
-```csharp
-[Section("section name")]
-[Scope<ScopeGeneral>]
-public sealed class MyFragment : IFragmentDynamic
-{
-    public IEnumerable<T> Create<T>() where T : IControl
-    {
-        return …;
-    }
-}
-```
-
-In the `Create` method, the fragments are instantiated.
+|Cache         |Bool         |1            |Yes      |Determines whether the fragment is created once and reused each time it is called. This attribute is active only if the associated page also has the cache attribute. 
 
 ## Controls
 Controls are units of the web page that are translated into HTML source code by rendering. A Web page consists 
@@ -3883,7 +3863,7 @@ application. The configuration of the topics can be done via definition classes 
 `WebExpress.WebApp`.
 
 ```
-╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
 ║   ┌────────────────────────────┐                    ┌────────────────┐               ║
 ║   │ <<Interface>>              │                    │ <<Interface>>  │               ║
