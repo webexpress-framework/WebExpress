@@ -1903,8 +1903,8 @@ instantiated and integrated into the resource. A section is a named area within 
 Fragments are derived from the `IFragment` interface and are identified by attributes:
 
 ```csharp
-[Section("mysection")]
 [Order(0)]
+[Section("mysection")]
 [Scope<ScopeGeneral>]
 [Permission<MyIdentityPermission>()]
 public sealed class MyFragment : IFragment
@@ -1917,7 +1917,7 @@ The following attributes are available:
 |Attribute     |Type         |Multiplicity |Optional |Description
 |--------------|-------------|-------------|---------|-----------------
 |Section       |`Section`    |n            |No       |The section of the Web page where the fragment is rendered.
-|Scope         |`IScope`     |n            |Yes      |The scope in which the fragment is valid.
+|Scope         |`IScope`     |n            |Yes      |The scope in which the fragment is valid. If no value is specified, the scope `IScope` is set as the default.
 |Order         |Int          |1            |Yes      |The order within the section. If no value is specified, the order "0" is set as the default.
 |Permission    |`Permission` |n            |Yes      |Grants access to the fragment.       
 |Condition     |`ICondition` |1            |Yes      |Condition that must be met for the fragment to be available.
