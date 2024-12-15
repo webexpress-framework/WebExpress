@@ -1339,7 +1339,6 @@ This ensures each page is correctly rendered and sent to the client.
 ║   │ ApplicationContext:IApplicationContext │                                         ║
 ║   │ Request:Request                        │                                         ║
 ║   │ Scopes:IEnumerable<string>             │                                         ║
-║   │ VisualTree:IVisualTree                 │                                         ║
 ║   └────────────────────────────────────────┘                                         ║
 ║                       Δ                                                              ║
 ║                       ¦                                                              ║
@@ -1351,11 +1350,9 @@ This ensures each page is correctly rendered and sent to the client.
 ║   │ ApplicationContext:IApplicationContext │                                         ║
 ║   │ Request:Request                        │                                         ║
 ║   │ Scopes:IEnumerable<string>             │                                         ║
-║   │ VisualTree:IVisualTree                 │                                         ║
 ║   ├────────────────────────────────────────┤                                         ║
 ║   │ RenderContext(ApplicationContext,      │                                         ║
 ║   │   Request,Scopes)                      │                                         ║
-║   │ CreateVisualTree():IVisualTree         │                                         ║
 ║   └────────────────────────────────────────┘                                         ║
 ║                       Δ                                                              ║
 ║                       ¦                                                              ║
@@ -1363,11 +1360,6 @@ This ensures each page is correctly rendered and sent to the client.
 ║                       ¦                 │ <<Interface>>                        │     ║
 ║                       ¦                 │ IVisualTree                          │     ║
 ║                       ¦                 ├──────────────────────────────────────┤     ║
-║                       ¦                 │ Title:string                         │     ║
-║                       ¦                 │ Favicons:List<Favicon>               │     ║
-║                       ¦                 │ Styles:List<string>                  │     ║
-║                       ¦                 │ HeaderScriptLinks:List<string>       │     ║
-║                       ¦                 │ …                                    │     ║
 ║                       ¦                 ├──────────────────────────────────────┤     ║
 ║                       ¦                 │ Render(IVisualTreeContext):IHtmlNode │     ║
 ║                       ¦                 └──────────────────────────────────────┘     ║
@@ -1382,16 +1374,14 @@ This ensures each page is correctly rendered and sent to the client.
 ║   ├────────────────────────────────────────┤                ¦                        ║
 ║   │ ApplicationContext:IApplicationContext │                ¦                        ║
 ║   │ Request:Request                        │                ¦                        ║
-║   │ Scopes:IEnumerable<string>             │ *              ¦                        ║
-║   │ VisualTree:IVisualTree                 │─────┐          ¦                        ║
-║   ├────────────────────────────────────────┤     │          ¦                        ║
-║   │ MyRenderContext(ApplicationContext,    │     │          ¦                        ║
-║   │   Request,Scopes)                      │     │          ¦                        ║
-║   │ CreateVisualTree():IVisualTree         │     │          ¦                        ║
-║   └──────────────────┬─────────────────────┘     │          ¦                        ║
-║                      ¦                           │          ¦                        ║
-║                      ¦                           │          ¦                        ║
-║                      ¦                         1 ▼          ¦                        ║
+║   │ Scopes:IEnumerable<string>             │                ¦                        ║
+║   ├────────────────────────────────────────┤                ¦                        ║
+║   │ MyRenderContext(ApplicationContext,    │                ¦                        ║
+║   │   Request,Scopes)                      │                ¦                        ║
+║   └──────────────────┬─────────────────────┘                ¦                        ║
+║                      ¦                                      ¦                        ║
+║                      ¦                                      ¦                        ║
+║                      ¦                                      ¦                        ║
 ║                      ¦         create   ┌───────────────────┴──────────────────┐     ║
 ║                      └-----------------►│ MyVisualTree                         │     ║
 ║                                         ├──────────────────────────────────────┤     ║
@@ -1907,7 +1897,7 @@ Fragments are derived from the `IFragment` interface and are identified by attri
 [Section("mysection")]
 [Scope<ScopeGeneral>]
 [Permission<MyIdentityPermission>()]
-public sealed class MyFragment : IFragment
+public sealed class MyFragment : IFragment<IRenderContext>
 {
 }
 ```
@@ -1936,7 +1926,7 @@ of nested controls.
 ║                  ├─────────────────────────────────────────┤                         ║
 ║                  │ Id:String                               │                         ║
 ║                  ├─────────────────────────────────────────┤                         ║
-║                  │ Render(IRenderContext):IHtmlNode        │                         ║
+║                  │ Render(IRenderControlContext):IHtmlNode │                         ║
 ║                  └─────────────────────────────────────────┘                         ║
 ║                                     Δ                                                ║
 ║                                     ¦                                                ║
@@ -1961,7 +1951,7 @@ of nested controls.
 ║                │ OnClick:PropertyOnClick                     │                       ║
 ║                │ Enable:Bool                                 │                       ║
 ║                ├─────────────────────────────────────────────┤                       ║
-║                │ Render(IRenderContext):IHtmlNode            │                       ║
+║                │ Render(IRenderControlContext):IHtmlNode     │                       ║
 ║                └─────────────────────────────────────────────┘                       ║
 ║                                     Δ                                                ║
 ║                                     ¦                                                ║
@@ -1969,11 +1959,11 @@ of nested controls.
                                       ¦
 ╔MyPlugin═════════════════════════════¦════════════════════════════════════════════════╗
 ║                                     ¦                                                ║
-║                    ┌────────────────┴─────────────────┐                              ║
-║                    │ MyControl                        │                              ║
-║                    ├──────────────────────────────────┤                              ║
-║                    │ Render(IRenderContext):IHtmlNode │                              ║
-║                    └──────────────────────────────────┘                              ║
+║                 ┌───────────────────┴─────────────────────┐                          ║
+║                 │ MyControl                               │                          ║
+║                 ├─────────────────────────────────────────┤                          ║
+║                 │ Render(IRenderControlContext):IHtmlNode │                          ║
+║                 └─────────────────────────────────────────┘                          ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
@@ -2007,7 +1997,15 @@ tabs to separate different sections, users can navigate and complete the form mo
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║                                   ┌─────────┐                                        ║
+║                                   ┌──────────┐                                       ║
+║                                   │ IControl │                                       ║
+║                                   ├──────────┤                                       ║
+║                                   │ …        │                                       ║
+║                                   └──────────┘                                       ║
+║                                        Δ                                             ║
+║                                        ¦                                             ║
+║                                        ¦                                             ║
+║                                   ┌────┴────┐                                        ║
 ║                                   │ Control │                                        ║
 ║                                   ├─────────┤                                        ║
 ║                                   │ …       │                                        ║
@@ -2015,47 +2013,47 @@ tabs to separate different sections, users can navigate and complete the form mo
 ║                                        Δ                                             ║
 ║                                        ¦                                             ║
 ║                                        ¦                                             ║
-║                    ┌───────────────────┴─────────────────┐                           ║
-║                    │ ControlForm                         │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ Name:String                         │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ OnValidation():Bool                 │                           ║
-║                    │ Render(RenderFormContext):IHtmlNode │                           ║
-║                    └─────────────────────────────────────┘                           ║
+║                    ┌───────────────────┴──────────────────┐                          ║
+║                    │ ControlForm                          │                          ║
+║                    ├──────────────────────────────────────┤                          ║
+║                    │ Name:String                          │                          ║
+║                    ├──────────────────────────────────────┤                          ║
+║                    │ OnValidation():Bool                  │                          ║
+║                    │ Render(IRenderFormContext):IHtmlNode │                          ║
+║                    └──────────────────────────────────────┘                          ║
 ║                                     1 ▲                                              ║
 ║                                       │                                              ║
 ║                                     * │                                              ║
-║                    ┌──────────────────┴──────────────────┐                           ║
-║                    │ ControlFormTab                      │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ Name:String                         │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ Render(RenderFormContext):IHtmlNode │                           ║
-║                    └─────────────────────────────────────┘                           ║
+║                ┌──────────────────────┴──────────────────────┐                       ║
+║                │ ControlFormTab                              │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ Name:String                                 │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ Render(IRenderControlFormContext):IHtmlNode │                       ║
+║                └─────────────────────────────────────────────┘                       ║
 ║                                     1 ▲                                              ║
 ║                                       │                                              ║
 ║                                     * │                                              ║
-║                    ┌──────────────────┴──────────────────┐                           ║
-║                    │ ControlFormGroup                    │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ Name:String                         │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ Render(RenderFormContext):IHtmlNode │                           ║
-║                    └─────────────────────────────────────┘                           ║
+║                ┌──────────────────────┴──────────────────────┐                       ║
+║                │ ControlFormGroup                            │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ Name:String                                 │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ Render(IRenderControlFormContext):IHtmlNode │                       ║
+║                └─────────────────────────────────────────────┘                       ║
 ║                                     1 ▲                                              ║
 ║                                       │                                              ║
 ║                                     * │                                              ║
-║                    ┌──────────────────┴──────────────────┐                           ║
-║                    │ ControlFormItem                     │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ Label:String                        │                           ║
-║                    │ Name:String                         │                           ║
-║                    │ Description:String                  │                           ║
-║                    ├─────────────────────────────────────┤                           ║
-║                    │ OnValidation():Bool                 │                           ║
-║                    │ Render(RenderFormContext):IHtmlNode │                           ║
-║                    └─────────────────────────────────────┘                           ║
+║                ┌──────────────────────┴──────────────────────┐                       ║
+║                │ ControlFormItem                             │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ Label:String                                │                       ║
+║                │ Name:String                                 │                       ║
+║                │ Description:String                          │                       ║
+║                ├─────────────────────────────────────────────┤                       ║
+║                │ OnValidation():Bool                         │                       ║
+║                │ Render(IRenderControlFormContext):IHtmlNode │                       ║
+║                └─────────────────────────────────────────────┘                       ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
