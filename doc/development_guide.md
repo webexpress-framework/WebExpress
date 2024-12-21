@@ -193,36 +193,36 @@ In addition, you can create your own components and register them in the `Compon
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║      ┌──────────────────────────────────────────────────────────┐                    ║
-║      │ <<Interface>>                                            │                    ║
-║      │ IComponentHub                                            │                    ║
-║      ├──────────────────────────────────────────────────────────┤                    ║
-║      │ AddManager:Event                                         │                    ║
-║      │ RemoveManager:Event                                      │                    ║
-║      ├──────────────────────────────────────────────────────────┤                    ║
-║      │ HttpServerContext:IHttpServerContext                     │ 1                  ║
-║      │ Managers:IEnumerable<IComponentManager>                  ├─────┐              ║
-║      │ LogManager:ILogManager                                   │     │              ║
-║      │ PackageManager:IPackageManager                           │     │              ║
-║      │ PluginManager:IPluginManager                             │     │              ║
-║      │ ApplicationManager:IApplicationManager                   │     │              ║
-║      │ EventManager:IEventManager                               │     │              ║
-║      │ JobManager:IJobManager                                   │     │              ║
-║      │ ResponseManager:IResponseManager                         │     │              ║
-║      │ ResourceManager:IResourceManager                         │     │              ║
-║      │ ThemeManager:IThemeManager                               │     │              ║
-║      │ FragmentManager:IFragmentManager                         │     │              ║
-║      │ SitemapManager:ISitemapManager                           │     │              ║
-║      │ InternationalizationManager:IInternationalizationManager │     │              ║
-║      │ SessionManager:ISessionManager                           │     │              ║
-║      │ TaskManager:ITaskManager                                 │     │              ║
-║      ├──────────────────────────────────────────────────────────┤     │              ║
-║      │ GetManager(id):IComponentManager                         │     │              ║
-║      │ GetManager<T>():T                                        │     │              ║
-║      │ Remove(pluginContext)                                    │     │              ║
-║      └──────────────────────────────────────────────────────────┘     │              ║
-║                                                                       │              ║
-║                                  ┌────────────────────────────────────┘              ║
+║     ┌────────────────────────────────────────────────────────────┐                   ║
+║     │ <<Interface>>                                              │                   ║
+║     │ IComponentHub                                              │                   ║
+║     ├────────────────────────────────────────────────────────────┤                   ║
+║     │ AddManager:Event                                           │                   ║
+║     │ RemoveManager:Event                                        │                   ║
+║     ├────────────────────────────────────────────────────────────┤                   ║
+║     │ HttpServerContext:IHttpServerContext                       │ 1                 ║
+║     │ Managers:IEnumerable<IComponentManager>                    ├─────┐             ║
+║     │ LogManager:ILogManager                                     │     │             ║
+║     │ PackageManager:IPackageManager                             │     │             ║
+║     │ PluginManager:IPluginManager                               │     │             ║
+║     │ ApplicationManager:IApplicationManager                     │     │             ║
+║     │ EventManager:IEventManager                                 │     │             ║
+║     │ JobManager:IJobManager                                     │     │             ║
+║     │ ResponseManager:IResponseManager                           │     │             ║
+║     │ ResourceManager:IResourceManager                           │     │             ║
+║     │ ThemeManager:IThemeManager                                 │     │             ║
+║     │ FragmentManager:IFragmentManager                           │     │             ║
+║     │ SitemapManager:ISitemapManager                             │     │             ║
+║     │ InternationalizationManager:IInternationalizationManager   │     │             ║
+║     │ SessionManager:ISessionManager                             │     │             ║
+║     │ TaskManager:ITaskManager                                   │     │             ║
+║     ├────────────────────────────────────────────────────────────┤     │             ║
+║     │ GetComponentManager(id):IComponentManager                  │     │             ║
+║     │ GetComponentManager<TComponentManager>():TComponentManager │     │             ║
+║     │ Remove(pluginContext)                                      │     │             ║
+║     └────────────────────────────────────────────────────────────┘     │             ║
+║                                                                        │             ║
+║                                  ┌─────────────────────────────────────┘             ║
 ║                                  ▼                                                   ║
 ║                 ┌───────────────────────────────────┐                                ║
 ║                 │ <<Interface>>                     │                                ║
