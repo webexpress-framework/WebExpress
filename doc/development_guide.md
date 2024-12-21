@@ -201,7 +201,7 @@ In addition, you can create your own components and register them in the `Compon
 ║      │ RemoveManager:Event                                      │                    ║
 ║      ├──────────────────────────────────────────────────────────┤                    ║
 ║      │ HttpServerContext:IHttpServerContext                     │ 1                  ║
-║      │ Managers:IEnumerable<IComponentManager>                  │─────┐              ║
+║      │ Managers:IEnumerable<IComponentManager>                  ├─────┐              ║
 ║      │ LogManager:ILogManager                                   │     │              ║
 ║      │ PackageManager:IPackageManager                           │     │              ║
 ║      │ PluginManager:IPluginManager                             │     │              ║
@@ -232,18 +232,18 @@ In addition, you can create your own components and register them in the `Compon
 ║                                  Δ                                                   ║
 ║                                  ¦                                                   ║
 ║                                  ¦                                                   ║
-║                     ┌────────────┴────────────┐                                      ║
-║                     │ <<Interface>>           │                                      ║
-║                     │ IComponentManagerPlugin │                                      ║
-║                     ├─────────────────────────┤                                      ║
-║                     │ Register(pluginContext) │                                      ║
-║                     │ Remove(pluginContext)   │                                      ║
-║                     └─────────────────────────┘                                      ║
-║                                  Δ                                                   ║
-║                                  ¦                                                   ║
-║                                  ¦                                                   ║
-║                     ┌────────────┴────────────┐                                      ║
-║                     │ MyComponentManager      │                                      ║
+║                     ┌────────────┴────────────┐         ┌───────────────┐            ║
+║                     │ <<Interface>>           │         │ <<Interface>> │            ║
+║                     │ IComponentManagerPlugin │         │ IComponent    │            ║
+║                     ├─────────────────────────┤         ├───────────────┤            ║
+║                     │ Register(pluginContext) │         └───────────────┘            ║
+║                     │ Remove(pluginContext)   │               * ▲                    ║
+║                     └─────────────────────────┘                 │                    ║
+║                                  Δ                              │                    ║
+║                                  ¦                              │                    ║
+║                                  ¦                              │                    ║
+║                     ┌────────────┴────────────┐ 1               │                    ║
+║                     │ MyComponentManager      ├─────────────────┘                    ║
 ║                     ├─────────────────────────┤                                      ║
 ║                     │ Register(pluginContext) │                                      ║
 ║                     │ Remove(pluginContext)   │                                      ║
@@ -251,6 +251,20 @@ In addition, you can create your own components and register them in the `Compon
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+
+`WebExpress` supports the creation of `IComponent` instances using dependency injection. This allows 
+dependencies to be automatically injected when an instance of a component is created. The following 
+constructor parameters can be indexed by injection:
+
+| Constructor Parameter | Description 
+|-----------------------|-------------
+| `IComponentHub`       | The central hub for managing all components. 
+| `I<*>Manager`         | A specific manager from `IComponentHub` (e.g. `IResourceManager`).
+| `IComponentId`        | The unique identifier of the component. 
+| `IHttpServerContext`  | The context of the HTTP server.
+
+By using dependency injection, it is ensured that all required dependencies are automatically provided 
+when the instance of the component is created.
 
 ## Package model
 `WebExpress` is designed by its open and modular plugin system, which supports many usage scenarios. The 
@@ -1396,12 +1410,28 @@ This ensures each page is correctly rendered and sent to the client.
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+
+`WebExpress` supports the creation of `IVisualTree` instances through dependency injection. This approach 
+allows dependencies to be automatically provided when an instance of a component is created. The following 
+constructor parameters can be injected:
+
+| Constructor Parameter | Description 
+|-----------------------|-------------
+| `IComponentHub`       | The central hub for managing all components. 
+| `I<*>Manager`         | A specific manager from `IComponentHub` (e.g., `IResourceManager`).
+| `IComponentId`        | The unique identifier of the component. 
+| `IHttpServerContext`  | The context of the HTTP server.
+
+By leveraging dependency injection, all required dependencies are automatically supplied when the component 
+instance is created.
+
                                           
 ### RestAPI
-A REST API (Representational State Transfer Application Programming Interface) is an interface that allows resources to be 
-accessed and manipulated via the HTTP protocol. REST APIs are designed to be simple and scalable by following the principles 
-of REST, such as stateless communication, use of HTTP methods, and resource orientation. By using REST APIs, applications 
-can exchange and integrate data between different systems, facilitating the development of distributed and modular applications.
+A REST API (Representational State Transfer Application Programming Interface) is an interface that allows resources 
+to be accessed and manipulated via the HTTP protocol. REST APIs are designed to be simple and scalable by following 
+the principles of REST, such as stateless communication, use of HTTP methods, and resource orientation. By using 
+REST APIs, applications can exchange and integrate data between different systems, facilitating the development of 
+distributed and modular applications.
 
 The integration of REST APIs into `WebExpress` offers several advantages that make the application more dynamic and reactive:
 
@@ -1415,9 +1445,10 @@ The integration of REST APIs into `WebExpress` offers several advantages that ma
 
 - **Improved user experience**: By leveraging REST APIs, WebExpress can provide a more responsive and interactive user interface. Users can seamlessly navigate through the application and receive instant feedback on their actions, increasing user satisfaction and engagement.
 
-One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. These basic operations allow 
-data to be created, retrieved, updated, and deleted, and form the backbone of many web applications. In WebExpress, CRUD operations 
-are supported by a framework that provides HTML and REST API templates to enable a generic view and processing.
+One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. These basic 
+operations allow data to be created, retrieved, updated, and deleted, and form the backbone of many web 
+applications. In WebExpress, CRUD operations are supported by a framework that provides HTML and REST API 
+templates to enable a generic view and processing.
 
 ```
   ┌─────────┐         ┌─────────┐         ┌─────────┐         ┌─────────┐
@@ -1829,18 +1860,21 @@ instantiated and integrated into the resource. A section is a named area within 
 ║                       Δ                          │                                   ║
 ║                       ¦                          │                                   ║
 ║                       ¦                        1 ▼                                   ║
-║               ┌───────┴──────────────────────────────────┐                           ║
-║               │ <<Interface>>                            │                           ║
-║               │ IFragmentManager                         ├-----------------┐         ║
-║               ├──────────────────────────────────────────┤                 ¦         ║
-║               │ AddFragment:Event                        │                 ¦         ║
-║               │ RemoveFragment:Event                     │                 ¦         ║
-║               ├──────────────────────────────────────────┤ 1               ¦         ║
-║               │ Fragments:IEnumerable<IFragmentContext>  ├──────────┐      ¦         ║
-║               ├──────────────────────────────────────────┤          │      ¦         ║
-║               │ GetFragmentContexts(Section)             │          │      ¦         ║
-║               │   :IEnumerable<IFragmentContext>         │          │      ¦         ║
-║               └──────────────────────────────────────────┘          │      ¦         ║
+║             ┌─────────┴───────────────────────────────────┐                          ║
+║             │ <<Interface>>                               │                          ║
+║             │ IFragmentManager                            ├----------------┐         ║
+║             ├─────────────────────────────────────────────┤                ¦         ║
+║             │ AddFragment:Event                           │                ¦         ║
+║             │ RemoveFragment:Event                        │                ¦         ║
+║             ├─────────────────────────────────────────────┤ 1              ¦         ║
+║             │ Fragments:IEnumerable<IFragmentContext>     ├─────────┐      ¦         ║
+║             ├─────────────────────────────────────────────┤         │      ¦         ║
+║             │ GetFragment<TFragment>(IApplicationContext) │         │      ¦         ║
+║             │   :IEnumerable<IFragmentContext>            │         │      ¦         ║
+║             │ GetFragments<TFragment,TSection>            │         │      ¦         ║
+║             │   (IApplicationContext,Scopes)              │         │      ¦         ║
+║             │   :IEnumerable<IFragmentContext>            │         │      ¦         ║
+║             └─────────────────────────────────────────────┘         │      ¦         ║
 ║                                                                     │      ¦         ║
 ║                            ┌────────────────┐                       │      ¦         ║
 ║                            │ <<Interface>>  │                       │      ¦         ║
