@@ -1,9 +1,11 @@
 ![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
 
 # Contributing to WebExpress
-First of all, thank you for considering contributing to `WebExpress`! We appreciate your support and efforts in improving this project.
+First of all, thank you for considering contributing to `WebExpress`! We appreciate your support and efforts in 
+improving this project.
 
-If you find a bug or have an idea for an improvement, please open an issue before you start working on it. This allows us to discuss the scope and implementation details and ensure they align with the project goals.
+If you find a bug or have an idea for an improvement, please open an issue before you start working on it. This 
+allows us to discuss the scope and implementation details and ensure they align with the project goals.
 
 # Ways to Contribute
 There are various ways you can contribute to `WebExpress`:
@@ -16,7 +18,8 @@ There are various ways you can contribute to `WebExpress`:
 - **Writing Tests:** Contribute to creating and improving tests to ensure the quality of the code.
 
 # Contribution Guidelines
-Please note that this project is released with a Contributor Code of Conduct. By participating in this project, you agree to abide by its terms.
+Please note that this project is released with a Contributor Code of Conduct. By participating in this 
+project, you agree to abide by its terms.
 
 - **Bugfixes:** If you fix a bug, make sure your code includes a test case that verifies the fix.
 - **Features:** If you add a new feature, please include documentation and relevant tests.
