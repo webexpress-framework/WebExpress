@@ -440,7 +440,6 @@ stored in the `PluginContext` and is available globally via the `PluginManager`.
 ║         │ IPlugin       │                         ¦                                  ║
 ║         ├───────────────┤                         ¦                                  ║
 ║         │ Run()         │                         ¦                                  ║
-║         │ Dispose()     │                         ¦                                  ║
 ║         └───────────────┘                         ¦                                  ║
 ║                Δ                                  ¦                                  ║
 ║                ¦                                  ¦                                  ║
@@ -453,7 +452,6 @@ stored in the `PluginContext` and is available globally via the `PluginManager`.
 ║          │ MyPlugin  │◄---------------------------┘                                  ║
 ║          ├───────────┤                                                               ║
 ║          │ Run()     │                                                               ║
-║          │ Dispose() │                                                               ║
 ║          └───────────┘                                                               ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -690,7 +688,6 @@ the application is stored in the `ApplicationContext` and managed by the `Applic
 ║           ¦                   │ IApplication  │                                      ║
 ║           ¦                   ├───────────────┤                                      ║
 ║           ¦                   │ Run()         │                                      ║
-║           ¦                   │ Dispose()     │                                      ║
 ║           ¦                   └───────────────┘                                      ║
 ║           ¦                           Δ                                              ║
 ║           ¦                           ¦                                              ║
@@ -702,7 +699,6 @@ the application is stored in the `ApplicationContext` and managed by the `Applic
 ║           └------------------►│ MyApplication │                                      ║
 ║                               ├───────────────┤                                      ║
 ║                               │ Run()         │                                      ║
-║                               │ Dispose()     │                                      ║
 ║                               └───────────────┘                                      ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -1816,7 +1812,6 @@ StatusPageManager and an instance is created. To do this, the following order is
 ║                    │ IStatusPage                         │             ¦             ║
 ║                    ├─────────────────────────────────────┤             ¦             ║
 ║                    │ Process(IRenderContext,TVisualTree) │             ¦             ║
-║                    │ Dispose()                           │             ¦             ║
 ║                    └─────────────────────────────────────┘             ¦             ║
 ║                                       Δ                                ¦             ║
 ║                                       ¦                                ¦             ║
@@ -1828,7 +1823,6 @@ StatusPageManager and an instance is created. To do this, the following order is
 ║                    │ MyStatusPage                        │◄------------┘             ║
 ║                    ├─────────────────────────────────────┤                           ║
 ║                    │ Process(IRenderContext,TVisualTree) │                           ║
-║                    │ Dispose()                           │                           ║
 ║                    └─────────────────────────────────────┘                           ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -1918,7 +1912,6 @@ instantiated and integrated into the resource. A section is a named area within 
 ║                  │ MyFragment                        │◄--------------------┘         ║
 ║                  ├───────────────────────────────────┤                               ║
 ║                  │ Process(TRenderContext):IHtmlNode │                               ║
-║                  │ Dispose()                         │                               ║
 ║                  └───────────────────────────────────┘                               ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -2509,7 +2502,6 @@ Events are notifications from the `WebExpress` API or web applications that can 
 ║        │ MyEventHandler                 │◄--------------┘                            ║
 ║        ├────────────────────────────────┤                                            ║
 ║        │ Process(Sender,TEventArgument) │                                            ║
-║        │ Dispose()                      │                                            ║
 ║        └────────────────────────────────┘                                            ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -2619,7 +2611,6 @@ it are determined by the ScheduleManager and instantiated and started at the spe
 ║                │ MyJob                         │◄--------------------------------┘   ║
 ║                ├───────────────────────────────┤                                     ║
 ║                │ Process()                     │                                     ║
-║                │ Dispose()                     │                                     ║
 ║                └───────────────────────────────┘                                     ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -3771,7 +3762,6 @@ the `IPageSetting` interface.
 ║           └-----------►│ MySettingPage           │                                   ║
 ║                        ├─────────────────────────┤                                   ║
 ║                        │ Process(TRenderContext) │                                   ║
-║                        │ Dispose()               │                                   ║
 ║                        └─────────────────────────┘                                   ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -4006,13 +3996,11 @@ namespace Sample
     public sealed class MyPlugin : IPlugin
     {
         public void Run() {}
-        public void Dispose() {}
     }
 
     public sealed class MyApplication : IApplication
     {
         public void Run() {}
-        public void Dispose() {}
     }
 
     public sealed class Home : IPage
