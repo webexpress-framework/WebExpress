@@ -39,6 +39,8 @@ To get started with WebExpress, use the following links and tutorials.
 
 - [installation guide](https://github.com/ReneSchwarzer/WebExpress/blob/main/doc/installation_guide.md) 
 - [development guide](https://github.com/ReneSchwarzer/WebExpress/blob/main/doc/development_guide.md)
+- [WebExpress.WebCore API Documentation](https://reneschwarzer.github.io/WebExpress.WebCore/) 
+- [WebExpress.WebUI API Documentation](https://reneschwarzer.github.io/WebExpress.WebUI/) 
 
 ## Tutorials
 - [HelloWorld](https://github.com/ReneSchwarzer/WebExpress.Tutorial.HelloWorld#readme)
