@@ -1495,7 +1495,7 @@ delete│ ├────────────────>│ │          P
 CRUD operations are mapped by the REST API by the following operations (RFC 7231 and RFC 5789):
 
 |CRUD operation   |HTML              |REST API  |Description
-|-----------------|------------------|----------------------------
+|-----------------|------------------|----------|-----------------
 |Create           |Form              |POST      |create record
 |Read (Retrieve)  |List or Table     |GET       |read record(s)
 |Update           |Form              |PATCH     |update record
@@ -1532,7 +1532,7 @@ Below are the descriptions of the attributes used in the rest api classes:
 |ContextPath     |String            |1            |Yes      |The URI path from the applcation to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
 |Method          |GrudMethod        |n            |Yes      |The method attribute defines which CRUD operations (Create, Read, Update, Delete) can be executed.
 |Version         |UInt              |1            |Yes      |The version attribute indicates the current version of the API, ensuring clients interact with the correct version for compatibility and feature updates.
-???|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
+|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
@@ -3438,7 +3438,6 @@ The content area is used to display records (for example, as a table or list) or
 ```
 
 ### Toolbar
-
 The toolbar contains links or buttons with data-independent functions (e.g. switching between lists and table view).
 
 ```
@@ -3463,16 +3462,20 @@ The headline displays the title of the displayed data. The title bar also has da
 display of metadata (e.g. creation date, creator).
 
 ```
-╔Headline═══════════════════════════════════════════════════════════════════════╗
-║┌Prologue┐┌Title───────────────────┐┌Preference─┐┌Primary─────────┐┌Secondary─┐║
-║│        ││ $Headline              ││           ││                ││          │║
-║└────────┘└────────────────────────┘└───────────┘└────────────────┘└──────────┘║
-║┌Metadata─────────────────────────────────────────────────────────────────────┐║
-║│                                                                             │║
-║└─────────────────────────────────────────────────────────────────────────────┘║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+╔Headline═════════════════════════════════════════════════════════════════╗
+║┌Prologue┐┌Title─────────┐┌Preference───┐┌Primary──────┐┌Secondary─┐┌───┐║
+║│        ││ $Headline    ││             ││             ││          ││ … │← More
+║└────────┘└──────────────┘└─────────────┘└─────────────┘└──────────┘└─┬─┘║
+║┌Metadata────────────────────────────────────────────────────────────┌┴───────────┐
+║│                                                                    │ Options    │
+║└────────────────────────────────────────────────────────────────────├────────────┤
+╚═══════════════════════════════════════════════════ MorePreferences →│ Link       │
+                                                                      ├────────────┤
+                                                         MorePrimary →│ Link       │
+                                                                      ├────────────┤
+                                                       MoreSecondary →│ Link       │
+                                                                      └────────────┘
 ```
-
 ### Property
 The properties pane is used to display metadata and properties of the displayed data (for example, attachments). 
 

@@ -4,7 +4,7 @@
 		<Version>0.0.8.0</Version>
 		<AssemblyVersion>0.0.8.0</AssemblyVersion>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net9.0</TargetFramework>
 		<ApplicationIcon>Rocket.ico</ApplicationIcon>
 		<Authors>Rene_Schwarzer@hotmail.de</Authors>
 		<StartupObject>WebExpress.App.Program</StartupObject>
