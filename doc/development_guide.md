@@ -51,19 +51,19 @@ The development of a web application without the need to use HTML, CSS, or JavaS
 exclusively using C#, could revolutionize web development. A web framework programmed entirely 
 in C# offers numerous advantages. Modularity allows for the independent development and testing 
 of components, facilitating reusability and maintenance. Plugins can be added to extend 
-functionality without altering the core of the framework. Using such a framework can significantly 
-reduce development time. Prepared components allow developers to focus on business logic, leading 
-to faster time-to-market and reduced costs. Development, debugging, and deployment processes can 
-be fully carried out with C# tools like Visual Studio. This provides a unified development environment 
-that enhances efficiency and simplifies troubleshooting. The need to deal with various technologies 
-is eliminated, reducing complexity and improving maintainability. 
-Frameworks like Angular, React, or Vue.js require knowledge of HTML, CSS, and JavaScript. These technologies 
-are powerful but also complex and require a steep learning curve. A C#-based framework eliminates these 
-hurdles, enabling quicker onboarding and higher productivity. 
-A C#-based web framework offers numerous advantages. It simplifies web development, increases efficiency 
-and productivity, and reduces complexity. With pre-built components and a unified development environment, 
-high-quality web applications can be created faster and more cost-effectively. Such a framework could 
-fundamentally change the way web applications are developed.
+functionality without altering the core of the framework. Using such a framework can 
+significantly reduce development time. Prepared components allow developers to focus on business 
+logic, leading to faster time-to-market and reduced costs. Development, debugging, and deployment 
+processes can be fully carried out with C# tools like Visual Studio. This provides a unified 
+development environment that enhances efficiency and simplifies troubleshooting. The need to 
+deal with various technologies is eliminated, reducing complexity and improving maintainability. 
+Frameworks like Angular, React, or Vue.js require knowledge of HTML, CSS, and JavaScript. These 
+technologies are powerful but also complex and require a steep learning curve. A C#-based framework 
+eliminates these hurdles, enabling quicker onboarding and higher productivity. 
+A C#-based web framework offers numerous advantages. It simplifies web development, increases 
+efficiency and productivity, and reduces complexity. With pre-built components and a unified 
+development environment, high-quality web applications can be created faster and more 
+cost-effectively. Such a framework could fundamentally change the way web applications are developed.
 
 # Architecture
 `WebExpress` is deliberately kept very simple. It consists only of basic functionalities 
@@ -104,12 +104,13 @@ Kestrel to process http(s) requests.
 ╚════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` consists of several program libraries, which serve as the basis for `WebExpress` projects. The 
-`WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions 
-such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates 
-that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. 
-The `WebExpress.exe` program library represents the application that takes control of the individual functions and 
-components. The `WebExpress.exe` program library is generic and can be replaced by its own program library.
+`WebExpress` consists of several program libraries, which serve as the basis for `WebExpress` 
+projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating 
+content and additional functions such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` 
+packages provide controls and templates that facilitate the development of (business) applications. 
+`WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` program library 
+represents the application that takes control of the individual functions and components. 
+The `WebExpress.exe` program library is generic and can be replaced by its own program library.
 
 ```
 ╔WebExpress.exe══════════════════════════════════════════════════════╗
@@ -128,8 +129,8 @@ components. The `WebExpress.exe` program library is generic and can be replaced 
 ```
 
 In the context of `WebExpress`, (web) applications are deployed. An application is the logical 
-combination of Components. Components, in turn, are amalgamations of (web) elements. Elements reflect 
-content (e.g. web pages). The relationships between `WebExpress`, packages, applications, 
+combination of Components. Components, in turn, are amalgamations of (web) elements. Elements 
+reflect content (e.g. web pages). The relationships between `WebExpress`, packages, applications, 
 and elements are illustrated in the following figure: 
 
 ```
@@ -188,7 +189,9 @@ The following component managers are available in `WebExpress`:
 |IdentityManager             |Users or technical objects that are used for identity and access management.
 |SettingPageManager          |Manages the settings of the application.
 
-In addition, you can create your own components and register them in the `ComponentHub`.
+In addition, you can create your own components and register them in the `ComponentHub`. The 
+following UML diagram illustrates the relationships and internal structure of the `ComponentManager` 
+and the components it manages:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -252,9 +255,9 @@ In addition, you can create your own components and register them in the `Compon
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` supports the creation of `IComponent` instances using dependency injection. This allows 
-dependencies to be automatically injected when an instance of a component is created. The following 
-constructor parameters can be indexed by injection:
+`WebExpress` supports the creation of `IComponent` instances using dependency injection. 
+This allows dependencies to be automatically injected when an instance of a component is 
+created. The following constructor parameters can be indexed by injection:
 
 | Constructor Parameter | Description 
 |-----------------------|-------------
@@ -263,17 +266,18 @@ constructor parameters can be indexed by injection:
 | `IComponentId`        | The unique identifier of the component. 
 | `IHttpServerContext`  | The context of the HTTP server.
 
-By using dependency injection, it is ensured that all required dependencies are automatically provided 
-when the instance of the component is created.
+By using dependency injection, it is ensured that all required dependencies are automatically
+provided when the instance of the component is created.
 
 ## Package model
-`WebExpress` is designed by its open and modular plugin system, which supports many usage scenarios. The 
-distribution of the plugins and other software components (e.g. Entity Framework) takes place as 
-`WebExpress` packages. `WebExpress` is able to read these packets and execute the code in them. Packages 
-can contain both managed code and native libraries (e.g. for Linux) and be dependent on other packages. 
-The recursive resolution of the dependencies is done by `WebExpress`. 
-The `WebExpress` packages are ZIP-compressed files that can provide libraries for multiple platforms. They 
-have the `wxp` file extension. A `WebExpress` package has the following structure:
+`WebExpress` is designed by its open and modular plugin system, which supports many usage 
+scenarios. The distribution of the plugins and other software components (e.g. Entity Framework) 
+takes place as `WebExpress` packages. `WebExpress` is able to read these packets and execute 
+the code in them. Packages can contain both managed code and native libraries (e.g. for Linux) 
+and be dependent on other packages. The recursive resolution of the dependencies is done by 
+`WebExpress`. The `WebExpress` packages are ZIP-compressed files that can provide libraries 
+for multiple platforms. They have the `wxp` file extension. A `WebExpress` package has the 
+following structure:
 
 ```
    📦 <packagename>.<version>.wxp
@@ -312,8 +316,9 @@ The packages are versioned and can assume the following states:
 - **Active** - The package has been loaded and is ready for use. 
 - **Disable** - The package has been disabled. The use of the package is not possible.
 
-The `PackageManager` is responsible for provisioning the packages. This has the task of loading all packages and 
-deactivating or removing them if desired. The following directories are used to store the packages and libraries: 
+The `PackageManager` is responsible for provisioning the packages. This has the task of 
+loading all packages and deactivating or removing them if desired. The following directories 
+are used to store the packages and libraries: 
 
 ```
    📁 packages
@@ -331,14 +336,16 @@ deactivating or removing them if desired. The following directories are used to 
 |catalog.xml     |The catalog.xml file collects all metadata (including the package state) of the installed packages.
 |package.wxp     |Each installed package is saved unpacked for future actions.
 
-New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning 
-service cyclically scans the directory for new packets and loads them. 
-If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). 
-In addition package, the directory of the deactivated package is deleted and all contents (components) 
-are removed from the running `WebExpress`. When `WebExpress` boots up and initializes, the catalog is read and the 
-disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and 
-loading the package into the package directory. When a package is deleted, it is removed from the package directory and 
-from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime via the following classes.
+New packages can be installed on the fly by copying them into the packages directory by the 
+user. The provisioning service cyclically scans the directory for new packets and loads them. 
+If a package is to be deactivated without removing it, the `PackageManager` notes it in the 
+catalog (state `Disable`). In addition package, the directory of the deactivated package is 
+deleted and all contents (components) are removed from the running `WebExpress`. When `WebExpress` 
+boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled 
+package is activated by changing the state in the catalog and unpacking and loading the package 
+into the package directory. When a package is deleted, it is removed from the package directory 
+and from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime 
+via the following classes:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -366,8 +373,9 @@ from the catalog. The `PackageManager` manages the catalog. This can be accessed
 ```
 
 ## Plugin model
-The plugin system can be used to extend both `WebExpress` and application functionalities. Each 
-plugin must have exactly one plugin class that implements `IPlugin`.
+The plugin system can be used to extend both `WebExpress` and application functionalities. 
+Each plugin must have exactly one plugin class that implements `IPlugin`. The following 
+example demonstrates the implementation of a plugin:
 
 ```csharp
 [Name("myplugin")]
@@ -383,7 +391,8 @@ public sealed class MyPlugin : IPlugin
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following table presents 
+the available attributes and their corresponding details for defining plugins:
 
 |Attribute   |Type           |Multiplicity |Optional |Description
 |------------|---------------|-------------|---------|--------------
@@ -393,8 +402,10 @@ The following attributes are available:
 |Dependency  |String         |n            |Yes      |Defines a dependency on another plugin and is specified via the PluginId.
 |Applcation  |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
 
-The implemented methods from the interface cover the life cycle of the plugin. Meta information about the plugin is 
-stored in the `PluginContext` and is available globally via the `PluginManager`.
+The implemented methods from the interface cover the life cycle of the plugin. Meta information 
+about the plugin is stored in the `PluginContext` and is available globally via the 
+`PluginManager`. Below is a UML diagram that highlights the structure and connections between 
+the `PluginManager` and plugins.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -458,8 +469,8 @@ stored in the `PluginContext` and is available globally via the `PluginManager`.
 ```
 
 ## Internationalization model
-The provision of multilingual applications for different cultures is supported by `WebExpress`. In addition, the 
-following text formatting is also adapted to the corresponding culture:
+The provision of multilingual applications for different cultures is supported by `WebExpress`. 
+In addition, the following text formatting is also adapted to the corresponding culture:
 
 |Text formatting |Description
 |---------------|-----------------
@@ -468,8 +479,10 @@ following text formatting is also adapted to the corresponding culture:
 |Time zones     |Support for time zones when displaying times.
 |Number formats |Support the different representation of decimal and thousands separators, as well as different currencies, weights and measurements.
 
-The `InternationalizationManager` is a central component responsible for managing the translation of texts within the application. It reads the language 
-files and provides the `I18N` function to access the translations. 
+The `InternationalizationManager` is a central component responsible for managing the translation 
+of texts within the application. It reads the language files and provides the `I18N` function 
+to access the translations. This following UML diagram offers an overview of the architecture 
+of the `InternationalizationManager`:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -545,8 +558,8 @@ folder and registered in the project file:
 </ItemGroup>
 ```
 
-The name of the language translation file must match the country code from ISO 3166 ALPHA-2. Each language 
-translation file is structured as follows:
+The name of the language translation file must match the country code from ISO 3166 ALPHA-2. 
+Each language translation file is structured as follows:
 
 ```csharp
 # Comment
@@ -561,10 +574,13 @@ logout.button=Abmelden
 welcome.message=Welcome '{0}' to our application!
 logout.button=Logout
 ```
-When creating language files, it is important to pay attention to cultural differences in the translation of content, e.g. in forms of address.
+When creating language files, it is important to pay attention to cultural differences in 
+the translation of content, e.g. in forms of address.
 
-The translation of a text is done with the help of the InternationalizationManager, which provides the `I18N` function. The term i18n is a numeronym 
-for "internationalization", where the number 18 stands for the 18 letters between the first "i" and the last "n" in the word. 
+The translation of a text is done with the help of the `InternationalizationManager`, which 
+provides the `I18N` function. The term i18n is a numeronym for "internationalization", where 
+the number 18 stands for the 18 letters between the first "i" and the last "n" in the word. 
+The following examples demonstrate how to use the `I18N` function for translating text:
 
 ```csharp
 // Language, PluginId, Key
@@ -583,7 +599,8 @@ The `I18N` function works as follows:
 - PluginId: Identifies the plugin for which the translation is registered.
 - Key: The key that corresponds to the text fragment to be translated.
 
-If a key is not found, the I18N function returns the key itself by default. This can be replaced with a custom error message:
+If a key is not found, the I18N function returns the key itself by default. This can be replaced 
+with a custom error message:
 
 ```csharp
 var text = I18N.Translate("en", "<PluginId>", "non.existent.key") ??
@@ -591,8 +608,9 @@ var text = I18N.Translate("en", "<PluginId>", "non.existent.key") ??
 ```
 
 ## Application model
-Each plugin can provide one or more applications. To define an application, a class must be defined that implements the 
-`IApplication` interface. The application's metadata is appended as attributes of the class.
+Each plugin can provide one or more applications. To define an application, a class must 
+be defined that implements the `IApplication` interface. The application's metadata is appended 
+as attributes of the class. The following example illustrates the definition of an application:
 
 ```csharp
 [Name("Application")]
@@ -605,7 +623,8 @@ public sealed class MyApplication : Application
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following table presents 
+the available attributes and their corresponding details for defining applications:
 
 |Attribute   |Type       |Multiplicity |Optional |Description
 |------------|-----------|-------------|---------|------------
@@ -616,9 +635,11 @@ The following attributes are available:
 |DataPath    |String     |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String     |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
 
-The methods implemented from the interface cover the life cycle of the application. When the plugin is loaded, all the 
-applications it contains are instantiated. These remain in place until the plugin is unloaded. Meta information about 
-the application is stored in the `ApplicationContext` and managed by the `ApplicationManager`.
+The methods implemented from the interface cover the life cycle of the application. When the 
+plugin is loaded, all the applications it contains are instantiated. These remain in place until 
+the plugin is unloaded. Meta information about the application is stored in the `ApplicationContext` 
+and managed by the `ApplicationManager`. To better understand the organization and lifecycle of 
+applications in relation to the `ApplicationManager`, refer to the UML diagram below:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -703,11 +724,14 @@ the application is stored in the `ApplicationContext` and managed by the `Applic
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+
 ## Endpoint model
-Endpoints are (web) elements that can be accessed with a URI (Uniform Resource Identifier). When a plugin is loaded, all 
-classes marked as resources are automatically determined from the assembly and included in a sitemap. For this purpose, 
-the affected classes are provided with attributes. Endpoints are virtual and are implemented through specific derivations 
-such as pages, resources, or REST APIs. Additionally, custom endpoints can also be defined.
+Endpoints are (web) elements that can be accessed with a URI (Uniform Resource Identifier). When 
+a plugin is loaded, all classes marked as resources are automatically determined from the assembly 
+and included in a sitemap. For this purpose, the affected classes are provided with attributes. 
+Endpoints are virtual and are implemented through specific derivations such as pages, resources, or 
+REST APIs. Additionally, custom endpoints can also be defined. The following UML diagram illustrates 
+the relationships and internal structure of the `EndpointManager` and the `Endpoint` it manages:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -797,8 +821,8 @@ such as pages, resources, or REST APIs. Additionally, custom endpoints can also 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Endpoint, such as pages or assets, can be uniquely addressed with the help of URIs. The following endpoint types 
-are supported:
+Endpoint, such as pages or assets, can be uniquely addressed with the help of URIs. The 
+following endpoint types are supported:
 
 |Endpoint type |Description
 |--------------|-------------------------
@@ -809,9 +833,10 @@ are supported:
 |RestAPI       |A RestAPI-Endpoint.
 
 ### Assets
-`WebExpress` provides automatically generated endpoints, which are made available to the client application. Assets 
-in this context are static resources such as JavaScript files, CSS files, icons, and other files necessary for 
-the presentation and functionality of the application.
+`WebExpress` provides automatically generated endpoints, which are made available to 
+the client application. Assets in this context are static resources such as JavaScript 
+files, CSS files, icons, and other files necessary for the presentation and functionality 
+of the application.
 
 ```xml
 <ItemGroup>
@@ -819,12 +844,14 @@ the presentation and functionality of the application.
 </ItemGroup>
 ```
 
-These assets are added as embedded resources in the plugin and are converted into endpoints by the `AssetManager`, which 
-are then integrated into the application's sitemap.
-The `AssetManager` is a central component responsible for managing and providing static resources within the application. It 
-takes on the task of collecting, organizing, and converting the embedded resources from plugins, `WebExpress.WebApp`, and 
-`WebExpress.UI` into endpoints that can be used by the application. The `AssetManager` ensures that the resources are processed 
-in a defined order to avoid conflicts and maintain the consistency of the provided resources.
+These assets are added as embedded resources in the plugin and are converted into endpoints 
+by the `AssetManager`, which are then integrated into the application's sitemap.
+The `AssetManager` is a central component responsible for managing and providing static 
+resources within the application. It takes on the task of collecting, organizing, and 
+converting the embedded resources from plugins, `WebExpress.WebApp`, and `WebExpress.UI` 
+into endpoints that can be used by the application. The `AssetManager` ensures that the 
+resources are processed in a defined order to avoid conflicts and maintain the consistency 
+of the provided resources.
 
 The `AssetManager` builds the asset endpoints in the following order:
 1. *Plugins:* Assets from plugins are used first.
@@ -862,11 +889,13 @@ The following asset types are supported by the `WebExpress` system:
 | .xml  | XML file              
 | .zip  | ZIP archive           
 
-If an asset appears multiple times, the last occurrence is used. This ensures that the desired version of the asset is 
-used. All assets are placed under the "assets" path, which is located within the main directory of the application. This 
-facilitates the organization and access to the necessary resources. It is important to note that the size of embedded 
-resources increases the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, 
-large files should not be delivered as embedded resources.
+If an asset appears multiple times, the last occurrence is used. This ensures that the desired 
+version of the asset is used. All assets are placed under the "assets" path, which is located 
+within the main directory of the application. This facilitates the organization and access to 
+the necessary resources. It is important to note that the size of embedded resources increases 
+the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, 
+large files should not be delivered as embedded resources. Below is a UML diagram that highlights 
+the architecture of the `AssetManager` and its management of `Assets`:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -956,8 +985,9 @@ large files should not be delivered as embedded resources.
 ```
 
 ### Resources
-Resources are typically assets that can come in various forms, such as images, videos, documents, or other files. They serve 
-to provide and support content and functionalities within an application.
+Resources are typically assets that can come in various forms, such as images, videos, documents, 
+or other files. They serve to provide and support content and functionalities within an application. 
+The example below demonstrates how to implement a resource:
 
 ```csharp
 [Segment("E")]
@@ -969,7 +999,8 @@ public sealed class MyResource : IResource
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following 
+table presents the available attributes and their corresponding details for defining resources:
 
 |Attribute       |Type              |Multiplicity |Optional |Description
 |----------------|------------------|-------------|---------|----------------
@@ -984,9 +1015,10 @@ The following attributes are available:
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
 
-A cached resource is created on the first call and persists until the associated plugin is unloaded. The `Initialize` 
-method is called once at instantiation, while the `Process` method is called each time the resource is requested. For 
-non-cached resources, a new instance is created each time they are called.
+A cached resource is created on the first call and persists until the associated plugin 
+is unloaded. The `Initialize` method is called once at instantiation, while the `Process` 
+method is called each time the resource is requested. For non-cached resources, a new 
+instance is created each time they are called.
 
 ```
 ┌────────┐ ┌────────┐ ┌─────────┐ ┌─────────┐
@@ -1060,8 +1092,8 @@ non-cached resources, a new instance is created each time they are called.
     └─┘        └─┘        └─┘         └─┘         └─┘        └─┘      └─┘      └─┘
 ```
 
-The `ResourceManager` manages all resources. However, these are only accessible through the `SitemapManager`. The 
-interaction of the classes involved is illustrated in the following figure:
+The `ResourceManager` manages all resources. However, these are only accessible through the 
+`SitemapManager`. The interaction of the classes involved is illustrated in the following figure:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1177,12 +1209,14 @@ interaction of the classes involved is illustrated in the following figure:
 ```
 
 ### Pages
-Pages are a fundamental component of web applications, serving as the primary interface through which users interact 
-with the content and functionalities provided by the application. Pages can contain a variety of elements, including 
-text, images, videos, forms, and interactive components, all designed to enhance the user experience.
-When a plugin is loaded, pages marked as page are automatically identified and included in the sitemap. This process 
-ensures that all relevant pages are easily accessible and properly indexed. Pages are virtual constructs, implemented 
-through specific derivations such as HTML documents, dynamic web pages, or single-page applications (SPAs). 
+Pages are a fundamental component of web applications, serving as the primary interface through 
+which users interact with the content and functionalities provided by the application. Pages can 
+contain a variety of elements, including text, images, videos, forms, and interactive components, 
+all designed to enhance the user experience. When a plugin is loaded, pages marked as page are 
+automatically identified and included in the sitemap. This process ensures that all relevant pages 
+are easily accessible and properly indexed. Pages are virtual constructs, implemented through 
+specific derivations such as HTML documents, dynamic web pages, or single-page applications (SPAs).
+The following example demonstrates the implementation of a page:
 
 ```csharp
 [Title("my page")]
@@ -1196,7 +1230,8 @@ public sealed class MyPage : IPage
 }
 ```
 
-The following attributes are available:
+To clearly illustrate the metadata described in the code above, the table below outlines the 
+available attributes and their respective details for defining pages:
 
 |Attribute       |Type              |Multiplicity |Optional |Description
 |----------------|------------------|-------------|---------|----------------
@@ -1212,8 +1247,9 @@ The following attributes are available:
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 
-Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, which is available 
-in the `RenderContext`, is responsible for the display of the page.
+Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, 
+which is available in the `RenderContext`, is responsible for the display of the page. The following 
+UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1331,13 +1367,15 @@ in the `RenderContext`, is responsible for the display of the page.
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Rendering a page in `WebExpress` involves converting it into an HTML tree, which is then sent to the requesting client
-for viewing. 
+Rendering a page in `WebExpress` involves converting it into an HTML tree, which is then sent 
+to the requesting client for viewing. 
 
  - `IRenderContext`: Provides all necessary information and methods for the rendering process, including details about the current request. Manages the `IVisualTree`, ensuring it is properly constructed and utilized during rendering.
  - `IVisualTree`: Represents the HTML tree constructed during the rendering process. It can implement various derivatives of the VisualTree class to offer different templates. A template defines the structure and appearance of a page.
 
-This ensures each page is correctly rendered and sent to the client.
+This ensures each page is correctly rendered and sent to the client. To better understand the 
+composition and functionality of the `RenderContext`, refer to the UML diagram below for a 
+comprehensive visualization:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1402,9 +1440,9 @@ This ensures each page is correctly rendered and sent to the client.
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` supports the creation of `IVisualTree` instances through dependency injection. This approach 
-allows dependencies to be automatically provided when an instance of a component is created. The following 
-constructor parameters can be injected:
+`WebExpress` supports the creation of `IVisualTree` instances through dependency injection. 
+This approach allows dependencies to be automatically provided when an instance of a component 
+is created. The following constructor parameters can be injected:
 
 | Constructor Parameter | Description 
 |-----------------------|-------------
@@ -1418,11 +1456,12 @@ instance is created.
 
                                           
 ### RestAPI
-A REST API (Representational State Transfer Application Programming Interface) is an interface that allows resources 
-to be accessed and manipulated via the HTTP protocol. REST APIs are designed to be simple and scalable by following 
-the principles of REST, such as stateless communication, use of HTTP methods, and resource orientation. By using 
-REST APIs, applications can exchange and integrate data between different systems, facilitating the development of 
-distributed and modular applications.
+A REST API (Representational State Transfer Application Programming Interface) is an interface 
+that allows resources to be accessed and manipulated via the HTTP protocol. REST APIs are designed 
+to be simple and scalable by following the principles of REST, such as stateless communication, 
+use of HTTP methods, and resource orientation. By using REST APIs, applications can exchange and 
+integrate data between different systems, facilitating the development of distributed and modular 
+applications.
 
 The integration of REST APIs into `WebExpress` offers several advantages that make the application more dynamic and reactive:
 
@@ -1436,10 +1475,10 @@ The integration of REST APIs into `WebExpress` offers several advantages that ma
 
 - **Improved user experience**: By leveraging REST APIs, WebExpress can provide a more responsive and interactive user interface. Users can seamlessly navigate through the application and receive instant feedback on their actions, increasing user satisfaction and engagement.
 
-One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. These basic 
-operations allow data to be created, retrieved, updated, and deleted, and form the backbone of many web 
-applications. In WebExpress, CRUD operations are supported by a framework that provides HTML and REST API 
-templates to enable a generic view and processing.
+One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. 
+These basic operations allow data to be created, retrieved, updated, and deleted, and form the 
+backbone of many web applications. In WebExpress, CRUD operations are supported by a framework 
+that provides HTML and REST API templates to enable a generic view and processing.
 
 ```
   ┌─────────┐         ┌─────────┐         ┌─────────┐         ┌─────────┐
@@ -1501,9 +1540,8 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 |Update           |Form              |PATCH     |update record
 |Delete (Destroy) |Confirmation form |DELETE    |delete record
 
-The following code selection contains an example class called MyRestApi that implements a REST API 
-in WebExpress. This class uses various attributes to define the CRUD (Create, Read, Update, Delete) 
-operations.
+The following code selection contains an example class called `MyRestApi` that implements a REST API 
+in `WebExpress`:
 
 ```csharp
 [Segment("E")]
@@ -1522,6 +1560,9 @@ public sealed class MyRestApi : IRestApi
 }
 ```
 
+This class uses various attributes to define the CRUD (Create, Read, Update, Delete) 
+operations.
+
 Below are the descriptions of the attributes used in the rest api classes:
 
 |Attribute       |Type              |Multiplicity |Optional |Description
@@ -1538,7 +1579,7 @@ Below are the descriptions of the attributes used in the rest api classes:
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 
-The following diagram outlines how the class structure and interactions for the REST API are defined.
+The following diagram outlines how the class structure and interactions for the REST API are defined:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1665,16 +1706,18 @@ The following diagram outlines how the class structure and interactions for the 
 ```
 
 ## Sitemap model
-In a sitemap, all endpoints are listed with their URI. When a WebClient calls a resource, the associated endpoint is determined 
-from the sitemap and returned to the caller. Only one endpoint can be associated with a URI. Multiple URIs, on the other hand, 
-can point to a common endpoint. This comes into play, among other things, when the segment is variable (e.g. described by 
-regular expressions). Furthermore, a partial URI can refer to a resource.
+In a sitemap, all endpoints are listed with their URI. When a WebClient calls a resource, 
+the associated endpoint is determined from the sitemap and returned to the caller. Only one 
+endpoint can be associated with a URI. Multiple URIs, on the other hand, can point to a common 
+endpoint. This comes into play, among other things, when the segment is variable 
+(e.g. described by regular expressions). Furthermore, a partial URI can refer to a resource.
 
-The sitemap is implemented as a tree. Multiple paths to the same resource are resolved by creating a copy of the affected 
-resource. For example, the URIs `/B/E/G`, `/B/X/G`, and `/C/D/G` point to the same resource `G`.
+The sitemap is implemented as a tree. Multiple paths to the same resource are resolved by 
+creating a copy of the affected resource. For example, the URIs `/B/E/G`, `/B/X/G`, and 
+`/C/D/G` point to the same resource `G`.
 
-Context paths can be specified in the configuration of WebExpress and the applications. The context paths are 
-prefixed to the URIs. The following possible combinations exist:
+Context paths can be specified in the configuration of WebExpress and the applications. The 
+context paths are prefixed to the URIs. The following possible combinations exist:
 
 |WebExpress |Application | Resource | URI
 |-----------|------------|----------|----
@@ -1692,16 +1735,18 @@ prefixed to the URIs. The following possible combinations exist:
 |/x         |/           |/a/b/c    |/x/a/b/c
 |/x         |/y          |/a/b/c    |/x/y/a/b/c
 
-The insertion into the sitemap is done by sorting the number of URI segments in ascending order. Only one resource can 
-be assigned per sitemap node. In a competing situation, the first resource is used. All other resources are not 
-processed. This is indicated in the log by a warning message. 
+The insertion into the sitemap is done by sorting the number of URI segments in ascending 
+order. Only one resource can be assigned per sitemap node. In a competing situation, the 
+first resource is used. All other resources are not processed. This is indicated in the log 
+by a warning message. 
 
-Finding a resource starts at the root of the sitemap tree and follows the path of the URI. If no resource can be 
-found, a 404 jam page is returned.
+Finding a resource starts at the root of the sitemap tree and follows the path of the URI. 
+If no resource can be found, a 404 jam page is returned.
 
-Parameters can be transferred to the resource to be executed in a URI or through form inputs. Furthermore, it is possible 
-to store parameters in the session environment in order to make values available across pages. The parameters in the session 
-are valid until the web server is restarted or the session is destroyed. The following parameters are supported:
+Parameters can be transferred to the resource to be executed in a URI or through form inputs. 
+Furthermore, it is possible to store parameters in the session environment in order to make 
+values available across pages. The parameters in the session are valid until the web server is 
+restarted or the session is destroyed. The following parameters are supported:
 
 |Origin       |Scope     |Description
 |-------------|----------|-------------------------
@@ -1711,12 +1756,14 @@ are valid until the web server is restarted or the session is destroyed. The fol
 |Session      |Session   |Parameters, which are stored in the session. 
 
 ## Response modell
-Web queries can be answered with different status responses (see RFC 2616). If successful, a status code of `200` is 
-returned with the invoked resource. In the `StatusPageManager`, generally valid status pages for the various status 
-codes can be stored. When returning a response that differs from `200`, the stored status page is used. 
+Web queries can be answered with different status responses (see RFC 2616). If successful, 
+a status code of `200` is returned with the invoked resource. In the `StatusPageManager`, 
+generally valid status pages for the various status codes can be stored. When returning a 
+response that differs from `200`, the stored status page is used. 
 
-Status pages are primarily used from the plugin in which the associated application is implemented. Status pages 
-implement the `IStatusPage` interface. 
+Status pages are primarily used from the plugin in which the associated application is 
+implemented. Status pages implement the `IStatusPage` interface. The example below demonstrates 
+how to create a custom status page:
 
 ```csharp
 [WebExStatusCode(500)]
@@ -1725,7 +1772,8 @@ public sealed class MyStatusPage : IStatusPage<RenderContext>
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following table presents 
+the available attributes and their corresponding details for defining status codes:
 
 |Attribute  |Type   |Multiplicity |Optional |Description
 |-----------|-------|-------------|---------|-------------
@@ -1733,13 +1781,17 @@ The following attributes are available:
 |StatusCode |int    |1            |No       |The status code (see RFC 2616 para. 6). 
 |Icon       |String |1            |Yes      |The icon that represents the statuscode graphically.
 
-When creating a response that differs from status 200, the corresponding status page is determined from the 
-StatusPageManager and an instance is created. To do this, the following order is used to determine the status page:
+When creating a response that differs from status 200, the corresponding status page is 
+determined from the StatusPageManager and an instance is created. To do this, the following 
+order is used to determine the status page:
 
 - Search in the plugin of the called resource.
 - Search in the plugin of the application of the called resource.
 - Use the status pages from the plugin "webexpress.webapp".
 - Use the system status pages.
+
+To better understand the architecture of the `StatusPageManager` and the `StatusPage` it 
+oversees, refer to the UML diagram below:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1823,12 +1875,15 @@ StatusPageManager and an instance is created. To do this, the following order is
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-If no status page is found in the current application, a default page is created and delivered by `WebExpress`.
+If no status page is found in the current application, a default page is created and delivered 
+by `WebExpress`.
 
 ## Fragment model
-Fragments are components that can be integrated into pages to extend functionalities. Fragments can come from 
-different sources (plugins). When a resource is loaded, the fragments stored in the sections are determined, 
-instantiated and integrated into the resource. A section is a named area within a page (e.g. `Property.Primary`).
+Fragments are components that can be integrated into pages to extend functionalities. Fragments 
+can come from different sources (plugins). When a resource is loaded, the fragments stored in 
+the sections are determined, instantiated and integrated into the resource. A section is a named 
+area within a page (e.g. `Property.Primary`). The following UML diagram illustrates the 
+relationships and internal structure of the `FragmentManager` and its associated fragments:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1913,7 +1968,9 @@ instantiated and integrated into the resource. A section is a named area within 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Fragments are derived from the `IFragment` interface and are identified by attributes:
+Fragments are modular components that derive from the `IFragment` interface and are identified 
+and configured through attributes. These attributes help define their behavior, scope, and access 
+permissions. The example below demonstrates how to define a fragment with specific attributes:
 
 ```csharp
 [Order(0)]
@@ -1925,7 +1982,8 @@ public sealed class MyFragment : IFragment<IRenderContext>
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following table presents 
+the available attributes and their corresponding details for defining fragments:
 
 |Attribute     |Type         |Multiplicity |Optional |Description
 |--------------|-------------|-------------|---------|-----------------
@@ -1937,8 +1995,9 @@ The following attributes are available:
 |Cache         |Bool         |1            |Yes      |Determines whether the fragment is created once and reused each time it is called. This attribute is active only if the associated page also has the cache attribute. 
 
 ## Controls
-Controls are units of the web page that are translated into HTML source code by rendering. A Web page consists 
-of nested controls.
+Controls are units of the web page that are translated into HTML source code by rendering. A 
+Web page consists of nested controls. This UML diagram provides a representation of the 
+relationships and structure of controls:
 
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
@@ -2012,10 +2071,13 @@ A control provides the following properties:
 |Enable              |Bool                    |Indicates if the element is enabled.
 
 ### Form
-A form in HTML is an interactive element that allows users to enter data and send it to the WebExpress server. Forms consist 
-of various input elements such as text boxes, checkboxes, radio buttons, drop-down menus, and buttons. These form elements 
-are organized into tabs and groups for better structure and usability. By grouping related elements together and using 
-tabs to separate different sections, users can navigate and complete the form more efficiently.
+A form in HTML is an interactive element that allows users to enter data and send it to the 
+WebExpress server. Forms consist of various input elements such as text boxes, checkboxes, 
+radio buttons, drop-down menus, and buttons. These form elements are organized into tabs and 
+groups for better structure and usability. By grouping related elements together and using 
+tabs to separate different sections, users can navigate and complete the form more 
+efficiently. The following UML diagram illustrates the relationships and internal structure, 
+serving as a schema for form designs:
 
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
@@ -2155,8 +2217,9 @@ new/reset│ ├────────>│ │  Process│ │         │ │
          └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
 ```
 
-Form classes and associated form controls are available for entering data, ensuring a consistent and user-friendly 
-experience. The user interface of the form is structured as follows to ensure a variable display of the controls:
+Form classes and associated form controls are available for entering data, ensuring a 
+consistent and user-friendly experience. The user interface of the form is structured as 
+follows to ensure a variable display of the controls:
 
 ```
 ╔Form═════════════════════════════════════════════════════════════════════╗
@@ -2356,9 +2419,11 @@ The arrangement of the form contents can be controlled by the `ControlFormItemGr
 ```
 
 ## Session model
-A session establishes a state-based connection between the client and WebExpress using the otherwise stateless HTTP(S) 
-protocol. The session is assigned to a cookie and is personalized. The cookie consists of a guid. Further data is not 
-stored in the cookie, but on the server side in the `session` object. 
+A session establishes a state-based connection between the client and WebExpress using the 
+otherwise stateless HTTP(S) protocol. The session is assigned to a cookie and is personalized. 
+The cookie consists of a guid. Further data is not stored in the cookie, but on the server 
+side in the `session` object. The following UML diagram illustrates the relationships and 
+structure involved:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2425,11 +2490,14 @@ stored in the cookie, but on the server side in the `session` object.
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-The session manager delivers the currently used session based on the cookie stored in the request. The session, in 
-turn, stores instances of the `ISessionProperty` interface in which the information (e.g. parameters) is stored. 
+The session manager delivers the currently used session based on the cookie stored in the 
+request. The session, in turn, stores instances of the `ISessionProperty` interface in which 
+the information (e.g. parameters) is stored. 
 
 ## Event modell
-Events are notifications from the `WebExpress` API or web applications that can be subscribed to and evaluated.
+Events are notifications from the `WebExpress` API or web applications that can be subscribed 
+to and evaluated. To explore the organization, refer to the UML diagram illustrating the 
+structural relationships:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2503,7 +2571,9 @@ Events are notifications from the `WebExpress` API or web applications that can 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-A eventhandler is created by creating a class that inherits from `IEventHandler`.
+An event handler is created by defining a class that implements the `IEventHandler` interface. 
+This allows the system to respond to specific events and execute custom logic when those events 
+are triggered. The example below demonstrates how to create a simple event handler:
 
 ```csharp
 [Event<Event>] 
@@ -2515,15 +2585,18 @@ public sealed class MyEventHandler : IEventHandler
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following table presents 
+the available attributes and their corresponding details for defining events:
 
 |Attribute   |Type           |Multiplicity |Optional |Description
 |------------|---------------|-------------|---------|------------
 |Event       |`IEvent`       |1            |No       |The event at which you want to listen.
 
 ## Job modell
-Jobs are tasks that are executed in a time-controlled and repetitive manner. When a plugin is loaded, all jobs containing 
-it are determined by the ScheduleManager and instantiated and started at the specified execution time.
+Jobs are tasks that are executed in a time-controlled and repetitive manner. When a plugin 
+is loaded, all jobs containing it are determined by the ScheduleManager and instantiated 
+and started at the specified execution time. The UML diagram below serves to illustrate 
+the relationships and underlying structure:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2612,10 +2685,10 @@ it are determined by the ScheduleManager and instantiated and started at the spe
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-A job is created by a class that inherits from `Job`.
+A job is created by a class that inherits from `Job`. The example below demonstrates how to 
+define a job that starts at 0:30 a.m. on the first day of each month:
 
 ```csharp
-// The job starts at 0:30 a.m. on the first day of each month
 [Job("30", "0", "1", "*", "*")] 
 public sealed class MyJob : Job
 {
@@ -2631,16 +2704,19 @@ public sealed class MyJob : Job
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following table presents 
+the available attributes and their corresponding details for defining jobs:
 
 |Attribute |Type      |Multiplicity |Optional |Description
 |----------|----------|-------------|---------|------------
 |Job       |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
 
 ## Task model
-Tasks are another form of concurrent code execution. In contrast to jobs, tasks are executed ad-hoc (e.g. an export task 
-that was triggered by the user). The result may not be available until a later date. However, the web application can still 
-be fully used. If the result is available, information is usually provided (e.g. by means of a notification).
+Tasks are another form of concurrent code execution. In contrast to jobs, tasks are executed 
+ad-hoc (e.g. an export task that was triggered by the user). The result may not be available 
+until a later date. However, the web application can still be fully used. If the result is 
+available, information is usually provided (e.g. by means of a notification). The following 
+UML diagram illustrates the relationships and structure involved:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2731,7 +2807,8 @@ be fully used. If the result is available, information is usually provided (e.g.
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Tasks are created dynamically by instantiating a class derived from `Task` and starting it from the `TaskManager`.
+Tasks are created dynamically by instantiating a class derived from `Task` and starting it 
+from the `TaskManager`.
 
 The tasks can take the following states:
 
@@ -2754,10 +2831,12 @@ The tasks can take the following states:
 
 
 ## Notification model
-Notifications are messages that are displayed to users as pop-up windows. The notifications are globally (visible to 
-all), linked to a session (visible to current users) or to specific roles (visible to selected users). The notifications 
-are displayed in the upper right corner and are retained when a page is changed. Notifications are closed by the user or 
-at the end of the display period. Notifications that are visible to multiple users are removed by closing a user.
+Notifications are messages that are displayed to users as pop-up windows. The notifications 
+are globally (visible to all), linked to a session (visible to current users) or to specific 
+roles (visible to selected users). The notifications are displayed in the upper right corner 
+and are retained when a page is changed. Notifications are closed by the user or at the end 
+of the display period. Notifications that are visible to multiple users are removed by closing 
+a user. To better understand the relationships and structure, refer to the UML diagram below:
 
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
@@ -2828,9 +2907,8 @@ at the end of the display period. Notifications that are visible to multiple use
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-The `NotificationManager` is the central class for notifications. The `AddNotification` method is used to create notifications.
-
-The following properties can be assigned to notifications:
+The `NotificationManager` is the central class for notifications. The `AddNotification` method is 
+used to create notifications. The following properties can be assigned to notifications:
 
 |Property   |Optional |Description
 |-----------|---------|-----------------
@@ -2842,7 +2920,9 @@ The following properties can be assigned to notifications:
 |Icon       |Yes      |A URI that contains an icon.
 |Type       |Yes      |Is the notification type. The following values are supported: Primary, Secondary, Success, Info, Warning, Danger, Dark, Light, White
 
-The following example illustrates how the NotificationManager works:
+Here is an example to illustrate how the `NotificationManager` functions. Notifications can be 
+added with specific properties such as heading, message, icon, and duration. The following snippet 
+demonstrates how to create a simple welcome notification:
 
 ```csharp
 // Welcome notification
@@ -2853,7 +2933,6 @@ NotificationManager.AddNotification
     icon: Context.Icon,
     durability: 30000
 );
-
 ```
 
 The functions of the `NotificationManager` can also be accessed via the REST API interface `{base path}/wxapp/api/v1/popupnotifications`
@@ -2918,8 +2997,9 @@ supports the following search options:
 ╚══════════════════════════════════════════════════════╝
 ```
 
-To create a reverse index, the data type to be indexed must be registered in 
-the `IndexManager`.
+To create a reverse index, the data type to be indexed must be registered in  the `IndexManager`. This 
+ensures that the system is aware of the data type and can properly index it. The example below 
+demonstrates how to implement a data type that adheres to the `IIndexItem` interface and register it:
 
 ```csharp
 // DataType must implement the IIndexItem interface.
@@ -2933,7 +3013,9 @@ public class DataType : IIndexItem
 WebEx.ComponentHub.GetComponent<IndexManager>().Register<DataType>();
 ```
 
-The reverse index is built by using the `ReBuild` method for all objects or `Add` for an object.
+The reverse index is built by using the `ReBuild` method for all objects or `Add` for an object. The 
+following example demonstrates how to use the `ReIndex` method to rebuild the index for a collection 
+of records:
 
 ```csharp
 var records = new []
@@ -2945,7 +3027,8 @@ var records = new []
 WebEx.ComponentHub.GetComponent<IndexManager>().ReIndex(records);
 ```
 
-To access the reverse index, WQL (see below) is used.
+To access the reverse index, WQL (see below) is used. The example below demonstrates how to execute a WQL 
+query via the `IndexManager` to find entries matching specific criteria:
 
 ```csharp
 var wql = WebEx.ComponentHub.GetComponent<IndexManager>().ExecuteWql("Text ~ \"lorem\"");
@@ -3031,7 +3114,7 @@ Entity           1 │
 
 The identities and groups must be loaded from a persistent data storage. These can be provided by the application or come 
 from external identity management (e.g. LDAP). The roles and identity resources are dictated by the application by 
-hard-implementing them.
+hard-implementing them. The UML diagram below highlights the key relationships and structural elements:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3190,7 +3273,9 @@ hard-implementing them.
 |Business administrator |Business configuration of the application. For example, the business administrator can define access rights (except system administration) of the entities.
 |System administrator   |Technical configuration of the system. For example, the system administrator can install or update a new application.
 
-In addition to the listed standard roles, self-defined roles from definition classes can be provided. 
+In addition to the predefined standard roles, custom roles can also be created by defining them 
+in dedicated classes. The example below demonstrates how to define a custom role using the `IIdentityRole` 
+interface and associate it with a specific permission:
 
 ```csharp
 [Name("myRole")]
@@ -3208,7 +3293,9 @@ The role definition classes have the following attributes:
 |Description |String                |1            |Yes      |The description of the role. This can be a key to internationalization.
 |Permission  |`IIdentityPermission` |n            |Yes      |Inherits the characteristics of the specified permission.
 
-Permissions are specific rights or access rights that are assigned to one or more roles.
+Permissions define specific rights or access controls that are allocated to one or more roles 
+within an application. The example below demonstrates how to define a permission using the 
+`IIdentityPermission` interface and assign it to a role:
 
 ```csharp
 [Name("Write content")]
@@ -3218,7 +3305,8 @@ public sealed class MyIdentityPermission : IIdentityPermission
 }
 ```
 
-The permission definition classes have the following attributes:
+To provide clarity about the metadata specified in the code above, the following table presents 
+the available attributes and their corresponding details for defining permissions:
 
 |Attribute   |Type            |Multiplicity |Optional |Description
 |------------|----------------|-------------|---------|-------------
@@ -3277,9 +3365,9 @@ of `true` means that access can be made.
 The `WebExpress.WebApp.dll` package provides a template for creating business applications.
 
 ## WebApp page
-The template determines the layout of a page. The page is divided into a header, a side area, the page content, and 
-a footer. The individual sections (areas) can be accessed via the class properties. Furthermore, components can bind 
-to these areas and display their contents.
+The template determines the layout of a page. The page is divided into a header, a side area, 
+the page content, and a footer. The individual sections (areas) can be accessed via the class 
+properties. Furthermore, components can bind to these areas and display their contents.
 
 ```
 ╔WebAppPage════════════════════════════════════════════════════════════════════════════╗
@@ -3290,7 +3378,7 @@ to these areas and display their contents.
 ║│ Notfications                                             ┌PopupNotfication──────┐ ×│║
 ║└──────────────────────────────────────────────────────────│ ┌Notfication───────┐ │──┘║
 ║┌Breadcrumb────────────────────────────────────────────────│ │ Icon Title      ×│ │──┐║
-║│ Dashboard / Site / ...                                   │ │      Description │ │  │║
+║│ / Site / ...                                             │ │      Description │ │  │║
 ║└──────────────────────────────────────────────────────────│ └──────────────────┘ │──┘║
 ║┌Prologue──────────────────────────────────────────────────│ ┌Notfication───────┐ │──┐║
 ║│                                                          │ │ Icon Title      ×│ │  │║
@@ -3316,21 +3404,23 @@ to these areas and display their contents.
 ║│                     │░│                                                            │║
 ║│                     │░│                                                            │║
 ║│                     │░│                                                            │║
-║│                     │░└────────────────────────────────────────────────────────────┘║
-║│                     │░┌Footer──────────────────────────────────────────────────────┐║
-║│                     │░│                                                            │║
 ║└─────────────────────┘ └────────────────────────────────────────────────────────────┘║
+║┌Footer──────────────────────────────────────────────────────────────────────────────┐║
+║│                                                                                    │║
+║└────────────────────────────────────────────────────────────────────────────────────┘║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ### Header
-The business application header contains buttons and submenus to navigate the application at the top level. The 
-`ApplicationNavigator` refers to other (WebExpress) applications. The `AppTitle` contains the name of the 
-application. This comes from the name attribute of the application (see Section 3.3). The AppNavigation links 
-point to key features of the application. The `QuickCreate` button provides functionality for creating records. In 
-the search field, search queries can be passed to the application. The `Help` shaft panel groups the application's 
-help links. The `Notification` button collects all notifications from the application. In the `Avatar` button, the 
-functions of the user account are provided. The `Setting` button contains the functions for configuring the application.
+The business application header contains buttons and submenus to navigate the application 
+at the top level. The `ApplicationNavigator` refers to other (WebExpress) applications. 
+The `AppTitle` contains the name of the application. This comes from the name attribute of 
+the application (see Section 3.3). The AppNavigation links point to key features of the 
+application. The `QuickCreate` button provides functionality for creating records. In the 
+search field, search queries can be passed to the application. The `Help` shaft panel groups 
+the application's help links. The `Notification` button collects all notifications from the 
+application. In the `Avatar` button, the functions of the user account are provided. The 
+`Setting` button contains the functions for configuring the application.
 
 ```
                          AppNavigationPreferences
@@ -3369,8 +3459,8 @@ functions of the user account are provided. The `Setting` button contains the fu
 ```
 
 ### Sidebar
-The left side area of the application is responsible for the navigation of a thematically related area/function. Links 
-to sub-functions or data sets can be created and displayed here.
+The left side area of the application is responsible for the navigation of a thematically 
+related area/function. Links to sub-functions or data sets can be created and displayed here.
 
 ```
 ╔Sidebar══════════════╗
@@ -3407,7 +3497,8 @@ to sub-functions or data sets can be created and displayed here.
 ```
 
 ### Content
-The content area is used to display records (for example, as a table or list) or to display and edit a record.
+The content area is used to display records (for example, as a table or list) or to display 
+and edit a record.
 
 ```
 ╔Content═══════════════════════════════════════════════════════════════════════╗
@@ -3438,7 +3529,8 @@ The content area is used to display records (for example, as a table or list) or
 ```
 
 ### Toolbar
-The toolbar contains links or buttons with data-independent functions (e.g. switching between lists and table view).
+The toolbar contains links or buttons with data-independent functions (e.g. switching between 
+lists and table view).
 
 ```
 ╔Toolbar══════════════════════════════════════════════════════════════════╗
@@ -3458,8 +3550,8 @@ The toolbar contains links or buttons with data-independent functions (e.g. swit
 
 
 ### Headline
-The headline displays the title of the displayed data. The title bar also has data-dependent functions and a 
-display of metadata (e.g. creation date, creator).
+The headline displays the title of the displayed data. The title bar also has data-dependent 
+functions and a display of metadata (e.g. creation date, creator).
 
 ```
 ╔Headline═════════════════════════════════════════════════════════════════╗
@@ -3477,7 +3569,8 @@ display of metadata (e.g. creation date, creator).
                                                                       └────────────┘
 ```
 ### Property
-The properties pane is used to display metadata and properties of the displayed data (for example, attachments). 
+The properties pane is used to display metadata and properties of the displayed data 
+(for example, attachments). 
 
 ```
 ╔Property═══════════╗
@@ -3503,10 +3596,11 @@ The properties pane is used to display metadata and properties of the displayed 
 ```
 
 ### Notfications
-There are three ways to display notifications in web applications. The first way is to display notifications in 
-the `Notification` section of the header. Above all, personalized notifications are displayed here (e.g. new comments 
-on subscribed content). The second way is to display notifications in an area below the header. This is intended for 
-application-wide notifications (e.g. scheduled maintenance windows).
+There are three ways to display notifications in web applications. The first way is to 
+display notifications in the `Notification` section of the header. Above all, personalized 
+notifications are displayed here (e.g. new comments on subscribed content). The second way 
+is to display notifications in an area below the header. This is intended for application-
+wide notifications (e.g. scheduled maintenance windows).
 
 ```
 ╔ToastNotfication═══════════════════════════════════════════════════════════════╗
@@ -3517,7 +3611,8 @@ application-wide notifications (e.g. scheduled maintenance windows).
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 ```
 
-The third option is to display notifications in a pop-up dialog. This is intended for the display of results (e.g. successful saving).
+The third option is to display notifications in a pop-up dialog. This is intended for the 
+display of results (e.g. successful saving).
 
 ```
 ╔PopupNotfication════════════╗
@@ -3555,8 +3650,8 @@ The search options provide a dialog for filtering records.
 ```
 
 ### Footer
-The footer is located at the bottom of the web application and usually contains information about the 
-copyright, imprint and version.
+The footer is located at the bottom of the web application and usually contains information 
+about the copyright, imprint and version.
 
 ```
 ╔Footer════════════════════════════════════════════════════════════════════════╗
@@ -3612,8 +3707,8 @@ The login page is used to authenticate users.
 ```
 
 ## Status page
-The status pages are displayed in case of errors. This can have different causes. For example, if a 
-requested page was not found.
+The status pages are displayed in case of errors. This can have different causes. For example, 
+if a requested page was not found.
 
 ```
 ╔WebAppPageLogin═══════════════════════════════════════════════════════════════════════╗
@@ -3658,8 +3753,9 @@ requested page was not found.
 ```
 
 ## Setting page
-Setting page templates are used to administer the web applications. Settings pages must implement 
-the `IPageSetting` interface.
+Setting page templates are utilized to manage and configure web applications. Each settings 
+page is required to implement the `IPageSetting` interface. The following UML diagram
+illustrates the relationships and structures:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3668,129 +3764,210 @@ the `IPageSetting` interface.
 ║   │ <<Interface>>                          │                                         ║
 ║   │ IComponentHub                          │                                         ║
 ║   ├────────────────────────────────────────┤ 1                                       ║
-║   │ SettingPageManager:ISettingPageManager ├────┐                                    ║
-║   │ …                                      │    │                                    ║
-║   └────────────────────────────────────────┘    │                                    ║
-║                                                 │                                    ║
-║                                                 │                                    ║
-║   ┌────────────────────────────────────┐        │                                    ║
-║   │ <<Interface>>                      │        │                                    ║
-║   │ IComponentManager                  │        │                                    ║
-║   ├────────────────────────────────────┤        │                                    ║
-║   └────────────────────────────────────┘        │                                    ║
-║                    Δ                            │                                    ║
-║                 ┌--┘                            │                                    ║
-║                 ¦                             1 ▼                                    ║
-║        ┌────────┴──────────────────────────────────────┐                             ║
-║        │ <<Interface>>                                 │                             ║
-║   ┌----┤ ISettingPageManager                           │                             ║
-║   ¦    ├───────────────────────────────────────────────┤                             ║
-║   ¦    │ AddSettingPage:Event                          │                             ║
-║   ¦    │ RemoveSettingPage:Event                       │                             ║
-║   ¦    ├───────────────────────────────────────────────┤ 1                           ║
-║   ¦    │ SettingPages:IEnumerable<ISettingPageContext> ├───┐                         ║
-║   ¦    ├───────────────────────────────────────────────┤   │                         ║
-║   ¦    │                                               │   │                         ║
-║   ¦    └───────────────────────────────────────────────┘   │                         ║
-║   ¦                                                        │                         ║
-║   ¦                   ┌────────────────┐                   │                         ║
-║   ¦                   │ <<Interface>>  │                   │                         ║
-║   ¦                   │ IContext       │                   │                         ║
-║   ¦                   ├────────────────┤                   │                         ║
-║   ¦                   └────────────────┘                   │                         ║
-║   ¦                           Δ                            │                         ║
-║   ¦                           ¦                            │                         ║
-║   ¦                           ¦                            │                         ║
-║   ¦       ┌───────────────────┴────────────────────┐       │                         ║
-║   ¦       │ <<Interface>>                          │       │                         ║
-║   ¦       │ IEndpointContext                       │       │                         ║
-║   ¦       ├────────────────────────────────────────┤       │                         ║
-║   ¦       │ EndpointId:String                      │       │                         ║
-║   ¦       │ PluginContext:IPluginContext           │       │                         ║
-║   ¦       │ ApplicationContext:IApplicationContext │       │                         ║
-║   ¦       │ Conditions:IEnumerable<ICondition>     │       │                         ║
-║   ¦       │ ParentContext:IEndpointContext         │       │                         ║
-║   ¦       │ Cache:Bool                             │       │                         ║
-║   ¦       │ ContextPath:UriResource                │       │                         ║
-║   ¦       │ Uri:UriResource                        │       │                         ║
-║   ¦       └────────────────────────────────────────┘       │                         ║
-║   ¦                           Δ                            │                         ║
-║   ¦                           ¦          ┌─────────────────┘                         ║
-║   ¦                           ¦        * ▼                                           ║
-║   ¦          ┌────────────────┴─────────────────┐                                    ║
-║   ¦          │ <<Interface>>                    │                                    ║
-║   ¦          │ ISettingPageContext              │                                    ║
-║   ¦          ├──────────────────────────────────┤                                    ║
-║   ¦          │ Hide:Bool                        │                                    ║
-║   ¦          │ Icon:PropertyIcon                │      ┌──────────────────┐          ║
-║   ¦          │ Context:String                   │ 1  1 │ <<Enumeration>>  │          ║
-║   ¦          │ Section:SettingSection           ├─────►│ SettingSection   │          ║
-║   ¦          │ Group:Group                      │      ├──────────────────┤          ║
-║   ¦          └──────────────────────────────────┘      │ Preferences      │          ║
-║   ¦                                                    │ Primary          │          ║
-║   ¦                        ┌────────────────┐          │ Secondary        │          ║
-║   └-------┐                │ <<Interface>>  │          └──────────────────┘          ║
-║           ¦                │ IComponent     │                                        ║
-║           ¦                ├────────────────┤                                        ║
-║           ¦                └────────────────┘                                        ║
-║           ¦                        Δ                                                 ║
-║           ¦                        ¦                                                 ║
-║           ¦                        ¦                                                 ║
-║           ¦                ┌───────┴────────┐                                        ║
-║           ¦                │ <<Interface>>  │                                        ║
-║           ¦                │ IEndpoint      │                                        ║
-║           ¦                ├────────────────┤                                        ║
-║           ¦                └────────────────┘                                        ║
-║           ¦                        Δ                                                 ║
-║           ¦                        ¦                                                 ║
-║           ¦                        ¦  ┌────────────────┐                             ║
-║           ¦     ┌──────────────────┴──│ TRenderContext │─┐                           ║
-║           ¦     │ <<Interface>>       └────────────────┘ │                           ║
-║           ¦     │ ISettingPage                           │                           ║
-║           ¦     ├────────────────────────────────────────┤                           ║
-║           ¦     │ Process(TRenderContext)                │                           ║
-║           ¦     └────────────────────────────────────────┘                           ║
-║           ¦                         Δ                                                ║
-╚═══════════¦═════════════════════════¦════════════════════════════════════════════════╝
-            ¦                         ¦                                         
-╔MyPlugin═══¦═════════════════════════¦════════════════════════════════════════════════╗
-║           ¦                         ¦                                                ║
-║           ¦                         ¦                                                ║
-║           ¦                         ¦                                                ║
-║           ¦ create     ┌────────────┴────────────┐                                   ║
-║           └-----------►│ MySettingPage           │                                   ║
-║                        ├─────────────────────────┤                                   ║
-║                        │ Process(TRenderContext) │                                   ║
-║                        └─────────────────────────┘                                   ║
+║   │ SettingPageManager:ISettingPageManager ├────────┐                                ║
+║   │ …                                      │        │                                ║
+║   └────────────────────────────────────────┘        │                                ║
+║                                                     │                                ║
+║                                                     │                                ║
+║   ┌────────────────────────────────────┐            │                                ║
+║   │ <<Interface>>                      │            │                                ║
+║   │ IComponentManager                  │            │                                ║
+║   ├────────────────────────────────────┤            │                                ║
+║   └────────────────────────────────────┘            │                                ║
+║                      Δ                              │                                ║
+║                 ┌----┘                              │                                ║
+║                 ¦                                 1 ▼                                ║
+║        ┌────────┴────────────────────────────────────────────────┐                   ║
+║        │ <<Interface>>                                           │                   ║
+║        │ ISettingPageManager                                     ├--------------┐    ║
+║        ├─────────────────────────────────────────────────────────┤              ¦    ║
+║        │ AddSettingPage:Event                                    │              ¦    ║
+║        │ RemoveSettingPage:Event                                 │              ¦    ║
+║        │ AddSettingCategory:Event                                │              ¦    ║
+║        │ RemoveSettingCategory:Event                             │              ¦    ║
+║        │ AddSettingGroup:Event                                   │              ¦    ║
+║        │ RemoveSettingGroup:Event                                │              ¦    ║
+║        ├─────────────────────────────────────────────────────────┤ 1            ¦    ║
+║      1 │ SettingCategories:IEnumerable<ISettingCategoryContext>  ├───────┐      ¦    ║
+║   ┌────┤ SettingGroups:IEnumerable<ISettingGroupContext>         │ 1     │      ¦    ║
+║   │    │ SettingPages:IEnumerable<ISettingPageContext>           ├──┐    │      ¦    ║
+║   │    ├─────────────────────────────────────────────────────────┤  │    │      ¦    ║
+║   │    │ GetSettingPages(Type):                                  │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
+║   │    │ GetSettingPages(Type, IApplicationContext):             │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
+║   │    │ GetSettingPages(IApplicationContext,category):          │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
+║   │    │ GetSettingPages(IApplicationContext,                    │  │    │      ¦    ║
+║   │    │  ISettingCategoryContext,                               │  │    │      ¦    ║
+║   │    │  ISettingGroupContext):IEnumerable<ISettingPageContext> │  │    │      ¦    ║
+║   │    │ GetFirstSettingPage(IApplicationContext,                │  │    │      ¦    ║
+║   │    │  ISettingCategoryContext):ISettingPageContext           │  │    │      ¦    ║
+║   │    │ GetCategories(IApplicationContext):                     │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingCategoryContext>                   │  │    │      ¦    ║
+║   │    │ GetGroups(IApplicationContext,ISettingCategoryContext): │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingGroupContext>                      │  │    │      ¦    ║
+║   │    └─────────────────────────────────────────────────────────┘  │    │      ¦    ║
+║   │                                                                 │    │      ¦    ║
+║   │                   ┌────────────────┐                            │    │      ¦    ║
+║   │                   │ <<Interface>>  │                            │    │      ¦    ║
+║   │                   │ IContext       │                            │    │      ¦    ║
+║   │                   ├────────────────┤                            │    │      ¦    ║
+║   │                   └────────────────┘                            │    │      ¦    ║
+║   │                           Δ                                     │    │      ¦    ║
+║   │                           ¦                                     │    │      ¦    ║
+║   │                           ¦                                     │    │      ¦    ║
+║   │       ┌───────────────────┴────────────────────┐                │    │      ¦    ║
+║   │       │ <<Interface>>                          │                │    │      ¦    ║
+║   │       │ IEndpointContext                       │                │    │      ¦    ║
+║   │       ├────────────────────────────────────────┤                │    │      ¦    ║
+║   │       │ EndpointId:String                      │                │    │      ¦    ║
+║   │       │ PluginContext:IPluginContext           │                │    │      ¦    ║
+║   │       │ ApplicationContext:IApplicationContext │                │    │      ¦    ║
+║   │       │ Conditions:IEnumerable<ICondition>     │                │    │      ¦    ║
+║   │       │ ParentContext:IEndpointContext         │                │    │      ¦    ║
+║   │       │ Cache:Bool                             │                │    │      ¦    ║
+║   │       │ ContextPath:UriResource                │                │    │      ¦    ║
+║   │       │ Uri:UriResource                        │                │    │      ¦    ║
+║   │       └────────────────────────────────────────┘                │    │      ¦    ║
+║   │                           Δ                                     │    │      ¦    ║
+║   │                           ¦     ┌───────────────────────────────┘  * ▼      ¦    ║
+║   │                           ¦     │               ┌─────────────────────────┐ ¦    ║
+║   │                       ┌---┘     │             1 │ <<Interface>>           │ ¦    ║
+║   │                       ¦         │          ┌───►│ ISettingCategoryContext │ ¦    ║
+║   │                       ¦       * ▼          │    ├─────────────────────────┤ ¦    ║
+║   │      ┌────────────────┴─────────────────┐  │    │ Icon:PropertyIcon       │ ¦    ║
+║   │      │ <<Interface>>                    │  │    │ Name:String             │ ¦    ║
+║   │      │ ISettingPageContext              │  │    │ Description:String      │ ¦    ║
+║   │      ├──────────────────────────────────┤  │    │ Section:SettingSection  │ ¦    ║
+║   │      │ Hide:Bool                        │  │    └─────────────────────────┘ ¦    ║
+║   │      │ Icon:PropertyIcon                │ 1│                                ¦    ║
+║   │      │ Category:ISettingCategoryContext ├──┘       ┌──────────────────┐     ¦    ║
+║   │   ┌──┤ Group:ISettingGroupContext       │ 1      1 │ <<Enumeration>>  │     ¦    ║
+║   │   │  │ Section:SettingSection           ├─────────►│ SettingSection   │     ¦    ║
+║   │   │  └──────────────────────────────────┘          ├──────────────────┤     ¦    ║
+║   │   │                                                │ Preferences      │     ¦    ║
+║ * ▼ 1 ▼                          ┌────────────────┐    │ Primary          │     ¦    ║
+║ ┌───────────────────────────┐    │ <<Interface>>  │    │ Secondary        │     ¦    ║
+║ │ <<Interface>>             │    │ IComponent     │    └──────────────────┘     ¦    ║
+║ │ ISettingGroupContext      │    ├────────────────┤                             ¦    ║
+║ ├───────────────────────────┤    └────────────────┘                             ¦    ║
+║ │ Icon:PropertyIcon         │            Δ                                      ¦    ║
+║ │ Name:String               │            ¦                                      ¦    ║
+║ │ Description:String        │            ¦                                      ¦    ║
+║ │ Category:                 │    ┌───────┴────────┐                             ¦    ║
+║ │   ISettingCategoryContext │    │ <<Interface>>  │                             ¦    ║
+║ │ Section:SettingSection    │    │ IEndpoint      │                             ¦    ║
+║ └───────────────────────────┘    ├────────────────┤                             ¦    ║
+║                                  └────────────────┘                             ¦    ║
+║                                          Δ                                      ¦    ║
+║                                          ¦                                      ¦    ║
+║                                          ¦   ┌─────────────┐                    ¦    ║
+║                        ┌─────────────────┴───│ TVisualTree │─┐                  ¦    ║
+║                        │ <<Interface>>       └─────────────┘ │                  ¦    ║
+║                        │ ISettingPage                        │                  ¦    ║
+║                        ├─────────────────────────────────────┤                  ¦    ║
+║                        │ Process(IRenderContext,TVisualTree) │                  ¦    ║
+║                        └─────────────────────────────────────┘                  ¦    ║
+║                                          Δ                                      ¦    ║
+║                                          ¦                                      ¦    ║
+╚══════════════════════════════════════════¦══════════════════════════════════════¦════╝
+                                           ¦                                      ¦     
+╔MyPlugin══════════════════════════════════¦══════════════════════════════════════¦════╗
+║                                          ¦                                      ¦    ║
+║                        ┌─────────────────┴───────────────────┐           create ¦    ║
+║                        │ MySettingPage                       │◄-----------------┘    ║
+║                        ├─────────────────────────────────────┤                       ║
+║                        │ Process(IRenderContext,TVisualTree) │                       ║
+║                        └─────────────────────────────────────┘                       ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-When the settings page is generated, the class is enriched with meta information by attributes.
+### Setting category
+Setting categories serve the purpose of organizing settings at the highest level and help 
+users navigate large settings interfaces efficiently. The example below demonstrates how a 
+category can be defined in code:
 
 ```csharp
-[SettingContext("admin")]
+[Icon(TypeIcon.InfoCircle)]
+[Name("SettingCategory A")]
+[Description("Description of category a.")]
 [SettingSection(SettingSection.Primary)]
-[SettingGroup("Setting")]
+public sealed class MySettingCategory : ISettingCategory
+{
+}
+```
+
+The following attributes are available for a settings category, which organizes settings at the 
+highest level:
+
+|Attribute       |Type             |Multiplicity |Optional |Description
+|----------------|-----------------|-------------|---------|--------------
+|Icon            |String           |1            |Yes      |An icon displayed alongside the category link.
+|                |TypeIcon         |             |         |   
+|Name            |String           |1            |Yes      |Human-readable name or internationalization key for the category.
+|Description     |String           |1            |Yes      |Human-readable description or internationalization key for the category.
+|SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
+
+### Setting group
+Setting groups provide a way to structure settings within categories, offering a more granular 
+organization. Below is an example of how a group can be defined in code:
+
+```csharp
+[Icon(TypeIcon.InfoCircle)]
+[Name("SettingGroup A")]
+[Description("Description of group a.")]
+[SettingCategory<MySettingCategory>()]
+[SettingSection(SettingSection.Primary)]
+public sealed class MySettingGroup : ISettingGroup
+{
+}
+```
+
+The following attributes are available for a settings group, which structures settings within
+a category:
+
+|Attribute       |Type             |Multiplicity |Optional |Description
+|----------------|-----------------|-------------|---------|--------------
+|Icon            |String           |1            |Yes      |An icon displayed alongside the group link.
+|                |TypeIcon         |             |         |
+|Name            |String           |1            |Yes      |Human-readable name or internationalization key for the group.
+|Description     |String           |1            |Yes      |Human-readable description or internationalization key for the group.
+|SettingCategory |ISettingCategory |1            |Yes      |Each setting group must have a setting category. If no category is specified, the fallback `SettingCategoryGeneral` is used.
+|SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
+
+This version enforces that every group must have a category, with a fallback to `SettingCategoryGeneral`
+if none is provided.
+
+### Setting page
+Setting pages define the individual interfaces where the settings are presented. These pages 
+make use of categories and groups to provide an organized experience. Below is an example of 
+how a settings page can be defined in code:
+
+```csharp
 [SettingIcon(TypeIcon.InfoCircle)]
+[SettingGroup<MySettingGroup>()]
+[SettingSection(SettingSection.Primary)]
 public sealed class MyWebAppPageSetting : WebAppPageSetting
 {
 }
 ```
 
-The following attributes are available for a settings page:
+To provide clarity about the metadata specified in the code above, the following table 
+presents the available attributes and their corresponding details for defining a settings 
+page:
 
-|Attribute      |Type           |Multiplicity |Optional |Description
-|---------------|---------------|-------------|---------|--------------
-|SettingContext |String         |1            |Yes      |Sets the context. Only settings pages that use the same context are included in the Setting menu. In the ```SettingTab```, all contexts are listed and referred to the first settings page.
-|SettingSection |SettingSection |1            |Yes      |Determines the section by displaying the entry in the Setting menu.
-|SettingGroup   |String         |1            |Yes      |Groups the settings entries within a section.
-|SettingIcon    |String         |1            |Yes      |An icon to be displayed in the SettigMenu along with the link to the settings page.
-|               |TypeIcon       |             |         |   
-|SettingHide    |-              |1            |Yes      |Not displaying the page in the settings
+|Attribute       |Type             |Multiplicity |Optional |Description
+|----------------|-----------------|-------------|---------|--------------
+|SettingIcon     |String           |1            |Yes      |An icon to be displayed along with the link to the settings page.
+|                |TypeIcon         |             |         |   
+|SettingGroup    |ISettingGroup    |1            |Yes      |Each setting page must have a setting group. If no group is specified, the fallback `SettingGroupGeneral` is used.
+|SettingSection  |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
+|SettingHide     |-                |1            |Yes      |Not displaying the page in the settings
 
-The template is specially adapted to the settings pages. In particular, the side navigation pane and a tab element 
-are automatically populated from the meta information.
+The template is specially adapted to the settings pages. In particular, the side navigation 
+pane and a tab element are automatically populated from the meta information.
 
 ```
 ╔WebAppPageSetting═════════════════════════════════════════════════════════════════════╗
@@ -3801,87 +3978,104 @@ are automatically populated from the meta information.
 ║│ Notfications                                             ┌PopupNotfication──────┐ ×│║
 ║└──────────────────────────────────────────────────────────│ ┌Notfication───────┐ │──┘║
 ║┌Breadcrumb────────────────────────────────────────────────│ │ Icon Title      ×│ │──┐║
-║│ Dashboard / Site / ...                                   │ │      Description │ │  │║
+║│ Settings: / Site / ...                                   │ │      Description │ │  │║
 ║└──────────────────────────────────────────────────────────│ └──────────────────┘ │──┘║
 ║┌Prologue──────────────────────────────────────────────────│ ┌Notfication───────┐ │──┐║
-║│ ┌SettingTab──────────────────────────────────────────────│ │ Icon Title      ×│ │┐ │║
-║│ │  SettingContext A   SettingContext B   SettingContext C│ │      Description │ ││ │║
-║│ └────────────────────────────────────────────────────────│ └──────────────────┘ │┘ │║
-║└──────────────────────────────────────────────────────────│ ┌Notfication───────┐ │──┘║
-║┌Sidebar──────────────┐ ┌SearchOptions─────────────────────│ │ Icon Title      ×│ │──┐║
-║│                     │░│                                  │ │      Description │ │ ×│║
-║│ ┌SettingMenu──────┐ │░└──────────────────────────────────│ └──────────────────┘ │──┘║
-║│ │                 │ │░┌Content───────────────────────────└──────────────────────┘──┐║
-║│ │ Group A         │ │░│                                                            │║
-║│ │   Link          │ │░│                                                            │║
-║│ │   Link          │ │░│                                                            │║
-║│ │   Link          │ │░│                                                            │║
-║│ │ Group B         │ │░│                                                            │║
-║│ │   Link          │ │<│                                                            │║
-║│ │   Link          │ │<│                                                            │║
-║│ │ Group C         │ │<│                                                            │║
-║│ │   Link          │ │░│                                                            │║
-║│ │                 │ │░│                                                            │║
-║│ │                 │ │░│                                                            │║
-║│ │                 │ │░│                                                            │║
-║│ │                 │ │░│                                                            │║
-║│ │                 │ │░│                                                            │║
-║│ │                 │ │░└────────────────────────────────────────────────────────────┘║
-║│ │                 │ │░┌Footer──────────────────────────────────────────────────────┐║
-║│ └─────────────────┘ │░│                                                            │║
+║│                                                          │ │ Icon Title      ×│ │  │║
+║└──────────────────────────────────────────────────────────│ │      Description │ │──┘║
+║┌SettingTab────────────────────────────────────────────────│ └──────────────────┘ │──┐║
+║│ SettingCategory A  SettingCategory B  SettingCategory C  │ ┌Notfication───────┐ │  │║
+║└──────────────────────────────────────────────────────────│ │ Icon Title      ×│ │──┘║
+║┌SettingSidebar───────┐ ┌SearchOptions─────────────────────│ │      Description │ │──┐║
+║│                     │░│                                  │ └──────────────────┘ │ ×│║
+║│ SettingGroup A      │░└──────────────────────────────────└──────────────────────┘──┘║
+║│   Link              │░┌Content─────────────────────────────────────────────────────┐║
+║│   Link              │░│                                                            │║
+║│   Link              │░│                                                            │║
+║│ SettingGroup B      │░│                                                            │║
+║│   Link              │░│                                                            │║
+║│   Link              │░│                                                            │║
+║│ SettingGroup C      │<│                                                            │║
+║│   Link              │<│                                                            │║
+║│                     │<│                                                            │║
+║│                     │░│                                                            │║
+║│                     │░│                                                            │║
+║│                     │░│                                                            │║
+║│                     │░│                                                            │║
+║│                     │░│                                                            │║
+║│                     │░│                                                            │║
 ║└─────────────────────┘ └────────────────────────────────────────────────────────────┘║
+║┌Footer──────────────────────────────────────────────────────────────────────────────┐║
+║│                                                                                    │║
+║└────────────────────────────────────────────────────────────────────────────────────┘║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
-
-### Setting menu
-The settings menu groups the different settings thematically. The groups are determined from the `SettingGroup` 
-attributes of the settings pages.
+### Setting tab
+The contents of the `SettingTab` are fed from the `SettingCategory` attributes of the settings 
+pages. For each defined category, a tab element is created and linked to the first element. 
+The `SettingTab` is not displayed if no section or only one section has been defined.
 
 ```
-╔SettingMenu════════╗
+╔SettingTab═════════════════════════════════════════════════════════════════════╗
+║┌Preferences─────────┐┌Primary────────────┐┌Secondary─────────────────────────┐║
+║│ SettingCategory A  ││ SettingCategory B ││SettingCategory C                 │║
+║└────────────────────┘└───────────────────┘└──────────────────────────────────┘║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Setting sidebar
+The settings sidebar groups the different settings thematically. The groups are determined 
+from the `SettingGroup` attributes of the settings pages.
+
+```
+╔SettingSidebar═════╗
 ║┌Preferences──────┐║
-║│ Group A         │║
-║│   Link          │║
-║│   Link          │║
-║│   Link          │║
+║│ SettingGroup A  │║
+║│  ┌Preferences─┐ │║
+║│  │ Link       │ │║
+║│  │ Link       │ │║
+║│  │ Link       │ │║
+║│  └────────────┘ │║
+║│  ┌Primary─────┐ │║
+║│  │ Link       │ │║
+║│  │ Link       │ │║
+║│  └────────────┘ │║
+║│  ┌Secondary───┐ │║
+║│  │ Link       │ │║
+║│  └────────────┘ │║
 ║└─────────────────┘║
 ║┌Primary──────────┐║
-║│ Group B         │║
-║│   Link          │║
-║│   Link          │║
-║│                 │║
-║│                 │║
-║│                 │║
-║│                 │║
-║│                 │║
+║│ SettingGroup B  │║
+║│  ┌Preferences─┐ │║
+║│  │ Link       │ │║
+║│  │ Link       │ │║
+║│  └────────────┘ │║
+║│  ┌Primary─────┐ │║
+║│  │ Link       │ │║
+║│  └────────────┘ │║
+║│  ┌Secondary───┐ │║
+║│  └────────────┘ │║
 ║└─────────────────┘║
 ║┌Secondary────────┐║
-║│ Group C         │║
-║│   Link          │║
-║│                 │║
-║│                 │║
-║│                 │║
+║│ SettingGroup C  │║
+║│  ┌Preferences─┐ │║
+║│  └────────────┘ │║
+║│  ┌Primary─────┐ │║
+║│  │ Link       │ │║
+║│  └────────────┘ │║
+║│  ┌Secondary───┐ │║
+║│  └────────────┘ │║
 ║└─────────────────┘║
 ╚═══════════════════╝
 ```
 
-### Setting tab
-The contents of the `SettingTab` are fed from the `SettingSection` attributes of the settings pages. For each defined section, a tab element 
-is created and linked to the first element of the section. The `SettingTab` is not displayed if no section or only one section has been defined.
-
-```
-╔SettingTab═════════════════════════════════════════════════════════════════════╗
-║┌─────────────────────────────────────────────────────────────────────────────┐║
-║│  SettingContext A         SettingContext B         SettingContext C         │║
-║└─────────────────────────────────────────────────────────────────────────────┘║
-╚═══════════════════════════════════════════════════════════════════════════════╝
-```
-
 ## Theme model
-WebExpress.WebApp offers a ready-made layout (e.g. color scheme, fonts, font sizes). This can be adapted to individual needs by 
-the web applications. The management of the themes is taken over by the `ThemeManager`. An individual topic can be assigned to each 
-application. The configuration of the topics can be done via definition classes or via a settings dialog, which is provided by 
-`WebExpress.WebApp`.
+WebExpress.WebApp offers a ready-made layout (e.g. color scheme, fonts, font sizes). This 
+can be adapted to individual needs by the web applications. The management of the themes is 
+taken over by the `ThemeManager`. An individual topic can be assigned to each application. 
+The configuration of the topics can be done via definition classes or via a settings dialog, 
+which is provided by `WebExpress.WebApp`. The UML diagram below serves to illustrate the 
+relationships and underlying structure:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3952,7 +4146,10 @@ application. The configuration of the topics can be done via definition classes 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-A color scheme is defined in a class that implements the `ITheme` interface and is associated with an application.
+A color scheme is defined in a class that implements the `ITheme` interface, allowing it 
+to be seamlessly associated with an application. The example below demonstrates how to specify 
+color properties for various UI elements, such as backgrounds and text, to create a consistent 
+visual theme:
 
 ```csharp
 [Name("MyTheme")]
@@ -3970,7 +4167,8 @@ public sealed class MyTheme : ITheme
 }
 ```
 
-The following attributes are available:
+To provide clarity about the metadata specified in the code above, the following table 
+presents the available attributes and their corresponding details:
 
 |Attribute   |Type   |Multiplicity |Optional |Description
 |------------|-------|-------------|---------|---------------------
@@ -3980,7 +4178,10 @@ The following attributes are available:
 |Image       |String |1            |Yes      |Link to an image that visually represents the topic.
 
 # Example
-The classic example of the Hello World application is intended to show in the simplest possible way which instructions and components are needed for a complete application.
+The classic 'Hello World' application serves as a fundamental starting point for understanding 
+how the essential instructions and components come together to form a complete and functional 
+application. The example below demonstrates the minimal setup required to implement an 
+application using plugins, pages, and controls:
 
 ```csharp
 using WebExpress.Core.WebAttribute;
