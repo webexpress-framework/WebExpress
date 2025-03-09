@@ -3934,11 +3934,8 @@ a category:
 |                |TypeIcon         |             |         |
 |Name            |String           |1            |Yes      |Human-readable name or internationalization key for the group.
 |Description     |String           |1            |Yes      |Human-readable description or internationalization key for the group.
-|SettingCategory |ISettingCategory |1            |Yes      |Each setting group must have a setting category. If no category is specified, the fallback `SettingCategoryGeneral` is used.
+|SettingCategory |ISettingCategory |1            |Yes      |Each setting page can have a setting category. If no `SettingCategory` is specified, the settings page will not be associated with a category.
 |SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
-
-This version enforces that every group must have a category, with a fallback to `SettingCategoryGeneral`
-if none is provided.
 
 ### Setting page
 Setting pages define the individual interfaces where the settings are presented. These pages 
@@ -3962,7 +3959,7 @@ page:
 |----------------|-----------------|-------------|---------|--------------
 |SettingIcon     |String           |1            |Yes      |An icon to be displayed along with the link to the settings page.
 |                |TypeIcon         |             |         |   
-|SettingGroup    |ISettingGroup    |1            |Yes      |Each setting page must have a setting group. If no group is specified, the fallback `SettingGroupGeneral` is used.
+|SettingGroup    |ISettingGroup    |1            |Yes      |Each setting page can have a setting group. If no `SettingGroup` is specified, the settings page will not be associated with a group.
 |SettingSection  |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
 |SettingHide     |-                |1            |Yes      |Not displaying the page in the settings
 
