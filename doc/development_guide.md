@@ -25,7 +25,7 @@ available as open source:
 ```
 The MIT License (MIT)
 
-Copyright (c) 2024 René Schwarzer
+Copyright (c) 2025 René Schwarzer
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -837,6 +837,10 @@ following endpoint types are supported:
 the client application. Assets in this context are static resources such as JavaScript 
 files, CSS files, icons, and other files necessary for the presentation and functionality 
 of the application.
+
+To include additional resources such as CSS files in the project, they can be embedded 
+directly within the project configuration. An example of how to include a CSS file as an 
+embedded resource is shown below:
 
 ```xml
 <ItemGroup>
@@ -4200,9 +4204,9 @@ namespace Sample
         public void Run() {}
     }
 
-    public sealed class Home : IPage
+    public sealed class Home : IPage<VisualTree>
     {
-        public void Render(IRenderContext context)
+        public void Render(IRenderContext renderContext, VisualTree visualTree)
         {
             var control = new ControlText(){Text = "Hello World!"};
             return control.Render(context);
