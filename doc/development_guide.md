@@ -187,7 +187,7 @@ The following component managers are available in `WebExpress`:
 |SessionManager              |Responsible for storing session data generated during the user session.
 |TaskManager                 |Management of ad-hoc tasks.
 |IdentityManager             |Users or technical objects that are used for identity and access management.
-|SettingPageManager          |Manages the settings of the application.
+|SettingPageManager          |Manages the settings of the application.    
 
 In addition, you can create your own components and register them in the `ComponentHub`. The 
 following UML diagram illustrates the relationships and internal structure of the `ComponentManager` 
@@ -1997,6 +1997,40 @@ the available attributes and their corresponding details for defining fragments:
 |Permission    |`Permission` |n            |Yes      |Grants access to the fragment.       
 |Condition     |`ICondition` |1            |Yes      |Condition that must be met for the fragment to be available.
 |Cache         |Bool         |1            |Yes      |Determines whether the fragment is created once and reused each time it is called. This attribute is active only if the associated page also has the cache attribute. 
+
+## Web icons
+Unlike components, web icons are not managed through a centralized manager like the `AssetManager`. 
+Instead, each web icon is derived from the `IIcon` interface and used directly within the application. 
+This approach provides a lightweight and flexible system for incorporating icons into the user interface 
+without the need for additional management layers. To define a specific web icon, a class is created 
+that inherits from a base Icon class or implements the `IIcon` interface. Below is an example of a class 
+representing an information circle icon:
+
+```csharp
+public class IconInfoCircle : IIcon
+{
+    public IHtmlNode Render(IRenderContext renderContext, 
+        IVisualTree visualTree, 
+        string id = null, 
+        string description = null, 
+        string css = null, 
+        string style = null, 
+        string role = null)
+    {
+        return new HtmlElementTextSemanticsSpan()
+        {
+            Class = "fas fa-info-circle"
+        };
+    }
+}
+```
+
+This implementation showcases the core functionality of the `IconInfoCircle` class. The render method 
+generates an HTML span element (`HtmlElementTextSemanticsSpan`) with a CSS class (`fas fa-info-circle`) 
+that defines the icon's appearance. In contrast to standard icons, which typically reference a file path 
+to an external asset, web icons directly produce HTML code that can be embedded into the HTML document.
+Additional optional parameters, such as id, description, and css, provide flexibility in customizing 
+the icon's rendering for various use cases.
 
 ## Controls
 Controls are units of the web page that are translated into HTML source code by rendering. A 
@@ -3894,7 +3928,7 @@ users navigate large settings interfaces efficiently. The example below demonstr
 category can be defined in code:
 
 ```csharp
-[Icon(TypeIcon.InfoCircle)]
+[WebIcon<IconInfoCircle>]
 [Name("SettingCategory A")]
 [Description("Description of category a.")]
 [SettingSection(SettingSection.Primary)]
@@ -3908,8 +3942,7 @@ highest level:
 
 |Attribute       |Type             |Multiplicity |Optional |Description
 |----------------|-----------------|-------------|---------|--------------
-|Icon            |String           |1            |Yes      |An icon displayed alongside the category link.
-|                |TypeIcon         |             |         |   
+|WebIcon         |IIcon            |1            |Yes      |An icon displayed alongside the category link.
 |Name            |String           |1            |Yes      |Human-readable name or internationalization key for the category.
 |Description     |String           |1            |Yes      |Human-readable description or internationalization key for the category.
 |SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
@@ -3919,10 +3952,10 @@ Setting groups provide a way to structure settings within categories, offering a
 organization. Below is an example of how a group can be defined in code:
 
 ```csharp
-[Icon(TypeIcon.InfoCircle)]
+[WebIcon<IconInfoCircle>]
 [Name("SettingGroup A")]
 [Description("Description of group a.")]
-[SettingCategory<MySettingCategory>()]
+[SettingCategory<MySettingCategory>]
 [SettingSection(SettingSection.Primary)]
 public sealed class MySettingGroup : ISettingGroup
 {
@@ -3934,8 +3967,7 @@ a category:
 
 |Attribute       |Type             |Multiplicity |Optional |Description
 |----------------|-----------------|-------------|---------|--------------
-|Icon            |String           |1            |Yes      |An icon displayed alongside the group link.
-|                |TypeIcon         |             |         |
+|WebIcon         |IIcon            |1            |Yes      |An icon displayed alongside the group link.
 |Name            |String           |1            |Yes      |Human-readable name or internationalization key for the group.
 |Description     |String           |1            |Yes      |Human-readable description or internationalization key for the group.
 |SettingCategory |ISettingCategory |1            |Yes      |Each setting page can have a setting category. If no `SettingCategory` is specified, the settings page will not be associated with a category.
@@ -3947,8 +3979,8 @@ make use of categories and groups to provide an organized experience. Below is a
 how a settings page can be defined in code:
 
 ```csharp
-[SettingIcon(TypeIcon.InfoCircle)]
-[SettingGroup<MySettingGroup>()]
+[WebIcon<IconInfoCircle>]
+[SettingGroup<MySettingGroup>]
 [SettingSection(SettingSection.Primary)]
 public sealed class MyWebAppPageSetting : WebAppPageSetting
 {
@@ -3959,13 +3991,12 @@ To provide clarity about the metadata specified in the code above, the following
 presents the available attributes and their corresponding details for defining a settings 
 page:
 
-|Attribute       |Type             |Multiplicity |Optional |Description
-|----------------|-----------------|-------------|---------|--------------
-|SettingIcon     |String           |1            |Yes      |An icon to be displayed along with the link to the settings page.
-|                |TypeIcon         |             |         |   
-|SettingGroup    |ISettingGroup    |1            |Yes      |Each setting page can have a setting group. If no `SettingGroup` is specified, the settings page will not be associated with a group.
-|SettingSection  |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
-|SettingHide     |-                |1            |Yes      |Not displaying the page in the settings
+|Attribute      |Type             |Multiplicity |Optional |Description
+|---------------|-----------------|-------------|---------|--------------
+|WebIcon        |IIcon            |1            |Yes      |An icon to be displayed along with the link to the settings page.
+|SettingGroup   |ISettingGroup    |1            |Yes      |Each setting page can have a setting group. If no `SettingGroup` is specified, the settings page will not be associated with a group.
+|SettingSection |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
+|SettingHide    |-                |1            |Yes      |Not displaying the page in the settings
 
 The template is specially adapted to the settings pages. In particular, the side navigation 
 pane and a tab element are automatically populated from the meta information.
