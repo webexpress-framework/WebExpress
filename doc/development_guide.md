@@ -618,6 +618,7 @@ as attributes of the class. The following example illustrates the definition of 
 [Icon("/app.svg")]
 [ContextPath("/app")]
 [AssetPath("/app")]
+[Theme<MyTheme>]
 public sealed class MyApplication : Application
 {
 }
@@ -634,6 +635,7 @@ the available attributes and their corresponding details for defining applicatio
 |AssetPath   |String     |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
 |DataPath    |String     |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String     |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
+|Theme       |ITheme     |1            |Yes      |The theme associated with the application, which defines visual and stylistic elements like color schemes, typography, and layout.
 
 The methods implemented from the interface cover the life cycle of the application. When the 
 plugin is loaded, all the applications it contains are instantiated. These remain in place until 
@@ -689,7 +691,6 @@ applications in relation to the `ApplicationManager`, refer to the UML diagram b
 ║           ¦           │ ApplicationId:String         │                               ║
 ║           ¦           │ ApplicationName:String       │                               ║
 ║           ¦           │ Description:String           │                               ║
-║           ¦           │ Options:IEnumerable<String>  │                               ║
 ║           ¦           │ AssetPath:String             │                               ║
 ║           ¦           │ DataPath:String              │                               ║
 ║           ¦           │ ContextPath:UriResource      │                               ║
@@ -989,9 +990,12 @@ the architecture of the `AssetManager` and its management of `Assets`:
 ```
 
 ### Resources
-Resources are typically assets that can come in various forms, such as images, videos, documents, 
-or other files. They serve to provide and support content and functionalities within an application. 
-The example below demonstrates how to implement a resource:
+Resources are typically assets that can come in various forms, such as images, videos, 
+documents, or other files. They serve to provide and support content and functionalities 
+within an application. Unlike assets, especially those provided by the "AssetManager" that 
+reference static content, resources are used to provide dynamic assets. This distinction 
+allows resources to enable greater flexibility and adaptability for applications. The example 
+below demonstrates how to implement a resource:
 
 ```csharp
 [Segment("E")]
@@ -1390,36 +1394,66 @@ comprehensive visualization:
 ║     ├────────────────────────────────────────┤                                       ║
 ║     │ Endpoint:IEndpoint                     │                                       ║
 ║     │ PageContext:IPageContext               │                                       ║
-║     │ Request:Request                        │                                       ║
-║     └────────────────────────────────────────┘                                       ║
-║                           Δ                                                          ║
-║                           ¦                                                          ║
-║                           ¦                                                          ║
-║                           ¦                                                          ║
-║   ┌───────────────────────┴────────────────────┐                                     ║
-║   │ RenderContext                              │                                     ║
-║   ├────────────────────────────────────────────┤                                     ║
-║   │ Endpoint:IEndpoint                         │                                     ║
+║     │ Request:Request                        │    ┌──────────────────────────────┐   ║
+║     └────────────────────────────────────────┘    │ <<Interface>>                │   ║
+║                           Δ                       │ IVisualTreeContext           │   ║
+║                           ¦                       ├──────────────────────────────┤   ║
+║                           ¦                       │ Request:Request              │   ║
+║   ┌───────────────────────┴────────────────────┐  │ Uri:UriResource              │   ║
+║   │ RenderContext                              │  │ RenderContext:IRenderContext │   ║
+║   ├────────────────────────────────────────────┤  ├──────────────────────────────┤   ║
+║   │ Endpoint:IEndpoint                         │  └──────────────────────────────┘   ║
 ║   │ PageContext:IPageContext                   │                                     ║
 ║   │ Request:Request                            │                                     ║
 ║   ├────────────────────────────────────────────┤                                     ║
 ║   │ RenderContext(Endpoint,PageContext,Request │                                     ║
 ║   └────────────────────────────────────────────┘                                     ║
 ║                           Δ                                                          ║
-║                           ¦                                                          ║
-║                           ¦             ┌──────────────────────────────────────┐     ║
-║                           ¦             │ <<Interface>>                        │     ║
-║                           ¦             │ IVisualTree                          │     ║
-║                           ¦             ├──────────────────────────────────────┤     ║
-║                           ¦             ├──────────────────────────────────────┤     ║
-║                           ¦             │ Render(IVisualTreeContext):IHtmlNode │     ║
-║                           ¦             └──────────────────────────────────────┘     ║
-║                           ¦                                 Δ                        ║
-║                           ¦                                 ¦                        ║
-╚═══════════════════════════¦═════════════════════════════════¦════════════════════════╝
-                            ¦                                 ¦
-╔MyPlugin═══════════════════¦═════════════════════════════════¦════════════════════════╗
-║                           ¦                                 ¦                        ║
+║                           │                                                          ║
+║                           │             ┌──────────────────────────────────────┐     ║
+║                           │             │ <<Interface>>                        │     ║
+║                           │             │ IVisualTree                          │     ║
+║                           │             ├──────────────────────────────────────┤     ║
+║                           │             ├──────────────────────────────────────┤     ║
+║                           │             │ Render(IVisualTreeContext):IHtmlNode │     ║
+║                           │             └──────────────────────────────────────┘     ║
+║                           │                                 Δ                        ║
+╚═══════════════════════════│═════════════════════════════════¦════════════════════════╝
+                            │                                 ¦
+╔WebExpress.WebUI═══════════│═════════════════════════════════¦════════════════════════╗
+║                           │                                 ¦                        ║
+║                           │             ┌───────────────────┴──────────────────┐     ║
+║                           │             │ <<Interface>>                        │     ║
+║                           │             │ IVisualTreeControl                   │     ║
+║                           │             ├──────────────────────────────────────┤     ║
+║                           │             │ Title:string                         │     ║
+║                           │             │ Favicons:List<Favicon>               │     ║
+║                           │             │ Styles:List<string>                  │     ║
+║                           │             │ HeaderScriptLinks:List<string>       │     ║
+║                           │             │ …                                    │     ║
+║                           │             ├──────────────────────────────────────┤     ║
+║                           │             │ Render(IVisualTreeContext):IHtmlNode │     ║
+║                           │             └──────────────────────────────────────┘     ║
+║                           │                                 Δ                        ║
+║                           │                                 ¦                        ║
+╚═══════════════════════════│═════════════════════════════════¦════════════════════════╝
+                            │                                 ¦
+╔WebExpress.WebApp══════════│═════════════════════════════════¦════════════════════════╗
+║                           │                                 ¦                        ║
+║                           │             ┌───────────────────┴──────────────────┐     ║
+║                           │             │ <<Interface>>                        │     ║
+║                           │             │ IVisualTreeWebApp                    │     ║
+║                           │             ├──────────────────────────────────────┤     ║
+║                           │             │ Theme:IThemeWebApp                   │     ║
+║                           │             │ …                                    │     ║
+║                           │             ├──────────────────────────────────────┤     ║
+║                           │             │ Render(IVisualTreeContext):IHtmlNode │     ║
+║                           │             └──────────────────────────────────────┘     ║
+║                           │                                 Δ                        ║
+╚═══════════════════════════│═════════════════════════════════¦════════════════════════╝ 
+                            │                                 ¦
+╔MyPlugin═══════════════════│═════════════════════════════════¦════════════════════════╗
+║                           │                                 ¦                        ║
 ║   ┌───────────────────────┴───────────────────────┐         ¦                        ║
 ║   │ MyRenderContext                               │         ¦                        ║
 ║   ├───────────────────────────────────────────────┤         ¦                        ║
@@ -1432,6 +1466,7 @@ comprehensive visualization:
 ║                          ¦     create   ┌───────────────────┴──────────────────┐     ║
 ║                          └-------------►│ MyVisualTree                         │     ║
 ║                                         ├──────────────────────────────────────┤     ║
+║                                         │ Theme:IThemeWebApp                   │     ║
 ║                                         │ Title:string                         │     ║
 ║                                         │ Favicons:List<Favicon>               │     ║
 ║                                         │ Styles:List<string>                  │     ║
@@ -1557,10 +1592,10 @@ in `WebExpress`:
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
 public sealed class MyRestApi : IRestApi
 {
-        public void CreateData(Request request) {…}
-        public object GetData(Request request) {…}
-        public void UpdateData(Request request) {…}
-        public void DeleteData(Request request) {…}
+    public void CreateData(Request request) {…}
+    public object GetData(Request request) {…}
+    public void UpdateData(Request request) {…}
+    public void DeleteData(Request request) {…}
 }
 ```
 
@@ -2945,8 +2980,8 @@ a user. To better understand the relationships and structure, refer to the UML d
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-The `NotificationManager` is the central class for notifications. The `AddNotification` method is 
-used to create notifications. The following properties can be assigned to notifications:
+The `NotificationManager` is the central class for notifications. The `AddNotification` method 
+is used to create notifications. The following properties can be assigned to notifications:
 
 |Property   |Optional |Description
 |-----------|---------|-----------------
@@ -2958,9 +2993,9 @@ used to create notifications. The following properties can be assigned to notifi
 |Icon       |Yes      |A URI that contains an icon.
 |Type       |Yes      |Is the notification type. The following values are supported: Primary, Secondary, Success, Info, Warning, Danger, Dark, Light, White
 
-Here is an example to illustrate how the `NotificationManager` functions. Notifications can be 
-added with specific properties such as heading, message, icon, and duration. The following snippet 
-demonstrates how to create a simple welcome notification:
+Here is an example to illustrate how the `NotificationManager` functions. Notifications can 
+be added with specific properties such as heading, message, icon, and duration. The following 
+snippet demonstrates how to create a simple welcome notification:
 
 ```csharp
 // Welcome notification
@@ -2973,8 +3008,9 @@ NotificationManager.AddNotification
 );
 ```
 
-The functions of the `NotificationManager` can also be accessed via the REST API interface `{base path}/wxapp/api/v1/popupnotifications`
-can be accessed. The following methods are available:
+The functions of the `NotificationManager` can also be accessed via the REST API interface 
+`{base path}/wxapp/api/v1/popupnotifications` can be accessed. The following methods are 
+available:
 
 |Method |Parameter             |Description
 |-------|----------------------|----------------
@@ -2987,8 +3023,8 @@ The index model provides a reverse index to enable fast and efficient searching.
 index can significantly speed up access to the data. However, creating and storing a 
 reverse index requires additional storage space and Processing time. The storage requirement 
 increases, especially with large amounts of data can be important. Therefore, it is important 
-to weigh the pros and cons to achieve the best possible performance. The full-text search in WebExpress 
-supports the following search options:
+to weigh the pros and cons to achieve the best possible performance. The full-text search in 
+`WebExpress` supports the following search options:
 
 - Word search
 - Wildcard search
@@ -3035,9 +3071,10 @@ supports the following search options:
 ╚══════════════════════════════════════════════════════╝
 ```
 
-To create a reverse index, the data type to be indexed must be registered in  the `IndexManager`. This 
-ensures that the system is aware of the data type and can properly index it. The example below 
-demonstrates how to implement a data type that adheres to the `IIndexItem` interface and register it:
+To create a reverse index, the data type to be indexed must be registered in  the 
+`IndexManager`. This ensures that the system is aware of the data type and can properly 
+index it. The example below demonstrates how to implement a data type that adheres to the 
+`IIndexItem` interface and register it:
 
 ```csharp
 // DataType must implement the IIndexItem interface.
@@ -3051,9 +3088,9 @@ public class DataType : IIndexItem
 WebEx.ComponentHub.GetComponent<IndexManager>().Register<DataType>();
 ```
 
-The reverse index is built by using the `ReBuild` method for all objects or `Add` for an object. The 
-following example demonstrates how to use the `ReIndex` method to rebuild the index for a collection 
-of records:
+The reverse index is built by using the `ReBuild` method for all objects or `Add` for 
+an object. The following example demonstrates how to use the `ReIndex` method to rebuild 
+the index for a collection of records:
 
 ```csharp
 var records = new []
@@ -3065,8 +3102,9 @@ var records = new []
 WebEx.ComponentHub.GetComponent<IndexManager>().ReIndex(records);
 ```
 
-To access the reverse index, WQL (see below) is used. The example below demonstrates how to execute a WQL 
-query via the `IndexManager` to find entries matching specific criteria:
+To access the reverse index, WQL (see below) is used. The example below demonstrates 
+how to execute a WQL query via the `IndexManager` to find entries matching specific 
+criteria:
 
 ```csharp
 var wql = WebEx.ComponentHub.GetComponent<IndexManager>().ExecuteWql("Text ~ \"lorem\"");
@@ -3074,35 +3112,37 @@ var res = wql?.Apply();
 ```
 
 ### WQL
-The WebExpress Query Language (WQL) is a query language that filters and sorts a given amount of data from the 
-reverse index. A statement of the query language is usually sent from the client to the server, which collects, 
-filters and sorts the data in the reverse index and sends it back to the client.
-Example of a WQL:
+The WebExpress Query Language (WQL) is a query language that filters and sorts a given 
+amount of data from the reverse index. A statement of the query language is usually 
+sent from the client to the server, which collects, filters and sorts the data in the 
+reverse index and sends it back to the client. Example of a WQL:
 
 ```
 Name ~ "WebExpress" and Create < now(-3d) orderby Create desc take 5
 ```
 
-The example returns the first five elements of the dataset that contain the value "WebExpress" in the Name 
-attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in 
-descending order by creation date.
+The example returns the first five elements of the dataset that contain the value 
+"WebExpress" in the Name attribute and that were created three days ago (Create attribute) 
+or earlier. The result is sorted in descending order by creation date.
 
 For detailed information about `WebIndex`, see [concept](https://github.com/ReneSchwarzer/WebExpress.WebIndex/blob/main/doc/concept.md).
 
 ## Identity model
-A large number of web applications are subject to requirements for access protection, integrity and 
-confidentiality. These requirements can be met through identity and access management (IAM). In identity 
-management, identities are managed. In access management, on the other hand, authorized entities are 
-enabled to use a service (application). `WebExpress` supports the following identity management features:
+A large number of web applications are subject to requirements for access protection, 
+integrity and confidentiality. These requirements can be met through identity and access 
+management (IAM). In identity management, identities are managed. In access management, 
+on the other hand, authorized entities are enabled to use a service (application). 
+`WebExpress` supports the following identity management features:
 
 - Provisioning: Provides `WebExpress` with the basic requirements for the entities to carry out their activities. Deprovisioning is the opposite path, in which the prerequisites are withdrawn (e.g. when leaving).
 - Authentication: Handles the identification process of the entities.
 - Authorization: Granting permission for a specific entity to use a specific service.
 
-The provisioning service provides `WebExpress` with the basic requirements for the operation of the identities. This 
-is realized with the help of a user account. The following illustration outlines the lifecycle of a user account. A 
-user account can be in one of two states, `Active` and `Deactivated`. If the events `Create`, `Update`, `Disable`, 
-`Enable` or `Delete` occur, the user account changes its state.
+The provisioning service provides `WebExpress` with the basic requirements for the operation 
+of the identities. This is realized with the help of a user account. The following illustration 
+outlines the lifecycle of a user account. A user account can be in one of two states, `Active` 
+and `Deactivated`. If the events `Create`, `Update`, `Disable`, `Enable` or `Delete` occur, 
+the user account changes its state.
 
 ```
 ╔═══════╗                  ╔═══════════╗
@@ -3132,11 +3172,12 @@ user account can be in one of two states, `Active` and `Deactivated`. If the eve
 - On-premises identity management: Each application has its own user management. The cost of setting up the necessary infrastructure is particularly easy here, as identity management is carried out directly by the application. Each application has its own identity domain, which is disadvantageous from a unified identity management perspective.
 - Shared identity management: If the identities are outsourced to a central service and retrieved by the applications, there is shared identity management. Shared identity management allows you to reduce the number of identity domains. 
 
-Entities (people, technical objects, etc.) have one or more identities, which distinguishes them from other entities. 
-An identity is used for identification and consists of a collection of attributes (properties e.g. name, password), which 
-individualizes an entity. Identities can be grouped according to certain characteristics. Furthermore, each group can be 
-assigned one or more roles (e.g. administrator, programmer). The roles determine access to identity permissions. In the 
-following figure, the concept of identity is defined in terms of a UML model.
+Entities (people, technical objects, etc.) have one or more identities, which distinguishes 
+them from other entities. An identity is used for identification and consists of a collection 
+of attributes (properties e.g. name, password), which individualizes an entity. Identities can 
+be grouped according to certain characteristics. Furthermore, each group can be assigned one 
+or more roles (e.g. administrator, programmer). The roles determine access to identity 
+permissions. In the following figure, the concept of identity is defined in terms of a UML model.
 
 ```
   O   1   *  ┌────────────┐ *    * ┌─────────┐ *    * ┌────────┐ *    * ┌────────────┐
@@ -3150,9 +3191,10 @@ Entity           1 │
              └────────────┘
 ```
 
-The identities and groups must be loaded from a persistent data storage. These can be provided by the application or come 
-from external identity management (e.g. LDAP). The roles and identity resources are dictated by the application by 
-hard-implementing them. The UML diagram below highlights the key relationships and structural elements:
+The identities and groups must be loaded from a persistent data storage. These can be provided 
+by the application or come from external identity management (e.g. LDAP). The roles and identity 
+resources are dictated by the application by hard-implementing them. The UML diagram below 
+highlights the key relationships and structural elements:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3161,41 +3203,40 @@ hard-implementing them. The UML diagram below highlights the key relationships a
 ║         │ <<Interface>>                    │                                         ║
 ║         │ IComponentHub                    │                                         ║
 ║         ├──────────────────────────────────┤ 1                                       ║
-║         │ IdentityManager:IIdentityManager ├───────────┐                             ║
-║         │ …                                │           │                             ║
-║         └──────────────────────────────────┘           │                             ║
-║                                                        │                             ║
-║                  ┌───────────────────┐                 │                             ║
-║                  │ <<Interface>>     │                 │                             ║
-║                  │ IComponentManager │                 │                             ║
-║                  ├───────────────────┤                 │                             ║
-║                  └───────────────────┘                 │                             ║
-║                            Δ                           │                             ║
-║                          ┌-┘                           │                             ║
-║                          ¦                             │                             ║
-║                          ¦                           1 ▼                             ║
-║                  ┌───────┴─────────────────────────────────────┐                     ║
-║                  │ <<Interface>>                               │                     ║
-║ ┌----------------┤ IIdentityManager                            │                     ║
-║ ¦                ├─────────────────────────────────────────────┤                     ║
-║ ¦                │ Identities:IEnumerable<IIdentity>           │                     ║
-║ ¦                │ Groups:IEnumerable<IIdentityGroup>          │                     ║
-║ ¦                │ Roles:IEnumerable<IIdentityRole>            │                     ║
-║ ¦                │ Permission:IEnumerable<IIdentityPermission> │                     ║
-║ ¦                ├─────────────────────────────────────────────┤                     ║
-║ ¦                │ AddIdentity(IIdentity)                      │                     ║
-║ ¦                │ AddGroup(IIdentityGroup)                    │                     ║
-║ ¦                │ RemoveIdentity(IIdentity)                   │                     ║
-║ ¦                │ RemoveGroup(IIdentityGroup)                 │                     ║
-║ ¦                │ Login(IApplicationContext,Login,Password)   │                     ║
-║ ¦                │ Logout(IApplicationContext)                 │                     ║
-║ ¦                │ ComputeHash(SecureString):String            │                     ║
-║ ¦                └─────┬──────────┬───────────┬──────────┬─────┘                     ║
-║ ¦                    1 │        1 │         1 │        1 │                           ║
-║ ¦              ┌───────┘          │           │          └─────────────┐             ║
-║ ¦              │                  │           │                        │             ║
-║ ¦              │                  └────┐      │                        │             ║
-║ ¦            * ▼                       │      └───────────┐            │             ║
+║         │ IdentityManager:IIdentityManager ├───────────────┐                         ║
+║         │ …                                │               │                         ║
+║         └──────────────────────────────────┘               │                         ║
+║                                                            │                         ║
+║                         ┌───────────────────┐              │                         ║
+║                         │ <<Interface>>     │              │                         ║
+║                         │ IComponentManager │              │                         ║
+║                         ├───────────────────┤              │                         ║
+║                         └───────────────────┘              │                         ║
+║                                  Δ                         │                         ║
+║                                  ¦                         │                         ║
+║                                  ¦                         │                         ║
+║                                  ¦                       1 ▼                         ║
+║                          ┌───────┴─────────────────────────────────────┐             ║
+║                          │ <<Interface>>                               │             ║
+║ ┌------------------------┤ IIdentityManager                            │             ║
+║ ¦                        ├─────────────────────────────────────────────┤             ║
+║ ¦                        │ Identities:IEnumerable<IIdentity>           │             ║
+║ ¦                        │ Groups:IEnumerable<IIdentityGroup>          │             ║
+║ ¦                        │ Roles:IEnumerable<IIdentityRole>            │             ║
+║ ¦                        │ Permission:IEnumerable<IIdentityPermission> │             ║
+║ ¦                        ├─────────────────────────────────────────────┤             ║
+║ ¦                        │ AddIdentity(IIdentity)                      │             ║
+║ ¦                        │ AddGroup(IIdentityGroup)                    │             ║
+║ ¦                        │ RemoveIdentity(IIdentity)                   │             ║
+║ ¦                        │ RemoveGroup(IIdentityGroup)                 │             ║
+║ ¦                        │ Login(IApplicationContext,Login,Password)   │             ║
+║ ¦                        │ Logout(IApplicationContext)                 │             ║
+║ ¦                        │ ComputeHash(SecureString):String            │             ║
+║ ¦                        └─────┬──────────┬───────────┬──────────┬─────┘             ║
+║ ¦                            1 │        1 │         1 │        1 │                   ║
+║ ¦                 ┌────────────┘          │           │          └─────┐             ║
+║ ¦                 │                    ┌──┘           │                │             ║
+║ ¦               * ▼                    │              └───┐            │             ║
 ║ ¦  ┌───────────────────────────────┐   │                  │            │             ║
 ║ ¦  │ <<Interface>>                 │   │                  │            │             ║
 ║ ¦  │ IIdentity                     │   │                  │            │             ║
@@ -4102,70 +4143,103 @@ from the `SettingGroup` attributes of the settings pages.
 ```
 
 ## Theme model
-WebExpress.WebApp offers a ready-made layout (e.g. color scheme, fonts, font sizes). This 
-can be adapted to individual needs by the web applications. The management of the themes is 
-taken over by the `ThemeManager`. An individual topic can be assigned to each application. 
-The configuration of the topics can be done via definition classes or via a settings dialog, 
-which is provided by `WebExpress.WebApp`. The UML diagram below serves to illustrate the 
-relationships and underlying structure:
+`WebExpress.WebApp` offers a ready-made layout (e.g. color scheme, fonts, font sizes). This 
+can be adapted to individual needs. The management of the themes is taken over by the 
+`ThemeManager`. An individual topic can be assigned to each application. The configuration 
+of the topics can be done via definition classes or via a settings dialog, which is provided 
+by `WebExpress.WebApp`. The UML diagram below serves to illustrate the relationships and 
+underlying structure:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║   ┌────────────────────────────┐                    ┌────────────────┐               ║
-║   │ <<Interface>>              │                    │ <<Interface>>  │               ║
-║   │ IComponentHub              │                    │ IContext       │               ║
-║   ├────────────────────────────┤ 1                  ├────────────────┤               ║
-║   │ ThemeManager:IThemeManager ├───┐                └────────────────┘               ║
-║   │ …                          │   │                        Δ                        ║
-║   └────────────────────────────┘   │                        ¦                        ║
-║                                    │                        ¦                        ║
-║   ┌───────────────────┐            │     ┌──────────────────┴─────────────────────┐  ║
-║   │ <<Interface>>     │            │     │ <<Interface>>                          │  ║
-║   │ IComponentManager │            │     │ IThemeContext                          │  ║
-║   ├───────────────────┤            │     ├────────────────────────────────────────┤  ║
-║   └───────────────────┘            │     │ PluginContext:IPluginContext           │  ║
-║             Δ                      │     │ ApplicationContext:IApplicationContext │  ║
-║             ¦                      │     └────────────────────────────────────────┘  ║
-║             ¦                      │                      * ▲                        ║
-║             ¦                    1 ▼                        │                        ║
-║       ┌─────┴──────────────────────────────┐                │                        ║
-║       │ <<Interface>>                      │                │                        ║
-║   ┌---┤ IThemeManager                      │                │                        ║
-║   ¦   ├────────────────────────────────────┤                │                        ║
-║   ¦   │ AddTheme:Event                     │                │                        ║
-║   ¦   │ RemoveTheme:Event                  │                │                        ║
-║   ¦   ├────────────────────────────────────┤ 1              │                        ║
-║   ¦   │ Themes:IEnumerable<IThemeContext>  ├────────────────┘                        ║
-║   ¦   ├────────────────────────────────────┤                                         ║
-║   ¦   └────────────────────────────────────┘                                         ║
-║   ¦                                                                                  ║
-║   ¦                       ┌────────────────┐                                         ║
-║   ¦                       │ <<Interface>>  │                                         ║
-║   ¦                       │ IComponent     │                                         ║
-║   ¦                       ├────────────────┤                                         ║
-║   ¦                       └────────────────┘                                         ║
-║   ¦                               Δ                                                  ║
-║   ¦                               ¦                                                  ║
-║   ¦                               ¦                                                  ║
-║   ¦         ┌─────────────────────┴────────────────────┐                             ║
-║   ¦         │ <<Interface>>                            │                             ║
-║   ¦         │ ITheme                                   │                             ║
-║   ¦         ├──────────────────────────────────────────┤                             ║
-║   ¦         │ HeaderBackground:PropertyColorBackground │                             ║
-║   ¦         │ HeaderTitle:PropertyColorText            │                             ║
-║   ¦         │ HeaderNavigationLink:PropertyColorText   │                             ║
-║   ¦         │ …                                        │                             ║
-║   ¦         ├──────────────────────────────────────────┤                             ║
-║   ¦         └──────────────────────────────────────────┘                             ║
-║   ¦                               Δ                                                  ║
-║   ¦                               ¦                                                  ║
-╚═══¦═══════════════════════════════¦══════════════════════════════════════════════════╝
-    ¦                               ¦                                    
-╔MyPlugin═══════════════════════════¦══════════════════════════════════════════════════╗
-║   ¦                               ¦                                                  ║
-║   ¦ create  ┌─────────────────────┴────────────────────┐                             ║
-║   └--------►│ MyTheme                                  │                             ║
+║   ┌────────────────────────────┐                   ┌────────────────┐                ║
+║   │ <<Interface>>              │                   │ <<Interface>>  │                ║
+║   │ IComponentHub              │                   │ IContext       │                ║
+║   ├────────────────────────────┤ 1                 ├────────────────┤                ║
+║   │ ThemeManager:IThemeManager ├───┐               └────────────────┘                ║
+║   │ …                          │   │                       Δ                         ║
+║   └────────────────────────────┘   │                       ¦                         ║
+║                                    │                       ¦                         ║
+║   ┌───────────────────┐            │    ┌──────────────────┴─────────────────────┐   ║
+║   │ <<Interface>>     │            │    │ <<Interface>>                          │   ║
+║   │ IComponentManager │            │    │ IThemeContext                          │   ║
+║   ├───────────────────┤            │    ├────────────────────────────────────────┤   ║
+║   └───────────────────┘            │    │ PluginContext:IPluginContext           │   ║
+║             Δ                      │    │ ApplicationContext:IApplicationContext │   ║
+║             ¦                      │    └────────────────────────────────────────┘   ║
+║             ¦                      │                     * ▲                         ║
+║             ¦                    1 ▼                       │                         ║
+║       ┌─────┴──────────────────────────────┐               │                         ║
+║       │ <<Interface>>                      │               │                         ║
+║   ┌---┤ IThemeManager                      │               │                         ║
+║   ¦   ├────────────────────────────────────┤               │                         ║
+║   ¦   │ AddTheme:Event                     │               │                         ║
+║   ¦   │ RemoveTheme:Event                  │               │                         ║
+║   ¦   ├────────────────────────────────────┤ 1             │                         ║
+║   ¦   │ Themes:IEnumerable<IThemeContext>  ├───────────────┘                         ║
+║   ¦   ├────────────────────────────────────┤ 1                                       ║
+║   ¦   │ GetTheme(IThemeContext):ITheme     ├─────────────────────────┐               ║
+║   ¦   └────────────────────────────────────┘                         │               ║
+║   ¦              ▲                                                   │               ║
+║   ¦              ¦                     ┌────────────────┐            │               ║
+║   ¦              ¦                     │ <<Interface>>  │            │               ║
+║   ¦              ¦                     │ IComponent     │            │               ║
+║   ¦              ¦                     ├────────────────┤            │               ║
+║   ¦              ¦                     └────────────────┘            │               ║
+║   ¦              ¦                             Δ                     │               ║
+║   ¦              ¦                             ¦                     │               ║
+║   ¦              ¦                             ¦                     │               ║
+║   ¦              ¦                     ┌───────┴───────┐             │               ║
+║   ¦              ¦                     │ <<Interface>> │             │               ║
+║   ¦              ¦                     │ ITheme        │             │               ║
+║   ¦              ¦                     ├───────────────┤             │               ║
+║   ¦              ¦                     └───────────────┘             │               ║
+║   ¦              ¦                             Δ                     │               ║
+╚═══¦══════════════¦═════════════════════════════¦═════════════════════│═══════════════╝
+    ¦              ¦                             ¦                     │ 
+╔WebExpress.WebApp═¦═════════════════════════════¦═════════════════════│═══════════════╗
+║   ¦              ¦                             ¦                     │               ║
+║   ¦              ¦                             ¦                     │               ║
+║   ¦  ┌───────────┴────────────────────┐        ¦                     │               ║
+║   ¦  │ <<Utility>>                    │        ¦                     │               ║
+║   ¦  │ ThemeManagerExtensions         │        ¦                     │               ║
+║   ¦  ├────────────────────────────────┤        ¦                     │               ║
+║   ¦  │ GetWebAppTheme(IThemeContext): │        ¦                     │               ║
+║   ¦  │   IThemeWebApp                 │        ¦                     │               ║
+║   ¦  └────────────────────────────────┘        ¦                     │               ║
+║   ¦                                            ¦                     │               ║
+║   ¦                                            ¦                     │               ║
+║   ¦         ┌──────────────────────────────────┴───────┐             │               ║
+║   ¦         │ <<Interface>>                            │             │               ║
+║   ¦         │ IThemeWebApp                             │             │               ║
+║   ¦         ├──────────────────────────────────────────┤             │               ║
+║   ¦         │ HeaderBackground:PropertyColorBackground │             │               ║
+║   ¦         │ HeaderTitle:PropertyColorText            │             │               ║
+║   ¦         │ HeaderNavigationLink:PropertyColorText   │             │               ║
+║   ¦         │ …                                        │             │               ║
+║   ¦         ├──────────────────────────────────────────┤             │               ║
+║   ¦         │                                          │             │               ║
+║   ¦         └──────────────────────────────────────────┘             │               ║
+║   ¦                               Δ                                  │               ║
+║   ¦                               ¦                                  │               ║
+║   ¦         ┌─────────────────────┴────────────────────┐             │               ║
+║   ¦         │ ThemeWebApp                              │             │               ║
+║   ¦         ├──────────────────────────────────────────┤             │               ║
+║   ¦         │ HeaderBackground:PropertyColorBackground │             │               ║
+║   ¦         │ HeaderTitle:PropertyColorText            │             │               ║
+║   ¦         │ HeaderNavigationLink:PropertyColorText   │             │               ║
+║   ¦         │ …                                        │             │               ║
+║   ¦         ├──────────────────────────────────────────┤             │               ║
+║   ¦         │                                          │             │               ║
+║   ¦         └──────────────────────────────────────────┘             │               ║
+║   ¦                               Δ                                  │               ║
+╚═══¦═══════════════════════════════│══════════════════════════════════│═══════════════╝
+    ¦                               │                                  │ 
+╔MyPlugin═══════════════════════════│══════════════════════════════════│═══════════════╗
+║   ¦                               │                                  │               ║
+║   ¦ create  ┌─────────────────────┴────────────────────┐ 1           │               ║
+║   └--------►│ MyTheme                                  │◄────────────┘               ║
 ║             ├──────────────────────────────────────────┤                             ║
 ║             │ HeaderBackground:PropertyColorBackground │                             ║
 ║             │ HeaderTitle:PropertyColorText            │                             ║
@@ -4178,16 +4252,28 @@ relationships and underlying structure:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-A color scheme is defined in a class that implements the `ITheme` interface, allowing it 
-to be seamlessly associated with an application. The example below demonstrates how to specify 
-color properties for various UI elements, such as backgrounds and text, to create a consistent 
-visual theme:
+A theme is defined in a class that implements the `ITheme` interface, allowing it to be 
+seamlessly associated with an application. A theme encompasses not only a color scheme 
+to define properties for various UI elements, such as backgrounds, and text, but also 
+additional attributes that contribute to a cohesive visual and functional design.
+
+These attributes may include:
+
+- Typography: Font styles, sizes, and weights used across the application.
+- Iconography: Sets of icons or visual elements tailored to the theme.
+- Spacing and Layout: Definitions for padding, margins, and element alignment to ensure consistent spacing across components.
+- Animations and Transitions: Custom animations or transition effects that enhance the user experience while aligning with the theme's aesthetic.
+- Custom Components: Predefined styles or templates for frequently used UI components like buttons, input fields, or modals.
+
+The example below demonstrates how a theme can define not only color properties but also 
+additional elements like typography and animations to create a consistent and rich user 
+experience within the application.
 
 ```csharp
 [Name("MyTheme")]
 [Description("example")]
 [Image("/assets/img/mytheme.png")]
-public sealed class MyTheme : ITheme
+public sealed class MyTheme : IThemeWebApp
 {
     public static PropertyColorBackground HeaderBackground => 
         new(TypeColorBackground.Dark);
@@ -4204,8 +4290,7 @@ presents the available attributes and their corresponding details:
 
 |Attribute   |Type   |Multiplicity |Optional |Description
 |------------|-------|-------------|---------|---------------------
-|Id          |String |1            |No       |The unique identification key. If no id is specified, the class name is used. An id should only be specified in exceptional cases.
-|Name        |String |1            |No       |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
+|Name        |String |1            |Yes      |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
 |Description |String |1            |Yes      |The description of the topic. This can be a key to internationalization.
 |Image       |String |1            |Yes      |Link to an image that visually represents the topic.
 
