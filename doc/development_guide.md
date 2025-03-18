@@ -385,9 +385,9 @@ example demonstrates the implementation of a plugin:
 [Application<MyApplication>()]
 public sealed class MyPlugin : IPlugin
 {
-  public Initialization(IPluginContext) {}
-  public Run() {}
-  public Dispose() {}
+    public Initialization(IPluginContext) {}
+    public Run() {}
+    public Dispose() {}
 }
 ```
 
@@ -618,7 +618,6 @@ as attributes of the class. The following example illustrates the definition of 
 [Icon("/app.svg")]
 [ContextPath("/app")]
 [AssetPath("/app")]
-[Theme<MyTheme>]
 public sealed class MyApplication : Application
 {
 }
@@ -635,7 +634,6 @@ the available attributes and their corresponding details for defining applicatio
 |AssetPath   |String     |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
 |DataPath    |String     |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String     |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
-|Theme       |ITheme     |1            |Yes      |The theme associated with the application, which defines visual and stylistic elements like color schemes, typography, and layout.
 
 The methods implemented from the interface cover the life cycle of the application. When the 
 plugin is loaded, all the applications it contains are instantiated. These remain in place until 
@@ -833,7 +831,7 @@ following endpoint types are supported:
 |SettingPage   |An HTML document for setting purposes.
 |RestAPI       |A RestAPI-Endpoint.
 
-### Assets
+### Asset model
 `WebExpress` provides automatically generated endpoints, which are made available to 
 the client application. Assets in this context are static resources such as JavaScript 
 files, CSS files, icons, and other files necessary for the presentation and functionality 
@@ -989,7 +987,7 @@ the architecture of the `AssetManager` and its management of `Assets`:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### Resources
+### Resource model
 Resources are typically assets that can come in various forms, such as images, videos, 
 documents, or other files. They serve to provide and support content and functionalities 
 within an application. Unlike assets, especially those provided by the "AssetManager" that 
@@ -1216,7 +1214,7 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### Pages
+### Page model
 Pages are a fundamental component of web applications, serving as the primary interface through 
 which users interact with the content and functionalities provided by the application. Pages can 
 contain a variety of elements, including text, images, videos, forms, and interactive components, 
@@ -1235,6 +1233,9 @@ The following example demonstrates the implementation of a page:
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
 public sealed class MyPage : IPage
 {
+    public void Process(IRenderContext renderContext, VisualTree visualTree)
+    {
+    }
 }
 ```
 
@@ -1490,11 +1491,218 @@ is created. The following constructor parameters can be injected:
 | `IComponentId`        | The unique identifier of the component. 
 | `IHttpServerContext`  | The context of the HTTP server.
 
-By leveraging dependency injection, all required dependencies are automatically supplied when the component 
-instance is created.
+By leveraging dependency injection, all required dependencies are automatically supplied when 
+the component instance is created.
 
+### Setting page model
+Setting page templates are utilized to manage and configure web applications. Each settings 
+page is required to implement the `IPageSetting` interface. The following UML diagram
+illustrates the relationships and structures:
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌────────────────────────────────────────┐                                         ║
+║   │ <<Interface>>                          │                                         ║
+║   │ IComponentHub                          │                                         ║
+║   ├────────────────────────────────────────┤ 1                                       ║
+║   │ SettingPageManager:ISettingPageManager ├────────┐                                ║
+║   │ …                                      │        │                                ║
+║   └────────────────────────────────────────┘        │                                ║
+║                                                     │                                ║
+║                                                     │                                ║
+║   ┌────────────────────────────────────┐            │                                ║
+║   │ <<Interface>>                      │            │                                ║
+║   │ IComponentManager                  │            │                                ║
+║   ├────────────────────────────────────┤            │                                ║
+║   └────────────────────────────────────┘            │                                ║
+║                      Δ                              │                                ║
+║                 ┌----┘                              │                                ║
+║                 ¦                                 1 ▼                                ║
+║        ┌────────┴────────────────────────────────────────────────┐                   ║
+║        │ <<Interface>>                                           │                   ║
+║        │ ISettingPageManager                                     ├--------------┐    ║
+║        ├─────────────────────────────────────────────────────────┤              ¦    ║
+║        │ AddSettingPage:Event                                    │              ¦    ║
+║        │ RemoveSettingPage:Event                                 │              ¦    ║
+║        │ AddSettingCategory:Event                                │              ¦    ║
+║        │ RemoveSettingCategory:Event                             │              ¦    ║
+║        │ AddSettingGroup:Event                                   │              ¦    ║
+║        │ RemoveSettingGroup:Event                                │              ¦    ║
+║        ├─────────────────────────────────────────────────────────┤ 1            ¦    ║
+║      1 │ SettingCategories:IEnumerable<ISettingCategoryContext>  ├───────┐      ¦    ║
+║   ┌────┤ SettingGroups:IEnumerable<ISettingGroupContext>         │ 1     │      ¦    ║
+║   │    │ SettingPages:IEnumerable<ISettingPageContext>           ├──┐    │      ¦    ║
+║   │    ├─────────────────────────────────────────────────────────┤  │    │      ¦    ║
+║   │    │ GetSettingPages(Type):                                  │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
+║   │    │ GetSettingPages(Type, IApplicationContext):             │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
+║   │    │ GetSettingPages(IApplicationContext,category):          │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
+║   │    │ GetSettingPages(IApplicationContext,                    │  │    │      ¦    ║
+║   │    │  ISettingCategoryContext,                               │  │    │      ¦    ║
+║   │    │  ISettingGroupContext):IEnumerable<ISettingPageContext> │  │    │      ¦    ║
+║   │    │ GetFirstSettingPage(IApplicationContext,                │  │    │      ¦    ║
+║   │    │  ISettingCategoryContext):ISettingPageContext           │  │    │      ¦    ║
+║   │    │ GetCategories(IApplicationContext):                     │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingCategoryContext>                   │  │    │      ¦    ║
+║   │    │ GetGroups(IApplicationContext,ISettingCategoryContext): │  │    │      ¦    ║
+║   │    │  IEnumerable<ISettingGroupContext>                      │  │    │      ¦    ║
+║   │    └─────────────────────────────────────────────────────────┘  │    │      ¦    ║
+║   │                                                                 │    │      ¦    ║
+║   │                   ┌────────────────┐                            │    │      ¦    ║
+║   │                   │ <<Interface>>  │                            │    │      ¦    ║
+║   │                   │ IContext       │                            │    │      ¦    ║
+║   │                   ├────────────────┤                            │    │      ¦    ║
+║   │                   └────────────────┘                            │    │      ¦    ║
+║   │                           Δ                                     │    │      ¦    ║
+║   │                           ¦                                     │    │      ¦    ║
+║   │                           ¦                                     │    │      ¦    ║
+║   │       ┌───────────────────┴────────────────────┐                │    │      ¦    ║
+║   │       │ <<Interface>>                          │                │    │      ¦    ║
+║   │       │ IEndpointContext                       │                │    │      ¦    ║
+║   │       ├────────────────────────────────────────┤                │    │      ¦    ║
+║   │       │ EndpointId:String                      │                │    │      ¦    ║
+║   │       │ PluginContext:IPluginContext           │                │    │      ¦    ║
+║   │       │ ApplicationContext:IApplicationContext │                │    │      ¦    ║
+║   │       │ Conditions:IEnumerable<ICondition>     │                │    │      ¦    ║
+║   │       │ ParentContext:IEndpointContext         │                │    │      ¦    ║
+║   │       │ Cache:Bool                             │                │    │      ¦    ║
+║   │       │ ContextPath:UriResource                │                │    │      ¦    ║
+║   │       │ Uri:UriResource                        │                │    │      ¦    ║
+║   │       └────────────────────────────────────────┘                │    │      ¦    ║
+║   │                           Δ                                     │    │      ¦    ║
+║   │                           ¦     ┌───────────────────────────────┘  * ▼      ¦    ║
+║   │                           ¦     │               ┌─────────────────────────┐ ¦    ║
+║   │                       ┌---┘     │             1 │ <<Interface>>           │ ¦    ║
+║   │                       ¦         │          ┌───►│ ISettingCategoryContext │ ¦    ║
+║   │                       ¦       * ▼          │    ├─────────────────────────┤ ¦    ║
+║   │      ┌────────────────┴─────────────────┐  │    │ Icon:PropertyIcon       │ ¦    ║
+║   │      │ <<Interface>>                    │  │    │ Name:String             │ ¦    ║
+║   │      │ ISettingPageContext              │  │    │ Description:String      │ ¦    ║
+║   │      ├──────────────────────────────────┤  │    │ Section:SettingSection  │ ¦    ║
+║   │      │ Hide:Bool                        │  │    └─────────────────────────┘ ¦    ║
+║   │      │ Icon:PropertyIcon                │ 1│                                ¦    ║
+║   │      │ Category:ISettingCategoryContext ├──┘       ┌──────────────────┐     ¦    ║
+║   │   ┌──┤ Group:ISettingGroupContext       │ 1      1 │ <<Enumeration>>  │     ¦    ║
+║   │   │  │ Section:SettingSection           ├─────────►│ SettingSection   │     ¦    ║
+║   │   │  └──────────────────────────────────┘          ├──────────────────┤     ¦    ║
+║   │   │                                                │ Preferences      │     ¦    ║
+║ * ▼ 1 ▼                          ┌────────────────┐    │ Primary          │     ¦    ║
+║ ┌───────────────────────────┐    │ <<Interface>>  │    │ Secondary        │     ¦    ║
+║ │ <<Interface>>             │    │ IComponent     │    └──────────────────┘     ¦    ║
+║ │ ISettingGroupContext      │    ├────────────────┤                             ¦    ║
+║ ├───────────────────────────┤    └────────────────┘                             ¦    ║
+║ │ Icon:PropertyIcon         │            Δ                                      ¦    ║
+║ │ Name:String               │            ¦                                      ¦    ║
+║ │ Description:String        │            ¦                                      ¦    ║
+║ │ Category:                 │    ┌───────┴────────┐                             ¦    ║
+║ │   ISettingCategoryContext │    │ <<Interface>>  │                             ¦    ║
+║ │ Section:SettingSection    │    │ IEndpoint      │                             ¦    ║
+║ └───────────────────────────┘    ├────────────────┤                             ¦    ║
+║                                  └────────────────┘                             ¦    ║
+║                                          Δ                                      ¦    ║
+║                                          ¦                                      ¦    ║
+║                                          ¦   ┌─────────────┐                    ¦    ║
+║                        ┌─────────────────┴───│ TVisualTree │─┐                  ¦    ║
+║                        │ <<Interface>>       └─────────────┘ │                  ¦    ║
+║                        │ ISettingPage                        │                  ¦    ║
+║                        ├─────────────────────────────────────┤                  ¦    ║
+║                        │ Process(IRenderContext,TVisualTree) │                  ¦    ║
+║                        └─────────────────────────────────────┘                  ¦    ║
+║                                          Δ                                      ¦    ║
+║                                          ¦                                      ¦    ║
+╚══════════════════════════════════════════¦══════════════════════════════════════¦════╝
+                                           ¦                                      ¦     
+╔MyPlugin══════════════════════════════════¦══════════════════════════════════════¦════╗
+║                                          ¦                                      ¦    ║
+║                        ┌─────────────────┴───────────────────┐           create ¦    ║
+║                        │ MySettingPage                       │◄-----------------┘    ║
+║                        ├─────────────────────────────────────┤                       ║
+║                        │ Process(IRenderContext,TVisualTree) │                       ║
+║                        └─────────────────────────────────────┘                       ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+Setting categories serve the purpose of organizing settings at the highest level and help 
+users navigate large settings interfaces efficiently. The example below demonstrates how a 
+category can be defined in code:
+
+```csharp
+[WebIcon<IconInfoCircle>]
+[Name("SettingCategory A")]
+[Description("Description of category a.")]
+[SettingSection(SettingSection.Primary)]
+public sealed class MySettingCategory : ISettingCategory
+{
+}
+```
+
+The following attributes are available for a settings category, which organizes settings at 
+the highest level:
+
+|Attribute       |Type             |Multiplicity |Optional |Description
+|----------------|-----------------|-------------|---------|--------------
+|WebIcon         |IIcon            |1            |Yes      |An icon displayed alongside the category link.
+|Name            |String           |1            |Yes      |Human-readable name or internationalization key for the category.
+|Description     |String           |1            |Yes      |Human-readable description or internationalization key for the category.
+|SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
+
+Setting groups provide a way to structure settings within categories, offering a more granular 
+organization. Below is an example of how a group can be defined in code:
+
+```csharp
+[WebIcon<IconInfoCircle>]
+[Name("SettingGroup A")]
+[Description("Description of group a.")]
+[SettingCategory<MySettingCategory>]
+[SettingSection(SettingSection.Primary)]
+public sealed class MySettingGroup : ISettingGroup
+{
+}
+```
+
+The following attributes are available for a settings group, which structures settings within
+a category:
+
+|Attribute       |Type             |Multiplicity |Optional |Description
+|----------------|-----------------|-------------|---------|--------------
+|WebIcon         |IIcon            |1            |Yes      |An icon displayed alongside the group link.
+|Name            |String           |1            |Yes      |Human-readable name or internationalization key for the group.
+|Description     |String           |1            |Yes      |Human-readable description or internationalization key for the group.
+|SettingCategory |ISettingCategory |1            |Yes      |Each setting page can have a setting category. If no `SettingCategory` is specified, the settings page will not be associated with a category.
+|SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
+
+Setting pages define the individual interfaces where the settings are presented. These pages 
+make use of categories and groups to provide an organized experience. Below is an example of 
+how a settings page can be defined in code:
+
+```csharp
+[WebIcon<IconInfoCircle>]
+[SettingGroup<MySettingGroup>]
+[SettingSection(SettingSection.Primary)]
+public sealed class MySettingPage : ISettingPage<VisualTree>
+{
+    public void Process(IRenderContext renderContext, VisualTree visualTree)
+    {
+    }
+}
+```
+
+To provide clarity about the metadata specified in the code above, the following table 
+presents the available attributes and their corresponding details for defining a settings 
+page:
+
+|Attribute      |Type             |Multiplicity |Optional |Description
+|---------------|-----------------|-------------|---------|--------------
+|WebIcon        |IIcon            |1            |Yes      |An icon to be displayed along with the link to the settings page.
+|SettingGroup   |ISettingGroup    |1            |Yes      |Each setting page can have a setting group. If no `SettingGroup` is specified, the settings page will not be associated with a group.
+|SettingSection |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
+|SettingHide    |-                |1            |Yes      |Not displaying the page in the settings
                                           
-### RestAPI
+### RestAPI model
 A REST API (Representational State Transfer Application Programming Interface) is an interface 
 that allows resources to be accessed and manipulated via the HTTP protocol. REST APIs are designed 
 to be simple and scalable by following the principles of REST, such as stateless communication, 
@@ -1502,7 +1710,8 @@ use of HTTP methods, and resource orientation. By using REST APIs, applications 
 integrate data between different systems, facilitating the development of distributed and modular 
 applications.
 
-The integration of REST APIs into `WebExpress` offers several advantages that make the application more dynamic and reactive:
+The integration of REST APIs into `WebExpress` offers several advantages that make the application 
+more dynamic and reactive:
 
 - **Flexibility and scalability**: REST APIs make it possible to develop and scale different frontend and backend components independently of each other. This means that changes can be made to one component without affecting the others, making it easier to maintain and evolve the application.
 
@@ -1794,7 +2003,7 @@ restarted or the session is destroyed. The following parameters are supported:
 |Path segment |URI       |Parameters that are part of the URI path. Example: http://www.example.com/d9869404-6628-464b-8286-9685d4c4ff8b/edit
 |Session      |Session   |Parameters, which are stored in the session. 
 
-## Response modell
+## Response model
 Web queries can be answered with different status responses (see RFC 2616). If successful, 
 a status code of `200` is returned with the invoked resource. In the `StatusPageManager`, 
 generally valid status pages for the various status codes can be stored. When returning a 
@@ -2567,7 +2776,7 @@ The session manager delivers the currently used session based on the cookie stor
 request. The session, in turn, stores instances of the `ISessionProperty` interface in which 
 the information (e.g. parameters) is stored. 
 
-## Event modell
+## Event model
 Events are notifications from the `WebExpress` API or web applications that can be subscribed 
 to and evaluated. To explore the organization, refer to the UML diagram illustrating the 
 structural relationships:
@@ -2652,9 +2861,9 @@ are triggered. The example below demonstrates how to create a simple event handl
 [Event<Event>] 
 public sealed class MyEventHandler : IEventHandler
 {
-  public void Process(object sender)
-  {
-  }
+    public void Process(object sender)
+    {
+    }
 }
 ```
 
@@ -2665,7 +2874,7 @@ the available attributes and their corresponding details for defining events:
 |------------|---------------|-------------|---------|------------
 |Event       |`IEvent`       |1            |No       |The event at which you want to listen.
 
-## Job modell
+## Job model
 Jobs are tasks that are executed in a time-controlled and repetitive manner. When a plugin 
 is loaded, all jobs containing it are determined by the ScheduleManager and instantiated 
 and started at the specified execution time. The UML diagram below serves to illustrate 
@@ -2765,15 +2974,15 @@ define a job that starts at 0:30 a.m. on the first day of each month:
 [Job("30", "0", "1", "*", "*")] 
 public sealed class MyJob : Job
 {
-  public override void Initialization(JobContext context)
-  {
-    base. Initialization(context);
-  }
+    public override void Initialization(JobContext context)
+    {
+        base. Initialization(context);
+    }
 
-  public override void Process()
-  {
-    base Process();
-  }
+    public override void Process()
+    {
+        base Process();
+    }
 }
 ```
 
@@ -3161,11 +3370,11 @@ the user account changes its state.
          └───────────────┘
 ```
 
-- Create: This event creates a new user account for an entity. As a rule, each entity should have exactly one user account. 
-- Update: The update event is triggered in the event of changes (e.g. marriage or relocation). The changes are forwarded to the appropriate user accounts.
-- Disable: This event disables the user account. However, allocated resources are retained and can no longer be used.
-- Enable: A deactivated user account can be transferred to the activated state with the help of this event.
-- Delete: This event is used for deprovisioning and deletes the user account of an entity.
+- **Create:** This event creates a new user account for an entity. As a rule, each entity should have exactly one user account. 
+- **Update:** The update event is triggered in the event of changes (e.g. marriage or relocation). The changes are forwarded to the appropriate user accounts.
+- **Disable:** This event disables the user account. However, allocated resources are retained and can no longer be used.
+- **Enable:** A deactivated user account can be transferred to the activated state with the help of this event.
+- **Delete:** This event is used for deprovisioning and deletes the user account of an entity.
 
 `WebExpress` supports two methods of identity management:
 
@@ -3353,8 +3562,8 @@ highlights the key relationships and structural elements:
 |System administrator   |Technical configuration of the system. For example, the system administrator can install or update a new application.
 
 In addition to the predefined standard roles, custom roles can also be created by defining them 
-in dedicated classes. The example below demonstrates how to define a custom role using the `IIdentityRole` 
-interface and associate it with a specific permission:
+in dedicated classes. The example below demonstrates how to define a custom role using the 
+`IIdentityRole` interface and associate it with a specific permission:
 
 ```csharp
 [Name("myRole")]
@@ -3832,213 +4041,6 @@ if a requested page was not found.
 ```
 
 ## Setting page
-Setting page templates are utilized to manage and configure web applications. Each settings 
-page is required to implement the `IPageSetting` interface. The following UML diagram
-illustrates the relationships and structures:
-
-```
-╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
-║                                                                                      ║
-║   ┌────────────────────────────────────────┐                                         ║
-║   │ <<Interface>>                          │                                         ║
-║   │ IComponentHub                          │                                         ║
-║   ├────────────────────────────────────────┤ 1                                       ║
-║   │ SettingPageManager:ISettingPageManager ├────────┐                                ║
-║   │ …                                      │        │                                ║
-║   └────────────────────────────────────────┘        │                                ║
-║                                                     │                                ║
-║                                                     │                                ║
-║   ┌────────────────────────────────────┐            │                                ║
-║   │ <<Interface>>                      │            │                                ║
-║   │ IComponentManager                  │            │                                ║
-║   ├────────────────────────────────────┤            │                                ║
-║   └────────────────────────────────────┘            │                                ║
-║                      Δ                              │                                ║
-║                 ┌----┘                              │                                ║
-║                 ¦                                 1 ▼                                ║
-║        ┌────────┴────────────────────────────────────────────────┐                   ║
-║        │ <<Interface>>                                           │                   ║
-║        │ ISettingPageManager                                     ├--------------┐    ║
-║        ├─────────────────────────────────────────────────────────┤              ¦    ║
-║        │ AddSettingPage:Event                                    │              ¦    ║
-║        │ RemoveSettingPage:Event                                 │              ¦    ║
-║        │ AddSettingCategory:Event                                │              ¦    ║
-║        │ RemoveSettingCategory:Event                             │              ¦    ║
-║        │ AddSettingGroup:Event                                   │              ¦    ║
-║        │ RemoveSettingGroup:Event                                │              ¦    ║
-║        ├─────────────────────────────────────────────────────────┤ 1            ¦    ║
-║      1 │ SettingCategories:IEnumerable<ISettingCategoryContext>  ├───────┐      ¦    ║
-║   ┌────┤ SettingGroups:IEnumerable<ISettingGroupContext>         │ 1     │      ¦    ║
-║   │    │ SettingPages:IEnumerable<ISettingPageContext>           ├──┐    │      ¦    ║
-║   │    ├─────────────────────────────────────────────────────────┤  │    │      ¦    ║
-║   │    │ GetSettingPages(Type):                                  │  │    │      ¦    ║
-║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
-║   │    │ GetSettingPages(Type, IApplicationContext):             │  │    │      ¦    ║
-║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
-║   │    │ GetSettingPages(IApplicationContext,category):          │  │    │      ¦    ║
-║   │    │  IEnumerable<ISettingPageContext>                       │  │    │      ¦    ║
-║   │    │ GetSettingPages(IApplicationContext,                    │  │    │      ¦    ║
-║   │    │  ISettingCategoryContext,                               │  │    │      ¦    ║
-║   │    │  ISettingGroupContext):IEnumerable<ISettingPageContext> │  │    │      ¦    ║
-║   │    │ GetFirstSettingPage(IApplicationContext,                │  │    │      ¦    ║
-║   │    │  ISettingCategoryContext):ISettingPageContext           │  │    │      ¦    ║
-║   │    │ GetCategories(IApplicationContext):                     │  │    │      ¦    ║
-║   │    │  IEnumerable<ISettingCategoryContext>                   │  │    │      ¦    ║
-║   │    │ GetGroups(IApplicationContext,ISettingCategoryContext): │  │    │      ¦    ║
-║   │    │  IEnumerable<ISettingGroupContext>                      │  │    │      ¦    ║
-║   │    └─────────────────────────────────────────────────────────┘  │    │      ¦    ║
-║   │                                                                 │    │      ¦    ║
-║   │                   ┌────────────────┐                            │    │      ¦    ║
-║   │                   │ <<Interface>>  │                            │    │      ¦    ║
-║   │                   │ IContext       │                            │    │      ¦    ║
-║   │                   ├────────────────┤                            │    │      ¦    ║
-║   │                   └────────────────┘                            │    │      ¦    ║
-║   │                           Δ                                     │    │      ¦    ║
-║   │                           ¦                                     │    │      ¦    ║
-║   │                           ¦                                     │    │      ¦    ║
-║   │       ┌───────────────────┴────────────────────┐                │    │      ¦    ║
-║   │       │ <<Interface>>                          │                │    │      ¦    ║
-║   │       │ IEndpointContext                       │                │    │      ¦    ║
-║   │       ├────────────────────────────────────────┤                │    │      ¦    ║
-║   │       │ EndpointId:String                      │                │    │      ¦    ║
-║   │       │ PluginContext:IPluginContext           │                │    │      ¦    ║
-║   │       │ ApplicationContext:IApplicationContext │                │    │      ¦    ║
-║   │       │ Conditions:IEnumerable<ICondition>     │                │    │      ¦    ║
-║   │       │ ParentContext:IEndpointContext         │                │    │      ¦    ║
-║   │       │ Cache:Bool                             │                │    │      ¦    ║
-║   │       │ ContextPath:UriResource                │                │    │      ¦    ║
-║   │       │ Uri:UriResource                        │                │    │      ¦    ║
-║   │       └────────────────────────────────────────┘                │    │      ¦    ║
-║   │                           Δ                                     │    │      ¦    ║
-║   │                           ¦     ┌───────────────────────────────┘  * ▼      ¦    ║
-║   │                           ¦     │               ┌─────────────────────────┐ ¦    ║
-║   │                       ┌---┘     │             1 │ <<Interface>>           │ ¦    ║
-║   │                       ¦         │          ┌───►│ ISettingCategoryContext │ ¦    ║
-║   │                       ¦       * ▼          │    ├─────────────────────────┤ ¦    ║
-║   │      ┌────────────────┴─────────────────┐  │    │ Icon:PropertyIcon       │ ¦    ║
-║   │      │ <<Interface>>                    │  │    │ Name:String             │ ¦    ║
-║   │      │ ISettingPageContext              │  │    │ Description:String      │ ¦    ║
-║   │      ├──────────────────────────────────┤  │    │ Section:SettingSection  │ ¦    ║
-║   │      │ Hide:Bool                        │  │    └─────────────────────────┘ ¦    ║
-║   │      │ Icon:PropertyIcon                │ 1│                                ¦    ║
-║   │      │ Category:ISettingCategoryContext ├──┘       ┌──────────────────┐     ¦    ║
-║   │   ┌──┤ Group:ISettingGroupContext       │ 1      1 │ <<Enumeration>>  │     ¦    ║
-║   │   │  │ Section:SettingSection           ├─────────►│ SettingSection   │     ¦    ║
-║   │   │  └──────────────────────────────────┘          ├──────────────────┤     ¦    ║
-║   │   │                                                │ Preferences      │     ¦    ║
-║ * ▼ 1 ▼                          ┌────────────────┐    │ Primary          │     ¦    ║
-║ ┌───────────────────────────┐    │ <<Interface>>  │    │ Secondary        │     ¦    ║
-║ │ <<Interface>>             │    │ IComponent     │    └──────────────────┘     ¦    ║
-║ │ ISettingGroupContext      │    ├────────────────┤                             ¦    ║
-║ ├───────────────────────────┤    └────────────────┘                             ¦    ║
-║ │ Icon:PropertyIcon         │            Δ                                      ¦    ║
-║ │ Name:String               │            ¦                                      ¦    ║
-║ │ Description:String        │            ¦                                      ¦    ║
-║ │ Category:                 │    ┌───────┴────────┐                             ¦    ║
-║ │   ISettingCategoryContext │    │ <<Interface>>  │                             ¦    ║
-║ │ Section:SettingSection    │    │ IEndpoint      │                             ¦    ║
-║ └───────────────────────────┘    ├────────────────┤                             ¦    ║
-║                                  └────────────────┘                             ¦    ║
-║                                          Δ                                      ¦    ║
-║                                          ¦                                      ¦    ║
-║                                          ¦   ┌─────────────┐                    ¦    ║
-║                        ┌─────────────────┴───│ TVisualTree │─┐                  ¦    ║
-║                        │ <<Interface>>       └─────────────┘ │                  ¦    ║
-║                        │ ISettingPage                        │                  ¦    ║
-║                        ├─────────────────────────────────────┤                  ¦    ║
-║                        │ Process(IRenderContext,TVisualTree) │                  ¦    ║
-║                        └─────────────────────────────────────┘                  ¦    ║
-║                                          Δ                                      ¦    ║
-║                                          ¦                                      ¦    ║
-╚══════════════════════════════════════════¦══════════════════════════════════════¦════╝
-                                           ¦                                      ¦     
-╔MyPlugin══════════════════════════════════¦══════════════════════════════════════¦════╗
-║                                          ¦                                      ¦    ║
-║                        ┌─────────────────┴───────────────────┐           create ¦    ║
-║                        │ MySettingPage                       │◄-----------------┘    ║
-║                        ├─────────────────────────────────────┤                       ║
-║                        │ Process(IRenderContext,TVisualTree) │                       ║
-║                        └─────────────────────────────────────┘                       ║
-║                                                                                      ║
-╚══════════════════════════════════════════════════════════════════════════════════════╝
-```
-
-### Setting category
-Setting categories serve the purpose of organizing settings at the highest level and help 
-users navigate large settings interfaces efficiently. The example below demonstrates how a 
-category can be defined in code:
-
-```csharp
-[WebIcon<IconInfoCircle>]
-[Name("SettingCategory A")]
-[Description("Description of category a.")]
-[SettingSection(SettingSection.Primary)]
-public sealed class MySettingCategory : ISettingCategory
-{
-}
-```
-
-The following attributes are available for a settings category, which organizes settings at the 
-highest level:
-
-|Attribute       |Type             |Multiplicity |Optional |Description
-|----------------|-----------------|-------------|---------|--------------
-|WebIcon         |IIcon            |1            |Yes      |An icon displayed alongside the category link.
-|Name            |String           |1            |Yes      |Human-readable name or internationalization key for the category.
-|Description     |String           |1            |Yes      |Human-readable description or internationalization key for the category.
-|SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
-
-### Setting group
-Setting groups provide a way to structure settings within categories, offering a more granular 
-organization. Below is an example of how a group can be defined in code:
-
-```csharp
-[WebIcon<IconInfoCircle>]
-[Name("SettingGroup A")]
-[Description("Description of group a.")]
-[SettingCategory<MySettingCategory>]
-[SettingSection(SettingSection.Primary)]
-public sealed class MySettingGroup : ISettingGroup
-{
-}
-```
-
-The following attributes are available for a settings group, which structures settings within
-a category:
-
-|Attribute       |Type             |Multiplicity |Optional |Description
-|----------------|-----------------|-------------|---------|--------------
-|WebIcon         |IIcon            |1            |Yes      |An icon displayed alongside the group link.
-|Name            |String           |1            |Yes      |Human-readable name or internationalization key for the group.
-|Description     |String           |1            |Yes      |Human-readable description or internationalization key for the group.
-|SettingCategory |ISettingCategory |1            |Yes      |Each setting page can have a setting category. If no `SettingCategory` is specified, the settings page will not be associated with a category.
-|SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
-
-### Setting page
-Setting pages define the individual interfaces where the settings are presented. These pages 
-make use of categories and groups to provide an organized experience. Below is an example of 
-how a settings page can be defined in code:
-
-```csharp
-[WebIcon<IconInfoCircle>]
-[SettingGroup<MySettingGroup>]
-[SettingSection(SettingSection.Primary)]
-public sealed class MyWebAppPageSetting : WebAppPageSetting
-{
-}
-```
-
-To provide clarity about the metadata specified in the code above, the following table 
-presents the available attributes and their corresponding details for defining a settings 
-page:
-
-|Attribute      |Type             |Multiplicity |Optional |Description
-|---------------|-----------------|-------------|---------|--------------
-|WebIcon        |IIcon            |1            |Yes      |An icon to be displayed along with the link to the settings page.
-|SettingGroup   |ISettingGroup    |1            |Yes      |Each setting page can have a setting group. If no `SettingGroup` is specified, the settings page will not be associated with a group.
-|SettingSection |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
-|SettingHide    |-                |1            |Yes      |Not displaying the page in the settings
-
 The template is specially adapted to the settings pages. In particular, the side navigation 
 pane and a tab element are automatically populated from the meta information.
 
@@ -4083,6 +4085,7 @@ pane and a tab element are automatically populated from the meta information.
 ║└────────────────────────────────────────────────────────────────────────────────────┘║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+
 ### Setting tab
 The contents of the `SettingTab` are fed from the `SettingCategory` attributes of the settings 
 pages. For each defined category, a tab element is created and linked to the first element. 
@@ -4259,11 +4262,15 @@ additional attributes that contribute to a cohesive visual and functional design
 
 These attributes may include:
 
-- Typography: Font styles, sizes, and weights used across the application.
-- Iconography: Sets of icons or visual elements tailored to the theme.
-- Spacing and Layout: Definitions for padding, margins, and element alignment to ensure consistent spacing across components.
-- Animations and Transitions: Custom animations or transition effects that enhance the user experience while aligning with the theme's aesthetic.
-- Custom Components: Predefined styles or templates for frequently used UI components like buttons, input fields, or modals.
+- **Typography:** Font styles, sizes, and weights used across the application.
+- **Iconography:** Sets of icons or visual elements tailored to the theme.
+- **Spacing and layout:** Definitions for padding, margins, and element alignment to ensure consistent spacing across components.
+- **Animations and transitions:** Custom animations or transition effects that enhance the user experience while aligning with the theme's aesthetic.
+- **Custom Components:** Predefined styles or templates for frequently used UI components like buttons, input fields, or modals.
+
+If a theme is included in the application's assembly, it becomes the default theme 
+automatically. Where more than one theme is defined, the system defaults to the first 
+theme it finds.
 
 The example below demonstrates how a theme can define not only color properties but also 
 additional elements like typography and animations to create a consistent and rich user 
