@@ -4170,18 +4170,22 @@ underlying structure:
 ║   ├───────────────────┤            │    ├────────────────────────────────────────┤   ║
 ║   └───────────────────┘            │    │ PluginContext:IPluginContext           │   ║
 ║             Δ                      │    │ ApplicationContext:IApplicationContext │   ║
-║             ¦                      │    └────────────────────────────────────────┘   ║
-║             ¦                      │                     * ▲                         ║
-║             ¦                    1 ▼                       │                         ║
-║       ┌─────┴───────────────────────────────────┐          │                         ║
-║       │ <<Interface>>                           │          │                         ║
-║   ┌---┤ IThemeManager                           │          │                         ║
-║   ¦   ├─────────────────────────────────────────┤          │                         ║
-║   ¦   │ AddTheme:Event                          │          │                         ║
-║   ¦   │ RemoveTheme:Event                       │          │                         ║
-║   ¦   ├─────────────────────────────────────────┤ 1        │                         ║
-║   ¦   │ Themes:IEnumerable<IThemeContext>       ├──────────┘                         ║
-║   ¦   ├─────────────────────────────────────────┤                                    ║
+║             ¦                      │    │ Image:UriResource                      │   ║
+║             ¦                      │    │ Name:String                            │   ║
+║             ¦                      │    │ Description:String                     │   ║
+║             ¦                      │    │ ThemeMode:ThemeMode                    │   ║
+║             ¦                      │    └──────────────────────────────┬─────────┘   ║
+║             ¦                      │                     * ▲         1 │             ║
+║             ¦                    1 ▼                       │           │             ║
+║       ┌─────┴───────────────────────────────────┐          │           │             ║
+║       │ <<Interface>>                           │          │         1 ▼             ║
+║   ┌---┤ IThemeManager                           │          │     ┌───────────┐       ║
+║   ¦   ├─────────────────────────────────────────┤          │     │ <<Enum>>  │       ║
+║   ¦   │ AddTheme:Event                          │          │     │ ThemeMode │       ║
+║   ¦   │ RemoveTheme:Event                       │          │     ├───────────┤       ║
+║   ¦   ├─────────────────────────────────────────┤ 1        │     │ Light     │       ║
+║   ¦   │ Themes:IEnumerable<IThemeContext>       ├──────────┘     │ Dark      │       ║
+║   ¦   ├─────────────────────────────────────────┤                └───────────┘       ║
 ║   ¦   │ GetThemes<ITheme>(IApplicationContext): │                                    ║
 ║   ¦   │   IEnumerable<IEventHandlerContext>     │ 1                                  ║
 ║   ¦   │ GetTheme(IThemeContext):ITheme          ├────────────────────┐               ║
@@ -4297,11 +4301,12 @@ public sealed class MyTheme : IThemeWebApp
 To provide clarity about the metadata specified in the code above, the following table 
 presents the available attributes and their corresponding details:
 
-|Attribute   |Type   |Multiplicity |Optional |Description
-|------------|-------|-------------|---------|---------------------
-|Name        |String |1            |Yes      |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
-|Description |String |1            |Yes      |The description of the topic. This can be a key to internationalization.
-|Image       |String |1            |Yes      |Link to an image that visually represents the topic.
+|Attribute   |Type      |Multiplicity |Optional |Description
+|------------|----------|-------------|---------|---------------------
+|Name        |String    |1            |Yes      |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
+|Description |String    |1            |Yes      |The description of the topic. This can be a key to internationalization.
+|Image       |String    |1            |Yes      |Link to an image that visually represents the topic.
+|ThemeMode   |ThemeMode |1            |Yes      |Indicates the theme mode (e.g., Light or Dark).
 
 # Example
 The classic 'Hello World' application serves as a fundamental starting point for understanding 
