@@ -4180,13 +4180,13 @@ underlying structure:
 ║             ¦                    1 ▼                       │           │             ║
 ║       ┌─────┴───────────────────────────────────┐          │           │             ║
 ║       │ <<Interface>>                           │          │         1 ▼             ║
-║   ┌---┤ IThemeManager                           │          │     ┌───────────┐       ║
-║   ¦   ├─────────────────────────────────────────┤          │     │ <<Enum>>  │       ║
-║   ¦   │ AddTheme:Event                          │          │     │ ThemeMode │       ║
-║   ¦   │ RemoveTheme:Event                       │          │     ├───────────┤       ║
-║   ¦   ├─────────────────────────────────────────┤ 1        │     │ Light     │       ║
-║   ¦   │ Themes:IEnumerable<IThemeContext>       ├──────────┘     │ Dark      │       ║
-║   ¦   ├─────────────────────────────────────────┤                └───────────┘       ║
+║   ┌---┤ IThemeManager                           │          │   ┌─────────────────┐   ║
+║   ¦   ├─────────────────────────────────────────┤          │   │ <<Enumeration>> │   ║
+║   ¦   │ AddTheme:Event                          │          │   │ ThemeMode       │   ║
+║   ¦   │ RemoveTheme:Event                       │          │   ├─────────────────┤   ║
+║   ¦   ├─────────────────────────────────────────┤ 1        │   │ Light           │   ║
+║   ¦   │ Themes:IEnumerable<IThemeContext>       ├──────────┘   │ Dark            │   ║
+║   ¦   ├─────────────────────────────────────────┤              └─────────────────┘   ║
 ║   ¦   │ GetThemes<ITheme>(IApplicationContext): │                                    ║
 ║   ¦   │   IEnumerable<IEventHandlerContext>     │ 1                                  ║
 ║   ¦   │ GetTheme(IThemeContext):ITheme          ├────────────────────┐               ║
