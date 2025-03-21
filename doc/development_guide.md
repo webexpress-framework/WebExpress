@@ -4174,6 +4174,7 @@ underlying structure:
 ║             ¦                      │    │ Name:String                            │   ║
 ║             ¦                      │    │ Description:String                     │   ║
 ║             ¦                      │    │ ThemeMode:ThemeMode                    │   ║
+║             ¦                      │    │ ThemeStyle:UriResource                 │   ║
 ║             ¦                      │    └──────────────────────────────┬─────────┘   ║
 ║             ¦                      │                     * ▲         1 │             ║
 ║             ¦                    1 ▼                       │           │             ║
@@ -4223,10 +4224,6 @@ underlying structure:
 ║   ¦         │ <<Interface>>                            │             │               ║
 ║   ¦         │ IThemeWebApp                             │             │               ║
 ║   ¦         ├──────────────────────────────────────────┤             │               ║
-║   ¦         │ HeaderBackground:PropertyColorBackground │             │               ║
-║   ¦         │ HeaderTitle:PropertyColorText            │             │               ║
-║   ¦         │ HeaderNavigationLink:PropertyColorText   │             │               ║
-║   ¦         │ …                                        │             │               ║
 ║   ¦         ├──────────────────────────────────────────┤             │               ║
 ║   ¦         │                                          │             │               ║
 ║   ¦         └──────────────────────────────────────────┘             │               ║
@@ -4235,10 +4232,6 @@ underlying structure:
 ║   ¦         ┌─────────────────────┴────────────────────┐             │               ║
 ║   ¦         │ ThemeWebApp                              │             │               ║
 ║   ¦         ├──────────────────────────────────────────┤             │               ║
-║   ¦         │ HeaderBackground:PropertyColorBackground │             │               ║
-║   ¦         │ HeaderTitle:PropertyColorText            │             │               ║
-║   ¦         │ HeaderNavigationLink:PropertyColorText   │             │               ║
-║   ¦         │ …                                        │             │               ║
 ║   ¦         ├──────────────────────────────────────────┤             │               ║
 ║   ¦         │                                          │             │               ║
 ║   ¦         └──────────────────────────────────────────┘             │               ║
@@ -4250,10 +4243,6 @@ underlying structure:
 ║   ¦ create  ┌─────────────────────┴────────────────────┐ 1           │               ║
 ║   └--------►│ MyTheme                                  │◄────────────┘               ║
 ║             ├──────────────────────────────────────────┤                             ║
-║             │ HeaderBackground:PropertyColorBackground │                             ║
-║             │ HeaderTitle:PropertyColorText            │                             ║
-║             │ HeaderNavigationLink:PropertyColorText   │                             ║
-║             │ …                                        │                             ║
 ║             ├──────────────────────────────────────────┤                             ║
 ║             │                                          │                             ║
 ║             └──────────────────────────────────────────┘                             ║
@@ -4266,7 +4255,7 @@ seamlessly associated with an application. A theme encompasses not only a color 
 to define properties for various UI elements, such as backgrounds, and text, but also 
 additional attributes that contribute to a cohesive visual and functional design.
 
-These attributes may include:
+The theme may include:
 
 - **Typography:** Font styles, sizes, and weights used across the application.
 - **Iconography:** Sets of icons or visual elements tailored to the theme.
@@ -4286,6 +4275,8 @@ experience within the application.
 [Name("MyTheme")]
 [Description("example")]
 [Image("/assets/img/mytheme.png")]
+[ThemeMode(ThemeMode.Dark)]
+[ThemeStyle("/assets/css/mytheme.css")]]
 public sealed class MyTheme : IThemeWebApp
 {
     public static PropertyColorBackground HeaderBackground => 
@@ -4307,6 +4298,7 @@ presents the available attributes and their corresponding details:
 |Description |String    |1            |Yes      |The description of the topic. This can be a key to internationalization.
 |Image       |String    |1            |Yes      |Link to an image that visually represents the topic.
 |ThemeMode   |ThemeMode |1            |Yes      |Indicates the theme mode (e.g., Light or Dark).
+|ThemeStyle  |String    |1            |Yes      |Link to an theme css style (e.g., material, flat, or skeuomorphic).
 
 # Example
 The classic 'Hello World' application serves as a fundamental starting point for understanding 
