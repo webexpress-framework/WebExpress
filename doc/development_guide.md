@@ -1,17 +1,10 @@
 ![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
 
 # WebExpress
-`WebExpress` is a lightweight web server that has been optimized for use in low-performance 
-environments. Even on small systems, such as the Raspberry PI, web applications can be 
-operated efficiently. This is achieved through a small footprint with a low resource burden. 
-Furthermore, WebExpress has a powerful and optimized plugin system, with a comprehensive API 
-and application templates. This allows web applications to be easily and quickly integrated 
-into a .Net language (e.g. C#).
+`WebExpress` is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, `WebExpress` has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .Net language (e.g. C#).
 
 # License
-The software is freely available as open source (MIT). The software sources can be obtained 
-from https://github.com/ReneSchwarzer/WebExpress. WebExpress is based on components that are 
-available as open source:
+The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/ReneSchwarzer/WebExpress. `WebExpress` is based on components that are available as open source:
 
 - https://github.com/dotnet/core (MIT)
 - https://getbootstrap.com/ (MIT)
@@ -31,7 +24,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
+copies of the Software, and to permit persons to whom the Software is 
 furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
@@ -47,91 +40,58 @@ SOFTWARE.
 ```
 
 # Vision of a new web framework
-The development of a web application without the need to use HTML, CSS, or JavaScript, but 
-exclusively using C#, could revolutionize web development. A web framework programmed entirely 
-in C# offers numerous advantages. Modularity allows for the independent development and testing 
-of components, facilitating reusability and maintenance. Plugins can be added to extend 
-functionality without altering the core of the framework. Using such a framework can 
-significantly reduce development time. Prepared components allow developers to focus on business 
-logic, leading to faster time-to-market and reduced costs. Development, debugging, and deployment 
-processes can be fully carried out with C# tools like Visual Studio. This provides a unified 
-development environment that enhances efficiency and simplifies troubleshooting. The need to 
-deal with various technologies is eliminated, reducing complexity and improving maintainability. 
-Frameworks like Angular, React, or Vue.js require knowledge of HTML, CSS, and JavaScript. These 
-technologies are powerful but also complex and require a steep learning curve. A C#-based framework 
-eliminates these hurdles, enabling quicker onboarding and higher productivity. 
-A C#-based web framework offers numerous advantages. It simplifies web development, increases 
-efficiency and productivity, and reduces complexity. With pre-built components and a unified 
-development environment, high-quality web applications can be created faster and more 
-cost-effectively. Such a framework could fundamentally change the way web applications are developed.
+The development of a web application without the need to use HTML, CSS, or JavaScript, but exclusively using C#, could revolutionize web development. A web framework programmed entirely in C# offers numerous advantages. Modularity allows for the independent development and testing of components, facilitating reusability and maintenance. Plugins can be added to extend functionality without altering the core of the framework. Using such a framework can significantly reduce development time. Prepared components allow developers to focus on business logic, leading to faster time-to-market and reduced costs. Development, debugging, and deployment processes can be fully carried out with C# tools like Visual Studio. This provides a unified development environment that enhances efficiency and simplifies troubleshooting. The need to deal with various technologies is eliminated, reducing complexity and improving maintainability. Frameworks like Angular, React, or Vue.js require knowledge of HTML, CSS, and JavaScript. These technologies are powerful but also complex and require a steep learning curve. A C#-based framework eliminates these hurdles, enabling quicker onboarding and higher productivity. A C#-based web framework offers numerous advantages. It simplifies web development, increases efficiency and productivity, and reduces complexity. With pre-built components and a unified development environment, high-quality web applications can be created faster and more cost-effectively. Such a framework could fundamentally change the way web applications are developed.
 
 # Architecture
-`WebExpress` is deliberately kept very simple. It consists only of basic functionalities 
-for processing HTTP and HTTPS requests, an API and a plugin system for extending the 
-functionalities. This means that `WebExpress` itself is not able to generate content. 
-The plugin system is required for this. Plugins are .Net assemblies, which create 
-content based on the WebExpress API. The plugins are loaded and executed by `WebExpress`. 
-`WebExpress` controls the plugins and distributes the http(s) requests to the responsible 
-plugin. The plugins answer the requests, create the content and transfer it to `WebExpress`. 
-Finally, the content is delivered as an HTTP response via `WebExpress`. `WebExpress` uses 
-Kestrel to process http(s) requests.
+`WebExpress` is deliberately kept very simple. It consists only of basic functionalities for processing HTTP and HTTPS requests, an API and a plugin system for extending the functionalities. This means that `WebExpress` itself is not able to generate content. The plugin system is required for this. Plugins are .Net assemblies, which create content based on the `WebExpress` API. The plugins are loaded and executed by `WebExpress`. `WebExpress` controls the plugins and distributes the http(s) requests to the responsible plugin. The plugins answer the requests, create the content and transfer it to `WebExpress`. Finally, the content is delivered as an HTTP response via `WebExpress`. `WebExpress` uses `Kestrel` to process http(s) requests.
 
 ```
-╔WebExpress══════════════════════════════════════════════════════════════════════════╗
-║┌Plugin a---------------------------------------┐ ┌Plugin b------------------------┐║
-║¦                                               ¦ ¦                                ¦║
-║¦┌─────────────────┐┌──────────────────────────────────────────┐┌─────────────────┐¦║
-║¦│ Application X   ││ Application y                            ││ Application z   │¦║
-║¦│                 ││                                          ││                 │¦║
-║¦│ ┌───────────┐   ││ ┌──────────┐  ┌─────────┐ ┌────────┐     ││ ┌───────────┐   │¦║
-║¦│ │ Resources │   ││ │  Pages   │  │ RestAPI │ │ Assets │     ││ │ Resources │   │¦║
-║¦│ └───────────┘   ││ └──────────┘  └─────────┘ └────────┘     ││ └───────────┘   │¦║
-║¦│                 ││                                          ││                 │¦║
-║¦│ ┌─────────┐     ││ ┌───────────┐ ┌───────────┐ ┌────────┐   ││ ┌───────────┐   │¦║
-║¦│ │  Pages  │     ││ │ Fragments │ │ Resources │ │Identity│   ││ │ Fragments │   │¦║
-║¦│ └─────────┘     ││ └───────────┘ └───────────┘ └────────┘   ││ └───────────┘   │¦║
-║¦│                 ││                                          ││                 │¦║
-║¦│ ┌────────┐      ││ ┌─────────────┐ ┌─────────┐ ┌────────┐   ││ ┌─────────────┐ │¦║
-║¦│ │  Jobs  │      ││ │ StatusPages │ │ Events  │ │  Jobs  │   ││ │ StatusPages │ │¦║
-║¦│ └────────┘      ││ └─────────────┘ └─────────┘ └────────┘   ││ └─────────────┘ │¦║
-║¦│                 ││                                          ││                 │¦║
-║¦└─────────────────┘└──────────────────────────────────────────┘└─────────────────┘¦║
-║¦                                               ¦ ¦                                ¦║
-║¦┌──────────┐ ┌───────────────────┐             ¦ ¦ ┌────────┐                     ¦║
-║¦│   I18N   │ │ ComponentManagers │             ¦ ¦ │  I18N  │                     ¦║
-║¦└──────────┘ └───────────────────┘             ¦ ¦ └────────┘                     ¦║
-║└-----------------------------------------------┘ └--------------------------------┘║
-╚════════════════════════════════════════════════════════════════════════════════════╝
+╔WebExpress════════════════════════════════════════════════════════════════════════════╗
+║┌Plugin a---------------------------------------┐ ┌Plugin b--------------------------┐║
+║¦                                               ¦ ¦                                  ¦║
+║¦┌──────────────────┐┌──────────────────────────────────────────┐┌──────────────────┐¦║
+║¦│ Application X    ││ Application y                            ││ Application z    │¦║
+║¦│                  ││                                          ││                  │¦║
+║¦│ ┌───────────┐    ││ ┌──────────┐  ┌─────────┐ ┌────────┐     ││ ┌───────────┐    │¦║
+║¦│ │ Resources │    ││ │  Pages   │  │ RestAPI │ │ Assets │     ││ │ Resources │    │¦║
+║¦│ └───────────┘    ││ └──────────┘  └─────────┘ └────────┘     ││ └───────────┘    │¦║
+║¦│                  ││                                          ││                  │¦║
+║¦│ ┌─────────┐      ││ ┌───────────┐ ┌───────────┐ ┌────────┐   ││ ┌───────────┐    │¦║
+║¦│ │  Pages  │      ││ │ Fragments │ │ Resources │ │Identity│   ││ │ Fragments │    │¦║
+║¦│ └─────────┘      ││ └───────────┘ └───────────┘ └────────┘   ││ └───────────┘    │¦║
+║¦│                  ││                                          ││                  │¦║
+║¦│ ┌────────┐       ││ ┌─────────────┐ ┌─────────┐ ┌────────┐   ││ ┌─────────────┐  │¦║
+║¦│ │  Jobs  │       ││ │ StatusPages │ │ Events  │ │  Jobs  │   ││ │ StatusPages │  │¦║
+║¦│ └────────┘       ││ └─────────────┘ └─────────┘ └────────┘   ││ └─────────────┘  │¦║
+║¦│                  ││                                          ││                  │¦║
+║¦└──────────────────┘└──────────────────────────────────────────┘└──────────────────┘¦║
+║¦                                               ¦ ¦                                  ¦║
+║¦┌──────────┐ ┌───────────────────┐             ¦ ¦ ┌────────┐                       ¦║
+║¦│   I18N   │ │ ComponentManagers │             ¦ ¦ │  I18N  │                       ¦║
+║¦└──────────┘ └───────────────────┘             ¦ ¦ └────────┘                       ¦║
+║└-----------------------------------------------┘ └----------------------------------┘║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` consists of several program libraries, which serve as the basis for `WebExpress` 
-projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating 
-content and additional functions such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` 
-packages provide controls and templates that facilitate the development of (business) applications. 
-`WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` program library 
-represents the application that takes control of the individual functions and components. 
-The `WebExpress.exe` program library is generic and can be replaced by its own program library.
+`WebExpress` consists of several program libraries, which serve as the basis for `WebExpress` projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` program library represents the application that takes control of the individual functions and components. The `WebExpress.exe` program library is generic and can be replaced by its own program library.
 
 ```
-╔WebExpress.exe══════════════════════════════════════════════════════╗
-║                                                                    ║
-║                                            ┌──────────────┐        ║
-║                                            │ WebIndex.dll │        ║
-║                                            └──────────────┘        ║
-║                                                   ▲                ║
-║         ┌──────────────────────────────────────┐  │                ║
-║         ▼                                      │  └───┐            ║
-║   ┌─────────────┐       ┌───────────┐       ┌──┴──────┴──┐         ║
-║   │ WebCore.dll │◄──────┤ WebUI.dll │◄──────┤ WebApp.dll │         ║
-║   └─────────────┘       └───────────┘       └────────────┘         ║
-║                                                                    ║
-╚════════════════════════════════════════════════════════════════════╝
+╔WebExpress.exe════════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                                                 ┌──────────────┐                     ║
+║                                                 │ WebIndex.dll │                     ║
+║                                                 └──────────────┘                     ║
+║                                                         ▲                            ║
+║               ┌──────────────────────────────────────┐  │                            ║
+║               ▼                                      │  └───┐                        ║
+║         ┌─────────────┐       ┌───────────┐       ┌──┴──────┴──┐                     ║
+║         │ WebCore.dll │◄──────┤ WebUI.dll │◄──────┤ WebApp.dll │                     ║
+║         └─────────────┘       └───────────┘       └────────────┘                     ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-In the context of `WebExpress`, (web) applications are deployed. An application is the logical 
-combination of Components. Components, in turn, are amalgamations of (web) elements. Elements 
-reflect content (e.g. web pages). The relationships between `WebExpress`, packages, applications, 
-and elements are illustrated in the following figure: 
+In the context of `WebExpress`, (web) applications are deployed. An application is the logical combination of Components. Components, in turn, are amalgamations of (web) elements. Elements reflect content (e.g. web pages). The relationships between `WebExpress`, packages, applications, and elements are illustrated in the following figure: 
 
 ```
 ╔WebExpress════════════════════════════════════════════════════════════════════════════╗
@@ -166,8 +126,7 @@ and elements are illustrated in the following figure:
 ```
 
 ## Component model
-The components of `WebExpress` and its applications are centrally managed in the `ComponentHub`.
-The following component managers are available in `WebExpress`:
+The components of `WebExpress` and its applications are centrally managed in the `ComponentHub`. The following component managers are available in `WebExpress`:
 
 |Component                   |Description
 |----------------------------|-----------------------
@@ -189,9 +148,7 @@ The following component managers are available in `WebExpress`:
 |IdentityManager             |Users or technical objects that are used for identity and access management.
 |SettingPageManager          |Manages the settings of the application.    
 
-In addition, you can create your own components and register them in the `ComponentHub`. The 
-following UML diagram illustrates the relationships and internal structure of the `ComponentManager` 
-and the components it manages:
+In addition, you can create your own components and register them in the `ComponentHub`. The following UML diagram illustrates the relationships and internal structure of the `ComponentManager` and the components it manages:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -255,9 +212,7 @@ and the components it manages:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` supports the creation of `IComponent` instances using dependency injection. 
-This allows dependencies to be automatically injected when an instance of a component is 
-created. The following constructor parameters can be indexed by injection:
+`WebExpress` supports the creation of `IComponent` instances using dependency injection. This allows dependencies to be automatically injected when an instance of a component is created. The following constructor parameters can be indexed by injection:
 
 | Constructor Parameter | Description 
 |-----------------------|-------------
@@ -266,27 +221,19 @@ created. The following constructor parameters can be indexed by injection:
 | `IComponentId`        | The unique identifier of the component. 
 | `IHttpServerContext`  | The context of the HTTP server.
 
-By using dependency injection, it is ensured that all required dependencies are automatically
-provided when the instance of the component is created.
+By using dependency injection, it is ensured that all required dependencies are automatically provided when the instance of the component is created.
 
 ## Package model
-`WebExpress` is designed by its open and modular plugin system, which supports many usage 
-scenarios. The distribution of the plugins and other software components (e.g. Entity Framework) 
-takes place as `WebExpress` packages. `WebExpress` is able to read these packets and execute 
-the code in them. Packages can contain both managed code and native libraries (e.g. for Linux) 
-and be dependent on other packages. The recursive resolution of the dependencies is done by 
-`WebExpress`. The `WebExpress` packages are ZIP-compressed files that can provide libraries 
-for multiple platforms. They have the `wxp` file extension. A `WebExpress` package has the 
-following structure:
+`WebExpress` is designed by its open and modular plugin system, which supports many usage scenarios. The distribution of the plugins and other software components (e.g. Entity Framework) takes place as `WebExpress` packages. `WebExpress` is able to read these packets and execute the code in them. Packages can contain both managed code and native libraries (e.g. for Linux) and be dependent on other packages. The recursive resolution of the dependencies is done by `WebExpress`. The `WebExpress` packages are ZIP-compressed files that can provide libraries for multiple platforms. They have the `wxp` file extension. A `WebExpress` package has the following structure:
 
 ```
    📦 <packagename>.<version>.wxp
-   ├📁 lib
-   │└📁 runtime
-   │ └📁 <rid>
-   ├📁 licences
-   ├📄 readme.md
-   └📄 <packagename>.spec
+   ├─📁 lib
+   │ └─📁 runtime
+   │   └─📁 <rid>
+   ├─📁 licences
+   ├─📄 readme.md
+   └─📄 <packagename>.spec
 ```
 
 |Directory/ File  |Description
@@ -312,21 +259,19 @@ The packages are versioned and can assume the following states:
              └───────────┘
 ```
 
-- **Available** - The package is available, but not yet loaded by the WebExpress. 
+- **Available** - The package is available, but not yet loaded by the `WebExpress`. 
 - **Active** - The package has been loaded and is ready for use. 
 - **Disable** - The package has been disabled. The use of the package is not possible.
 
-The `PackageManager` is responsible for provisioning the packages. This has the task of 
-loading all packages and deactivating or removing them if desired. The following directories 
-are used to store the packages and libraries: 
+The `PackageManager` is responsible for provisioning the packages. This has the task of loading all packages and deactivating or removing them if desired. The following directories are used to store the packages and libraries: 
 
 ```
    📁 packages
-   ├📁 <package>
-   ├📄 catalog.xml
-   ├📦 <package 1>.wxp
-   ├📦 <package …>.wxp
-   └📦 <package n>.wxp
+   ├─📁 <package>
+   ├─📄 catalog.xml
+   ├─📦 <package 1>.wxp
+   ├─📦 <package …>.wxp
+   └─📦 <package n>.wxp
 ```
 
 |Directory/ File |Description
@@ -336,16 +281,7 @@ are used to store the packages and libraries:
 |catalog.xml     |The catalog.xml file collects all metadata (including the package state) of the installed packages.
 |package.wxp     |Each installed package is saved unpacked for future actions.
 
-New packages can be installed on the fly by copying them into the packages directory by the 
-user. The provisioning service cyclically scans the directory for new packets and loads them. 
-If a package is to be deactivated without removing it, the `PackageManager` notes it in the 
-catalog (state `Disable`). In addition package, the directory of the deactivated package is 
-deleted and all contents (components) are removed from the running `WebExpress`. When `WebExpress` 
-boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled 
-package is activated by changing the state in the catalog and unpacking and loading the package 
-into the package directory. When a package is deleted, it is removed from the package directory 
-and from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime 
-via the following classes:
+New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning service cyclically scans the directory for new packets and loads them. If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). In addition package, the directory of the deactivated package is deleted and all contents (components) are removed from the running `WebExpress`. When `WebExpress` boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and loading the package into the package directory. When a package is deleted, it is removed from the package directory and from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime via the following classes:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -373,9 +309,7 @@ via the following classes:
 ```
 
 ## Plugin model
-The plugin system can be used to extend both `WebExpress` and application functionalities. 
-Each plugin must have exactly one plugin class that implements `IPlugin`. The following 
-example demonstrates the implementation of a plugin:
+The plugin system can be used to extend both `WebExpress` and application functionalities. Each plugin must have exactly one plugin class that implements `IPlugin`. The following example demonstrates the implementation of a plugin:
 
 ```csharp
 [Name("myplugin")]
@@ -391,8 +325,7 @@ public sealed class MyPlugin : IPlugin
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table presents 
-the available attributes and their corresponding details for defining plugins:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining plugins:
 
 |Attribute   |Type           |Multiplicity |Optional |Description
 |------------|---------------|-------------|---------|--------------
@@ -402,10 +335,7 @@ the available attributes and their corresponding details for defining plugins:
 |Dependency  |String         |n            |Yes      |Defines a dependency on another plugin and is specified via the PluginId.
 |Applcation  |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
 
-The implemented methods from the interface cover the life cycle of the plugin. Meta information 
-about the plugin is stored in the `PluginContext` and is available globally via the 
-`PluginManager`. Below is a UML diagram that highlights the structure and connections between 
-the `PluginManager` and plugins.
+The implemented methods from the interface cover the life cycle of the plugin. Meta information about the plugin is stored in the `PluginContext` and is available globally via the `PluginManager`. Below is a UML diagram that highlights the structure and connections between the `PluginManager` and plugins.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -439,7 +369,7 @@ the `PluginManager` and plugins.
 ║                                                   ¦   │ Version:String          │    ║
 ║                                                   ¦   │ Copyright:String        │    ║
 ║          ┌───────────────┐                        ¦   │ License:String          │    ║
-║          │ <<Interface>> │                        ¦   │ Icon:UriResource        │    ║
+║          │ <<Interface>> │                        ¦   │ Icon:EndpointRoute      │    ║
 ║          │ IComponent    │                        ¦   └─────────────────────────┘    ║
 ║          ├───────────────┤                        ¦                                  ║
 ║          └───────────────┘                        ¦                                  ║
@@ -469,8 +399,7 @@ the `PluginManager` and plugins.
 ```
 
 ## Internationalization model
-The provision of multilingual applications for different cultures is supported by `WebExpress`. 
-In addition, the following text formatting is also adapted to the corresponding culture:
+The provision of multilingual applications for different cultures is supported by `WebExpress`. In addition, the following text formatting is also adapted to the corresponding culture:
 
 |Text formatting |Description
 |---------------|-----------------
@@ -479,10 +408,7 @@ In addition, the following text formatting is also adapted to the corresponding 
 |Time zones     |Support for time zones when displaying times.
 |Number formats |Support the different representation of decimal and thousands separators, as well as different currencies, weights and measurements.
 
-The `InternationalizationManager` is a central component responsible for managing the translation 
-of texts within the application. It reads the language files and provides the `I18N` function 
-to access the translations. This following UML diagram offers an overview of the architecture 
-of the `InternationalizationManager`:
+The `InternationalizationManager` is a central component responsible for managing the translation of texts within the application. It reads the language files and provides the `I18N` function to access the translations. This following UML diagram offers an overview of the architecture of the `InternationalizationManager`:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -539,17 +465,15 @@ of the `InternationalizationManager`:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-For the translation of texts, language translation files are used, which are stored in 
-the packages under `Internationalization`:
+For the translation of texts, language translation files are used, which are stored in the packages under `Internationalization`:
 
 ```
    📁 Internationalization
-   ├📄 de
-   └📄 en
+   ├─📄 de
+   └─📄 en
 ```
 
-To add a new language, a new language file must be created in the Internationalization 
-folder and registered in the project file:
+To add a new language, a new language file must be created in the Internationalization folder and registered in the project file:
 
 ```xml
 <ItemGroup>
@@ -558,8 +482,7 @@ folder and registered in the project file:
 </ItemGroup>
 ```
 
-The name of the language translation file must match the country code from ISO 3166 ALPHA-2. 
-Each language translation file is structured as follows:
+The name of the language translation file must match the country code from ISO 3166 ALPHA-2. Each language translation file is structured as follows:
 
 ```csharp
 # Comment
@@ -574,13 +497,10 @@ logout.button=Abmelden
 welcome.message=Welcome '{0}' to our application!
 logout.button=Logout
 ```
-When creating language files, it is important to pay attention to cultural differences in 
-the translation of content, e.g. in forms of address.
 
-The translation of a text is done with the help of the `InternationalizationManager`, which 
-provides the `I18N` function. The term i18n is a numeronym for "internationalization", where 
-the number 18 stands for the 18 letters between the first "i" and the last "n" in the word. 
-The following examples demonstrate how to use the `I18N` function for translating text:
+When creating language files, it is important to pay attention to cultural differences in the translation of content, e.g. in forms of address.
+
+The translation of a text is done with the help of the `InternationalizationManager`, which provides the `I18N` function. The term i18n is a numeronym for "internationalization", where the number 18 stands for the 18 letters between the first "i" and the last "n" in the word. The following examples demonstrate how to use the `I18N` function for translating text:
 
 ```csharp
 // Language, PluginId, Key
@@ -599,8 +519,7 @@ The `I18N` function works as follows:
 - PluginId: Identifies the plugin for which the translation is registered.
 - Key: The key that corresponds to the text fragment to be translated.
 
-If a key is not found, the I18N function returns the key itself by default. This can be replaced 
-with a custom error message:
+If a key is not found, the I18N function returns the key itself by default. This can be replaced with a custom error message:
 
 ```csharp
 var text = I18N.Translate("en", "<PluginId>", "non.existent.key") ??
@@ -608,9 +527,7 @@ var text = I18N.Translate("en", "<PluginId>", "non.existent.key") ??
 ```
 
 ## Application model
-Each plugin can provide one or more applications. To define an application, a class must 
-be defined that implements the `IApplication` interface. The application's metadata is appended 
-as attributes of the class. The following example illustrates the definition of an application:
+Each plugin can provide one or more applications. To define an application, a class must be defined that implements the `IApplication` interface. The application's metadata is appended as attributes of the class. The following example illustrates the definition of an application:
 
 ```csharp
 [Name("Application")]
@@ -623,8 +540,7 @@ public sealed class MyApplication : Application
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table presents 
-the available attributes and their corresponding details for defining applications:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining applications:
 
 |Attribute   |Type       |Multiplicity |Optional |Description
 |------------|-----------|-------------|---------|------------
@@ -635,11 +551,7 @@ the available attributes and their corresponding details for defining applicatio
 |DataPath    |String     |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String     |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
 
-The methods implemented from the interface cover the life cycle of the application. When the 
-plugin is loaded, all the applications it contains are instantiated. These remain in place until 
-the plugin is unloaded. Meta information about the application is stored in the `ApplicationContext` 
-and managed by the `ApplicationManager`. To better understand the organization and lifecycle of 
-applications in relation to the `ApplicationManager`, refer to the UML diagram below:
+The methods implemented from the interface cover the life cycle of the application. When the plugin is loaded, all the applications it contains are instantiated. These remain in place until the plugin is unloaded. Meta information about the application is stored in the `ApplicationContext` and managed by the `ApplicationManager`. To better understand the organization and lifecycle of applications in relation to the `ApplicationManager`, refer to the UML diagram below:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -691,8 +603,8 @@ applications in relation to the `ApplicationManager`, refer to the UML diagram b
 ║           ¦           │ Description:String           │                               ║
 ║           ¦           │ AssetPath:String             │                               ║
 ║           ¦           │ DataPath:String              │                               ║
-║           ¦           │ ContextPath:UriResource      │                               ║
-║           ¦           │ Icon:UriResource             │                               ║
+║           ¦           │ ContextPath:EndpointRoute    │                               ║
+║           ¦           │ Icon:EndpointRoute           │                               ║
 ║           ¦           └──────────────────────────────┘                               ║
 ║           ¦                                                                          ║
 ║           ¦                   ┌────────────────┐                                     ║
@@ -725,12 +637,7 @@ applications in relation to the `ApplicationManager`, refer to the UML diagram b
 ```
 
 ## Endpoint model
-Endpoints are (web) elements that can be accessed with a URI (Uniform Resource Identifier). When 
-a plugin is loaded, all classes marked as resources are automatically determined from the assembly 
-and included in a sitemap. For this purpose, the affected classes are provided with attributes. 
-Endpoints are virtual and are implemented through specific derivations such as pages, resources, or 
-REST APIs. Additionally, custom endpoints can also be defined. The following UML diagram illustrates 
-the relationships and internal structure of the `EndpointManager` and the `Endpoint` it manages:
+Endpoints are (web) elements that can be accessed with a URI (Uniform Resource Identifier). When a plugin is loaded, all classes marked as resources are automatically determined from the assembly and included in a sitemap. For this purpose, the affected classes are provided with attributes. Endpoints are virtual and are implemented through specific derivations such as pages, resources, or REST APIs. Additionally, custom endpoints can also be defined. The following UML diagram illustrates the relationships and internal structure of the `EndpointManager` and the `Endpoint` it manages:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -802,10 +709,8 @@ the relationships and internal structure of the `EndpointManager` and the `Endpo
 ║  ¦             │ PluginContext:IPluginContext           │           ¦                ║
 ║  ¦             │ ApplicationContext:IApplicationContext │           ¦                ║
 ║  ¦             │ Conditions:IEnumerable<ICondition>     │           ¦                ║
-║  ¦             │ ParentContext:IEndpointContext         │           ¦                ║
 ║  ¦             │ Cache:Bool                             │           ¦                ║
-║  ¦             │ ContextPath:UriResource                │           ¦                ║
-║  ¦             │ Uri:UriResource                        │           ¦                ║
+║  ¦             │ RoutePath:EndpointRoute                │           ¦                ║
 ║  ¦             └────────────────────────────────────────┘           ¦                ║
 ║  ¦                                                                  ¦                ║
 ╚══¦══════════════════════════════════════════════════════════════════¦════════════════╝
@@ -820,8 +725,7 @@ the relationships and internal structure of the `EndpointManager` and the `Endpo
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Endpoint, such as pages or assets, can be uniquely addressed with the help of URIs. The 
-following endpoint types are supported:
+Endpoint, such as pages or assets, can be uniquely addressed with the help of URIs. The following endpoint types are supported:
 
 |Endpoint type |Description
 |--------------|-------------------------
@@ -831,15 +735,19 @@ following endpoint types are supported:
 |SettingPage   |An HTML document for setting purposes.
 |RestAPI       |A RestAPI-Endpoint.
 
-### Asset model
-`WebExpress` provides automatically generated endpoints, which are made available to 
-the client application. Assets in this context are static resources such as JavaScript 
-files, CSS files, icons, and other files necessary for the presentation and functionality 
-of the application.
+Parameters can be transferred to the endpoint to be executed in a URI or through form inputs. Furthermore, it is possible to store parameters in the session environment in order to make values available across endpoints. The parameters in the session are valid until the web server is restarted or the session is destroyed. The following parameters are supported:
 
-To include additional resources such as CSS files in the project, they can be embedded 
-directly within the project configuration. An example of how to include a CSS file as an 
-embedded resource is shown below:
+|Origin       |Scope     |Description
+|-------------|----------|-------------------------
+|GET, DELETE  |Parameter |Parameter from the URI. Example: http://www.example.com?id=d9869404-6628-464b-8286-9685d4c4ff8b
+|POST, PATCH  |Parameter |Parameter from the content part of the request. 
+|Path segment |URI       |Parameters that are part of the URI path. Example: http://www.example.com/d9869404-6628-464b-8286-9685d4c4ff8b/edit
+|Session      |Session   |Parameters, which are stored in the session. 
+
+### Asset model
+`WebExpress` provides automatically generated endpoints, which are made available to the client application. Assets in this context are static resources such as JavaScript files, CSS files, icons, and other files necessary for the presentation and functionality of the application.
+
+To include additional resources such as CSS files in the project, they can be embedded directly within the project configuration. An example of how to include a CSS file as an embedded resource is shown below:
 
 ```xml
 <ItemGroup>
@@ -847,14 +755,7 @@ embedded resource is shown below:
 </ItemGroup>
 ```
 
-These assets are added as embedded resources in the plugin and are converted into endpoints 
-by the `AssetManager`, which are then integrated into the application's sitemap.
-The `AssetManager` is a central component responsible for managing and providing static 
-resources within the application. It takes on the task of collecting, organizing, and 
-converting the embedded resources from plugins, `WebExpress.WebApp`, and `WebExpress.UI` 
-into endpoints that can be used by the application. The `AssetManager` ensures that the 
-resources are processed in a defined order to avoid conflicts and maintain the consistency 
-of the provided resources.
+These assets are added as embedded resources in the plugin and are converted into endpoints by the `AssetManager`, which are then integrated into the application's sitemap. The `AssetManager` is a central component responsible for managing and providing static resources within the application. It takes on the task of collecting, organizing, and converting the embedded resources from plugins, `WebExpress.WebApp`, and `WebExpress.UI` into endpoints that can be used by the application. The `AssetManager` ensures that the resources are processed in a defined order to avoid conflicts and maintain the consistency of the provided resources.
 
 The `AssetManager` builds the asset endpoints in the following order:
 1. *Plugins:* Assets from plugins are used first.
@@ -892,13 +793,7 @@ The following asset types are supported by the `WebExpress` system:
 | .xml  | XML file              
 | .zip  | ZIP archive           
 
-If an asset appears multiple times, the last occurrence is used. This ensures that the desired 
-version of the asset is used. All assets are placed under the "assets" path, which is located 
-within the main directory of the application. This facilitates the organization and access to 
-the necessary resources. It is important to note that the size of embedded resources increases 
-the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, 
-large files should not be delivered as embedded resources. Below is a UML diagram that highlights 
-the architecture of the `AssetManager` and its management of `Assets`:
+If an asset appears multiple times, the last occurrence is used. This ensures that the desired version of the asset is used. All assets are placed under the "assets" path, which is located within the main directory of the application. This facilitates the organization and access to the necessary resources. It is important to note that the size of embedded resources increases the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, large files should not be delivered as embedded resources. Below is a UML diagram that highlights the architecture of the `AssetManager` and its management of `Assets`:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -962,10 +857,8 @@ the architecture of the `AssetManager` and its management of `Assets`:
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
-║  │            │ ParentContext:IEndpointContext         │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
-║  │            │ ContextPath:UriResource                │                   ¦   │     ║
-║  │            │ Uri:UriResource                        │                   ¦   │     ║
+║  │            │ RoutePath:EndpointRoute                │                   ¦   │     ║
 ║  │            └────────────────────────────────────────┘                   ¦   │     ║
 ║  │                               Δ                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
@@ -988,16 +881,10 @@ the architecture of the `AssetManager` and its management of `Assets`:
 ```
 
 ### Resource model
-Resources are typically assets that can come in various forms, such as images, videos, 
-documents, or other files. They serve to provide and support content and functionalities 
-within an application. Unlike assets, especially those provided by the "AssetManager" that 
-reference static content, resources are used to provide dynamic assets. This distinction 
-allows resources to enable greater flexibility and adaptability for applications. The example 
-below demonstrates how to implement a resource:
+Resources are typically assets that can come in various forms, such as images, videos, documents, or other files. They serve to provide and support content and functionalities within an application. Unlike assets, especially those provided by the "AssetManager" that reference static content, resources are used to provide dynamic assets. This distinction allows resources to enable greater flexibility and adaptability for applications. The example below demonstrates how to implement a resource:
 
 ```csharp
 [Segment("E")]
-[ContextPath("/C/D")]
 [Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
 public sealed class MyResource : IResource
@@ -1005,26 +892,20 @@ public sealed class MyResource : IResource
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following 
-table presents the available attributes and their corresponding details for defining resources:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining resources:
 
 |Attribute       |Type              |Multiplicity |Optional |Description
 |----------------|------------------|-------------|---------|----------------
 |Segment         |String, String    |1            |Yes      |The path segment of the resource. The first argument is the path segment. The second argument is the display string.
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
-|ContextPath     |String            |1            |Yes      |The URI path from the application to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
-|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
 
-A cached resource is created on the first call and persists until the associated plugin 
-is unloaded. The `Initialize` method is called once at instantiation, while the `Process` 
-method is called each time the resource is requested. For non-cached resources, a new 
-instance is created each time they are called.
+A cached resource is created on the first call and persists until the associated plugin is unloaded. The `Initialize` method is called once at instantiation, while the `Process` method is called each time the resource is requested. For non-cached resources, a new instance is created each time they are called.
 
 ```
 ┌────────┐ ┌────────┐ ┌─────────┐ ┌─────────┐
@@ -1098,8 +979,7 @@ instance is created each time they are called.
     └─┘        └─┘        └─┘         └─┘         └─┘        └─┘      └─┘      └─┘
 ```
 
-The `ResourceManager` manages all resources. However, these are only accessible through the 
-`SitemapManager`. The interaction of the classes involved is illustrated in the following figure:
+The `ResourceManager` manages all resources. However, these are only accessible through the `SitemapManager`. The interaction of the classes involved is illustrated in the following figure:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1163,10 +1043,8 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
-║  │            │ ParentContext:IEndpointContext         │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
-║  │            │ ContextPath:UriResource                │                   ¦   │     ║
-║  │            │ Uri:UriResource                        │                   ¦   │     ║
+║  │            │ RoutePath:EndpointRoute                │                   ¦   │     ║
 ║  │            └────────────────────────────────────────┘                   ¦   │     ║
 ║  │                               Δ                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
@@ -1215,19 +1093,11 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ```
 
 ### Page model
-Pages are a fundamental component of web applications, serving as the primary interface through 
-which users interact with the content and functionalities provided by the application. Pages can 
-contain a variety of elements, including text, images, videos, forms, and interactive components, 
-all designed to enhance the user experience. When a plugin is loaded, pages marked as page are 
-automatically identified and included in the sitemap. This process ensures that all relevant pages 
-are easily accessible and properly indexed. Pages are virtual constructs, implemented through 
-specific derivations such as HTML documents, dynamic web pages, or single-page applications (SPAs).
-The following example demonstrates the implementation of a page:
+Pages are a fundamental component of web applications, serving as the primary interface through which users interact with the content and functionalities provided by the application. Pages can contain a variety of elements, including text, images, videos, forms, and interactive components, all designed to enhance the user experience. When a plugin is loaded, pages marked as page are automatically identified and included in the sitemap. This process ensures that all relevant pages are easily accessible and properly indexed. Pages are virtual constructs, implemented through specific derivations such as HTML documents, dynamic web pages, or single-page applications (SPAs). The following example demonstrates the implementation of a page:
 
 ```csharp
 [Title("my page")]
 [Segment("E")]
-[ContextPath("/C/D")]
 [Scope<ScopeGeneral>]
 [Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
@@ -1239,8 +1109,7 @@ public sealed class MyPage : IPage
 }
 ```
 
-To clearly illustrate the metadata described in the code above, the table below outlines the 
-available attributes and their respective details for defining pages:
+To clearly illustrate the metadata described in the code above, the table below outlines the available attributes and their respective details for defining pages:
 
 |Attribute       |Type              |Multiplicity |Optional |Description
 |----------------|------------------|-------------|---------|----------------
@@ -1248,17 +1117,13 @@ available attributes and their respective details for defining pages:
 |Segment         |String, String    |1            |Yes      |The path segment of the resource. The first argument is the path segment. The second argument is the display string.
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
-|ContextPath     |String            |1            |Yes      |The URI path from the Application to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
-|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Scope           |`IScope`          |n            |Yes      |The scope of the page.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 
-Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, 
-which is available in the `RenderContext`, is responsible for the display of the page. The following 
-UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
+Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, which is available in the `RenderContext`, is responsible for the display of the page. The following UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1323,21 +1188,19 @@ UML diagram illustrates the relationships and internal structure between `Page` 
 ║   │            │ PluginContext:IPluginContext           │             ¦         │    ║
 ║   │            │ ApplicationContext:IApplicationContext │             ¦         │    ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │             ¦         │    ║
-║   │            │ ParentContext:IEndpointContext         │             ¦         │    ║
 ║   │            │ Cache:Bool                             │             ¦         │    ║
-║   │            │ ContextPath:UriResource                │             ¦         │    ║
-║   │            │ Uri:UriResource                        │             ¦         │    ║
+║   │            │ RoutePath:EndpointRoute                │             ¦         │    ║
 ║   │            └────────────────────────────────────────┘             ¦         │    ║
 ║   │                                 Δ                                 ¦         │    ║
 ║   │                                 ¦                                 ¦         │    ║
 ║   │                                 ¦                                 ¦         │    ║
-║   │                  ┌──────────────┴─────────────┐                   ¦         │    ║
-║   │                * │ <<Interface>>              │ *                 ¦         │    ║
-║   └─────────────────►│ IPageContext               │◄────────────────────────────┘    ║
-║                      ├────────────────────────────┤                   ¦              ║
-║                      │ PageTitle:String           │                   ¦              ║
-║                      │ Scopes:IEnumerable<String> │                   ¦              ║
-║                      └────────────────────────────┘                   ¦              ║
+║   │                ┌────────────────┴───────────────┐                 ¦         │    ║
+║   │              * │ <<Interface>>                  │ *               ¦         │    ║
+║   └───────────────►│ IPageContext                   │◄──────────────────────────┘    ║
+║                    ├────────────────────────────────┤                 ¦              ║
+║                    │ PageTitle:String               │                 ¦              ║
+║                    │ Scopes:IEnumerable<String>     │                 ¦              ║
+║                    └────────────────────────────────┘                 ¦              ║
 ║                                                                       ¦              ║
 ║                            ┌────────────────┐                         ¦              ║
 ║                            │ <<Interface>>  │                         ¦              ║
@@ -1376,15 +1239,12 @@ UML diagram illustrates the relationships and internal structure between `Page` 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Rendering a page in `WebExpress` involves converting it into an HTML tree, which is then sent 
-to the requesting client for viewing. 
+Rendering a page in `WebExpress` involves converting it into an HTML tree, which is then sent to the requesting client for viewing. 
 
  - `IRenderContext`: Provides all necessary information and methods for the rendering process, including details about the current request. Manages the `IVisualTree`, ensuring it is properly constructed and utilized during rendering.
  - `IVisualTree`: Represents the HTML tree constructed during the rendering process. It can implement various derivatives of the VisualTree class to offer different templates. A template defines the structure and appearance of a page.
 
-This ensures each page is correctly rendered and sent to the client. To better understand the 
-composition and functionality of the `RenderContext`, refer to the UML diagram below for a 
-comprehensive visualization:
+This ensures each page is correctly rendered and sent to the client. To better understand the composition and functionality of the `RenderContext`, refer to the UML diagram below for a comprehensive visualization:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1400,7 +1260,7 @@ comprehensive visualization:
 ║                           Δ                       │ IVisualTreeContext           │   ║
 ║                           ¦                       ├──────────────────────────────┤   ║
 ║                           ¦                       │ Request:Request              │   ║
-║   ┌───────────────────────┴────────────────────┐  │ Uri:UriResource              │   ║
+║   ┌───────────────────────┴────────────────────┐  │ Uri:EndpointUri              │   ║
 ║   │ RenderContext                              │  │ RenderContext:IRenderContext │   ║
 ║   ├────────────────────────────────────────────┤  ├──────────────────────────────┤   ║
 ║   │ Endpoint:IEndpoint                         │  └──────────────────────────────┘   ║
@@ -1480,9 +1340,7 @@ comprehensive visualization:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` supports the creation of `IVisualTree` instances through dependency injection. 
-This approach allows dependencies to be automatically provided when an instance of a component 
-is created. The following constructor parameters can be injected:
+`WebExpress` supports the creation of `IVisualTree` instances through dependency injection. This approach allows dependencies to be automatically provided when an instance of a component is created. The following constructor parameters can be injected:
 
 | Constructor Parameter | Description 
 |-----------------------|-------------
@@ -1491,13 +1349,10 @@ is created. The following constructor parameters can be injected:
 | `IComponentId`        | The unique identifier of the component. 
 | `IHttpServerContext`  | The context of the HTTP server.
 
-By leveraging dependency injection, all required dependencies are automatically supplied when 
-the component instance is created.
+By leveraging dependency injection, all required dependencies are automatically supplied when the component instance is created.
 
 ### Setting page model
-Setting page templates are utilized to manage and configure web applications. Each settings 
-page is required to implement the `IPageSetting` interface. The following UML diagram
-illustrates the relationships and structures:
+Setting page templates are utilized to manage and configure web applications. Each settings page is required to implement the `IPageSetting` interface. The following UML diagram illustrates the relationships and structures:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1567,10 +1422,8 @@ illustrates the relationships and structures:
 ║   │       │ PluginContext:IPluginContext           │                │    │      ¦    ║
 ║   │       │ ApplicationContext:IApplicationContext │                │    │      ¦    ║
 ║   │       │ Conditions:IEnumerable<ICondition>     │                │    │      ¦    ║
-║   │       │ ParentContext:IEndpointContext         │                │    │      ¦    ║
 ║   │       │ Cache:Bool                             │                │    │      ¦    ║
-║   │       │ ContextPath:UriResource                │                │    │      ¦    ║
-║   │       │ Uri:UriResource                        │                │    │      ¦    ║
+║   │       │ RoutePath:EndpointRoute                │                │    │      ¦    ║
 ║   │       └────────────────────────────────────────┘                │    │      ¦    ║
 ║   │                           Δ                                     │    │      ¦    ║
 ║   │                           ¦     ┌───────────────────────────────┘  * ▼      ¦    ║
@@ -1626,9 +1479,7 @@ illustrates the relationships and structures:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Setting categories serve the purpose of organizing settings at the highest level and help 
-users navigate large settings interfaces efficiently. The example below demonstrates how a 
-category can be defined in code:
+Setting categories serve the purpose of organizing settings at the highest level and help users navigate large settings interfaces efficiently. The example below demonstrates how a category can be defined in code:
 
 ```csharp
 [WebIcon<IconInfoCircle>]
@@ -1640,8 +1491,7 @@ public sealed class MySettingCategory : ISettingCategory
 }
 ```
 
-The following attributes are available for a settings category, which organizes settings at 
-the highest level:
+The following attributes are available for a settings category, which organizes settings at the highest level:
 
 |Attribute       |Type             |Multiplicity |Optional |Description
 |----------------|-----------------|-------------|---------|--------------
@@ -1650,8 +1500,7 @@ the highest level:
 |Description     |String           |1            |Yes      |Human-readable description or internationalization key for the category.
 |SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
 
-Setting groups provide a way to structure settings within categories, offering a more granular 
-organization. Below is an example of how a group can be defined in code:
+Setting groups provide a way to structure settings within categories, offering a more granular organization. Below is an example of how a group can be defined in code:
 
 ```csharp
 [WebIcon<IconInfoCircle>]
@@ -1664,8 +1513,7 @@ public sealed class MySettingGroup : ISettingGroup
 }
 ```
 
-The following attributes are available for a settings group, which structures settings within
-a category:
+The following attributes are available for a settings group, which structures settings within a category:
 
 |Attribute       |Type             |Multiplicity |Optional |Description
 |----------------|-----------------|-------------|---------|--------------
@@ -1675,9 +1523,7 @@ a category:
 |SettingCategory |ISettingCategory |1            |Yes      |Each setting page can have a setting category. If no `SettingCategory` is specified, the settings page will not be associated with a category.
 |SettingSection  |SettingSection   |1            |Yes      |Specifies the section for displaying the entry.
 
-Setting pages define the individual interfaces where the settings are presented. These pages 
-make use of categories and groups to provide an organized experience. Below is an example of 
-how a settings page can be defined in code:
+Setting pages define the individual interfaces where the settings are presented. These pages make use of categories and groups to provide an organized experience. Below is an example of how a settings page can be defined in code:
 
 ```csharp
 [WebIcon<IconInfoCircle>]
@@ -1691,9 +1537,7 @@ public sealed class MySettingPage : ISettingPage<VisualTree>
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table 
-presents the available attributes and their corresponding details for defining a settings 
-page:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining a settings page:
 
 |Attribute      |Type             |Multiplicity |Optional |Description
 |---------------|-----------------|-------------|---------|--------------
@@ -1703,30 +1547,17 @@ page:
 |SettingHide    |-                |1            |Yes      |Not displaying the page in the settings
                                           
 ### RestAPI model
-A REST API (Representational State Transfer Application Programming Interface) is an interface 
-that allows resources to be accessed and manipulated via the HTTP protocol. REST APIs are designed 
-to be simple and scalable by following the principles of REST, such as stateless communication, 
-use of HTTP methods, and resource orientation. By using REST APIs, applications can exchange and 
-integrate data between different systems, facilitating the development of distributed and modular 
-applications.
+A REST API (Representational State Transfer Application Programming Interface) is an interface that allows resources to be accessed and manipulated via the HTTP protocol. REST APIs are designed to be simple and scalable by following the principles of REST, such as stateless communication, use of HTTP methods, and resource orientation. By using REST APIs, applications can exchange and integrate data between different systems, facilitating the development of distributed and modular applications.
 
-The integration of REST APIs into `WebExpress` offers several advantages that make the application 
-more dynamic and reactive:
+The integration of REST APIs into `WebExpress` offers several advantages that make the application more dynamic and reactive:
 
 - **Flexibility and scalability**: REST APIs make it possible to develop and scale different frontend and backend components independently of each other. This means that changes can be made to one component without affecting the others, making it easier to maintain and evolve the application.
-
 - **Real-time data refresh**: By using REST APIs, data can be exchanged in real time between the client and the server. This allows `WebExpress` to respond instantly to user actions and dynamically update the interface without having to reload the entire page.
-
 - **Interoperability**: REST APIs are platform-independent and can be used by various programming languages and frameworks. This makes it easier to integrate `WebExpress` with other systems and services, which expands the functionality and reach of the application.
-
 - **Reusability**: The modular and standardized interfaces of REST APIs make it possible to reuse functions once developed in different parts of the application or even in other projects. This saves development time and resources.
+- **Improved user experience**: By leveraging REST APIs, `WebExpress` can provide a more responsive and interactive user interface. Users can seamlessly navigate through the application and receive instant feedback on their actions, increasing user satisfaction and engagement.
 
-- **Improved user experience**: By leveraging REST APIs, WebExpress can provide a more responsive and interactive user interface. Users can seamlessly navigate through the application and receive instant feedback on their actions, increasing user satisfaction and engagement.
-
-One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. 
-These basic operations allow data to be created, retrieved, updated, and deleted, and form the 
-backbone of many web applications. In WebExpress, CRUD operations are supported by a framework 
-that provides HTML and REST API templates to enable a generic view and processing.
+One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. These basic operations allow data to be created, retrieved, updated, and deleted, and form the backbone of many web applications. In `WebExpress`, CRUD operations are supported by a framework that provides HTML and REST API templates to enable a generic view and processing.
 
 ```
   ┌─────────┐         ┌─────────┐         ┌─────────┐         ┌─────────┐
@@ -1788,12 +1619,10 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 |Update           |Form              |PATCH     |update record
 |Delete (Destroy) |Confirmation form |DELETE    |delete record
 
-The following code selection contains an example class called `MyRestApi` that implements a REST API 
-in `WebExpress`:
+The following code selection contains an example class called `MyRestApi` that implements a REST API in `WebExpress`:
 
 ```csharp
 [Segment("E")]
-[ContextPath("/C/D")]
 [Method(CrudMethod.POST)]
 [Method(CrudMethod.GET)]
 [Version(1)]
@@ -1808,20 +1637,15 @@ public sealed class MyRestApi : IRestApi
 }
 ```
 
-This class uses various attributes to define the CRUD (Create, Read, Update, Delete) 
-operations.
-
-Below are the descriptions of the attributes used in the rest api classes:
+This class uses various attributes to define the CRUD (Create, Read, Update, Delete) operations. Below are the descriptions of the attributes used in the rest api classes:
 
 |Attribute       |Type              |Multiplicity |Optional |Description
 |----------------|------------------|-------------|---------|----------------
 |Segment         |String, String    |1            |Yes      |The path segment of the resource. The first argument is the path segment. The second argument is the display string.
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
-|ContextPath     |String            |1            |Yes      |The URI path from the applcation to the resource. The URI of the resource is composed of the `ContextPath` of the web server, the application, the resource, and the segment.
 |Method          |GrudMethod        |n            |Yes      |The method attribute defines which CRUD operations (Create, Read, Update, Delete) can be executed.
 |Version         |UInt              |1            |Yes      |The version attribute indicates the current version of the API, ensuring clients interact with the correct version for compatibility and feature updates.
-|Parent          |`IEndpoint`       |1            |Yes      |The resource is included below a parent resource. The context path is derived from that of the parent and the resource.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
@@ -1893,10 +1717,8 @@ The following diagram outlines how the class structure and interactions for the 
 ║   │            │ PluginContext:IPluginContext           │                 ¦    │     ║
 ║   │            │ ApplicationContext:IApplicationContext │                 ¦    │     ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │                 ¦    │     ║
-║   │            │ ParentContext:IEndpointContext         │                 ¦    │     ║
 ║   │            │ Cache:Bool                             │                 ¦    │     ║
-║   │            │ ContextPath:UriResource                │                 ¦    │     ║
-║   │            │ Uri:UriResource                        │                 ¦    │     ║
+║   │            │ RoutePath:EndpointRoute                │                 ¦    │     ║
 ║   │            └────────────────────────────────────────┘                 ¦    │     ║
 ║   │                                Δ                                      ¦    │     ║
 ║   │                                ¦                                      ¦    │     ║
@@ -1954,64 +1776,93 @@ The following diagram outlines how the class structure and interactions for the 
 ```
 
 ## Sitemap model
-In a sitemap, all endpoints are listed with their URI. When a WebClient calls a resource, 
-the associated endpoint is determined from the sitemap and returned to the caller. Only one 
-endpoint can be associated with a URI. Multiple URIs, on the other hand, can point to a common 
-endpoint. This comes into play, among other things, when the segment is variable 
-(e.g. described by regular expressions). Furthermore, a partial URI can refer to a resource.
+In a sitemap, all endpoints are listed with their route path. When a web client calls a resource, the associated endpoint is determined from the sitemap and returned to the caller.
 
-The sitemap is implemented as a tree. Multiple paths to the same resource are resolved by 
-creating a copy of the affected resource. For example, the URIs `/B/E/G`, `/B/X/G`, and 
-`/C/D/G` point to the same resource `G`.
+The basic concept of the sitemap is based on mapping the physical file structure of the assembly directly as a routing hierarchy. Each folder corresponds to a segment of the route path, with the entire directory structure being converted into a namespace hierarchy during compilation. For example, a path such as `WWWW/Blog/Post` becomes the namespace `WWWW.Blog.Post`, which serves as the foundation for deriving the route path. Within these namespaces, the contained classes (such as `Index.cs`, `Add.cs`, or `Edit.cs`) define the specific endpoints of the corresponding segment. In this process, `Index.cs` functions as the default endpoint, meaning that this filename is not explicitly included in the URI. Thus, a class like `WWWW.Blog.Post.Index.cs` results in the route `/blog/post`.
 
-Context paths can be specified in the configuration of WebExpress and the applications. The 
-context paths are prefixed to the URIs. The following possible combinations exist:
+It is important to note that the algorithm removes certain prefixes from the route to ensure a simplified path structure. To help you understand the prefixes that are eliminated by the algorithm, the following table shows the prefixes and their conversion:
 
-|WebExpress |Application | Resource | URI
-|-----------|------------|----------|----
-|-          |-           |/         |/
-|-          |-           |/a/b/c    |/a/b/c
-|-          |/           |/         |/
-|-          |/y          |/         |/y
-|-          |/y          |/a/b/c    |/y/a/b/c
-|/          |/           |/         |/
-|/          |/y          |/         |/y
-|/          |/           |/a/b/c    |/a/b/c
-|/          |/y          |/a/b/c    |/y/a/b/c
-|/x         |/           |/         |/x
-|/x         |/y          |/         |/x/y
-|/x         |/           |/a/b/c    |/x/a/b/c
-|/x         |/y          |/a/b/c    |/x/y/a/b/c
+|Prefix   |Example
+|---------|---------------
+|WWW      |`WWW.Blog.Post.Index.cs` → `/blog/post`
+|Web      |`Web.Products.List.cs` → `/products/list`
+|WebPage  |`WebPage.About.cs` → `/about`
+|WebPages |`WebPages.Contact.cs` → `/contact`
+|Root     |`Root.Homepage.Index.cs` → `/homepage`
+|WebRoot  |`WebRoot.Products.Index.cs` → `/products`
+|WWWRoot  |`WWWRoot.Blog.Post.PostId.Edit.cs` → `/blog/post/{postId}/edit`
+|Default  |`Default.Blog.Post.cs` → `/blog/post`
 
-The insertion into the sitemap is done by sorting the number of URI segments in ascending 
-order. Only one resource can be assigned per sitemap node. In a competing situation, the 
-first resource is used. All other resources are not processed. This is indicated in the log 
-by a warning message. 
+In addition, the algorithm eliminates certain class name suffixes from the route to generate standardized route paths. If a class name contains one of these suffixes, only the essential part is used to form the path. The following is a summary table that lists the suffix identifiers and the corresponding transformation:
 
-Finding a resource starts at the root of the sitemap tree and follows the path of the URI. 
-If no resource can be found, a 404 jam page is returned.
+|Suffix     |Example
+|-----------|---------------
+|Controller |`WWW.Blog.Post.IndexController.cs` → `/blog/post`
+|Page       |`WWW.Products.ListPage.cs` → `/products/list`
 
-Parameters can be transferred to the resource to be executed in a URI or through form inputs. 
-Furthermore, it is possible to store parameters in the session environment in order to make 
-values available across pages. The parameters in the session are valid until the web server is 
-restarted or the session is destroyed. The following parameters are supported:
+Another central aspect of the concept is handling variable path segments, such as a blog post id. Since namespace names must be valid identifiers and cannot include special characters (like curly braces), variable segments cannot be directly represented as folder or namespace components. Instead, for these dynamic parts a special class `SegmentInfo` is defined. To illustrate this, consider the following code snippet, which demonstrates the implementation of the `SegmentInfo` class.
 
-|Origin       |Scope     |Description
-|-------------|----------|-------------------------
-|GET, DELETE  |Parameter |Parameter from the URI. Example: http://www.example.com?id=d9869404-6628-464b-8286-9685d4c4ff8b
-|POST, PATCH  |Parameter |Parameter from the content part of the request. 
-|Path segment |URI       |Parameters that are part of the URI path. Example: http://www.example.com/d9869404-6628-464b-8286-9685d4c4ff8b/edit
-|Session      |Session   |Parameters, which are stored in the session. 
+```csharp
+public class BlogPostParameter : Parameter
+{
+    public BlogPostParameter(int value)
+        :base("postid", value, ParameterScope.Url)
+    {
+    }
+}
+
+[SegmentInt<BlogPostParameter>]
+public static class SegmentInfo
+{
+}
+```
+
+The following table describes the attributes used in the `SegmentInfo`:
+
+|Attribute       |Type       |Multiplicity |Optional |Description
+|----------------|-----------|-------------|---------|----------------
+|SegmentInt      |Parameter  |1            |Yes      |A variable path segment of type `Int`.
+|SegmentGuid     |Parameter  |1            |Yes      |A variable path segment of type `Guid`.
+|Name            |String     |1            |Yes      |The name of the path segment. This can be a key to internationalization.
+|Description     |String     |1            |Yes      |The description of the path segment. This can be a key to internationalization.
+|Icon            |IIcon      |1            |Yes      |The icon that represents the path segment graphically.
+
+This class is further decorated with a custom attribute (`SegmentAttribute`) that defines the name of the placeholder (`postId`). During routing, a reflection-based mechanism examines the namespace hierarchy and the set attributes to determine where a dynamic value is expected. The mechanism then extracts the corresponding value from the URL and passes it on to the appropriate endpoint.
+
+When the application starts, the sitemap uses reflection to traverse all relevant classes that represent endpoints (all those that implement the `IEndpoint` interface) and automatically builds a routing tree from them. Below is an example of a typical website structure implemented with `WebExpress`:
+
+```
+   <> MyPlugin.csproj
+   ├─...
+   └─📁 WWWW                     (web root)
+     ├─📁 Blog                   (blog section)
+     │ ├─📄 Index.cs             (blog overview)
+     │ └─📁 Post                 (blog post section)
+     │   ├─📁 PostId             (blog post id section)
+     │   │ ├─📄 Edit.cs          (editing an blog post, e.g. /blog/post/42/edit)
+     │   │ ├─📄 Index.cs         (individual post, e.g., /blog/post/42)
+     │   │ └─📄 SegmentInfo.cs   (definition of the postId)
+     │   ├─📄 Add.cs             (adding a new blog post, e.g. /blog/post/add)
+     │   └─📄 Index.cs           (redirecting to the blog overview, e.g. /blog/post)
+     ├─📁 Products               (products section)
+     │ ├─📁 Details              (product details section)
+     │ │ │ └─📄 Index.cs         (product details, e.g., /products/details/314)
+     │ │ └─📄 Index.cs           (redirecting to the product overview)
+     │ ├─📄 Index.cs             (products overview)
+     │ └─📄 List.cs              (product listing)
+     ├─📄 About.cs               (about us)
+     ├─📄 Contact.cs             (contact page)
+     └─📄 Index.cs               (homepage)
+```
+
+The insertion into the sitemap is done by sorting the number of route segments in ascending order. Only one endpoint can be assigned per sitemap node. In a competing situation (e.g. variable segments), the first endpoint is used. All other endpoints are not processed. This is indicated in the log by a warning message. 
+
+Finding a resource starts at the root of the sitemap tree and follows the path of the URI. If no resource can be found, a `404` error page is returned.
 
 ## Response model
-Web queries can be answered with different status responses (see RFC 2616). If successful, 
-a status code of `200` is returned with the invoked resource. In the `StatusPageManager`, 
-generally valid status pages for the various status codes can be stored. When returning a 
-response that differs from `200`, the stored status page is used. 
+Web queries can be answered with different status responses (see RFC 2616). If successful, a status code of `200` is returned with the invoked resource. In the `StatusPageManager`, generally valid status pages for the various status codes can be stored. When returning a response that differs from `200`, the stored status page is used. 
 
-Status pages are primarily used from the plugin in which the associated application is 
-implemented. Status pages implement the `IStatusPage` interface. The example below demonstrates 
-how to create a custom status page:
+Status pages are primarily used from the plugin in which the associated application is implemented. Status pages implement the `IStatusPage` interface. The example below demonstrates how to create a custom status page:
 
 ```csharp
 [WebExStatusCode(500)]
@@ -2020,8 +1871,7 @@ public sealed class MyStatusPage : IStatusPage<RenderContext>
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table presents 
-the available attributes and their corresponding details for defining status codes:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining status codes:
 
 |Attribute  |Type   |Multiplicity |Optional |Description
 |-----------|-------|-------------|---------|-------------
@@ -2029,17 +1879,14 @@ the available attributes and their corresponding details for defining status cod
 |StatusCode |int    |1            |No       |The status code (see RFC 2616 para. 6). 
 |Icon       |String |1            |Yes      |The icon that represents the statuscode graphically.
 
-When creating a response that differs from status 200, the corresponding status page is 
-determined from the StatusPageManager and an instance is created. To do this, the following 
-order is used to determine the status page:
+When creating a response that differs from status `200`, the corresponding status page is determined from the StatusPageManager and an instance is created. To do this, the following order is used to determine the status page:
 
 - Search in the plugin of the called resource.
 - Search in the plugin of the application of the called resource.
-- Use the status pages from the plugin "webexpress.webapp".
+- Use the status pages from the plugin `webexpress.webapp`.
 - Use the system status pages.
 
-To better understand the architecture of the `StatusPageManager` and the `StatusPage` it 
-oversees, refer to the UML diagram below:
+To better understand the architecture of the `StatusPageManager` and the `StatusPage` it oversees, refer to the UML diagram below:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2091,7 +1938,7 @@ oversees, refer to the UML diagram below:
 ║                  │ StatusId:String                        │            ¦             ║
 ║                  │ StatusCode:Int                         │            ¦             ║
 ║                  │ StatusTitle:String                     │            ¦             ║
-║                  │ StatusIcon:UriResource                 │            ¦             ║
+║                  │ StatusIcon:EndpointRoute               │            ¦             ║
 ║                  └────────────────────────────────────────┘            ¦             ║
 ║                                                                        ¦             ║
 ║                               ┌────────────────┐                       ¦             ║
@@ -2123,15 +1970,10 @@ oversees, refer to the UML diagram below:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-If no status page is found in the current application, a default page is created and delivered 
-by `WebExpress`.
+If no status page is found in the current application, a default page is created and delivered by `WebExpress`.
 
 ## Fragment model
-Fragments are components that can be integrated into pages to extend functionalities. Fragments 
-can come from different sources (plugins). When a resource is loaded, the fragments stored in 
-the sections are determined, instantiated and integrated into the resource. A section is a named 
-area within a page (e.g. `Property.Primary`). The following UML diagram illustrates the 
-relationships and internal structure of the `FragmentManager` and its associated fragments:
+Fragments are components that can be integrated into pages to extend functionalities. Fragments can come from different sources (plugins). When a resource is loaded, the fragments stored in the sections are determined, instantiated and integrated into the resource. A section is a named area within a page (e.g. `Property.Primary`). The following UML diagram illustrates the relationships and internal structure of the `FragmentManager` and its associated fragments:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2216,9 +2058,7 @@ relationships and internal structure of the `FragmentManager` and its associated
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Fragments are modular components that derive from the `IFragment` interface and are identified 
-and configured through attributes. These attributes help define their behavior, scope, and access 
-permissions. The example below demonstrates how to define a fragment with specific attributes:
+Fragments are modular components that derive from the `IFragment` interface and are identified and configured through attributes. These attributes help define their behavior, scope, and access permissions. The example below demonstrates how to define a fragment with specific attributes:
 
 ```csharp
 [Order(0)]
@@ -2230,8 +2070,7 @@ public sealed class MyFragment : IFragment<IRenderContext>
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table presents 
-the available attributes and their corresponding details for defining fragments:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining fragments:
 
 |Attribute     |Type         |Multiplicity |Optional |Description
 |--------------|-------------|-------------|---------|-----------------
@@ -2243,12 +2082,7 @@ the available attributes and their corresponding details for defining fragments:
 |Cache         |Bool         |1            |Yes      |Determines whether the fragment is created once and reused each time it is called. This attribute is active only if the associated page also has the cache attribute. 
 
 ## Web icons
-Unlike components, web icons are not managed through a centralized manager like the `AssetManager`. 
-Instead, each web icon is derived from the `IIcon` interface and used directly within the application. 
-This approach provides a lightweight and flexible system for incorporating icons into the user interface 
-without the need for additional management layers. To define a specific web icon, a class is created 
-that inherits from a base Icon class or implements the `IIcon` interface. Below is an example of a class 
-representing an information circle icon:
+Unlike components, web icons are not managed through a centralized manager like the `AssetManager`. Instead, each web icon is derived from the `IIcon` interface and used directly within the application. This approach provides a lightweight and flexible system for incorporating icons into the user interface without the need for additional management layers. To define a specific web icon, a class is created that inherits from a base Icon class or implements the `IIcon` interface. Below is an example of a class representing an information circle icon:
 
 ```csharp
 public class IconInfoCircle : IIcon
@@ -2269,17 +2103,10 @@ public class IconInfoCircle : IIcon
 }
 ```
 
-This implementation showcases the core functionality of the `IconInfoCircle` class. The render method 
-generates an HTML span element (`HtmlElementTextSemanticsSpan`) with a CSS class (`fas fa-info-circle`) 
-that defines the icon's appearance. In contrast to standard icons, which typically reference a file path 
-to an external asset, web icons directly produce HTML code that can be embedded into the HTML document.
-Additional optional parameters, such as id, description, and css, provide flexibility in customizing 
-the icon's rendering for various use cases.
+This implementation showcases the core functionality of the `IconInfoCircle` class. The render method generates an HTML span element (`HtmlElementTextSemanticsSpan`) with a CSS class (`fas fa-info-circle`) that defines the icon's appearance. In contrast to standard icons, which typically reference a file path to an external asset, web icons directly produce HTML code that can be embedded into the HTML document. Additional optional parameters, such as id, description, and css, provide flexibility in customizing the icon's rendering for various use cases.
 
 ## Controls
-Controls are units of the web page that are translated into HTML source code by rendering. A 
-Web page consists of nested controls. This UML diagram provides a representation of the 
-relationships and structure of controls:
+Controls are units of the web page that are translated into HTML source code by rendering. A Web page consists of nested controls. This UML diagram provides a representation of the relationships and structure of controls:
 
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
@@ -2353,13 +2180,7 @@ A control provides the following properties:
 |Enable              |Bool                    |Indicates if the element is enabled.
 
 ### Form
-A form in HTML is an interactive element that allows users to enter data and send it to the 
-WebExpress server. Forms consist of various input elements such as text boxes, checkboxes, 
-radio buttons, drop-down menus, and buttons. These form elements are organized into tabs and 
-groups for better structure and usability. By grouping related elements together and using 
-tabs to separate different sections, users can navigate and complete the form more 
-efficiently. The following UML diagram illustrates the relationships and internal structure, 
-serving as a schema for form designs:
+A form in HTML is an interactive element that allows users to enter data and send it to the `WebExpress` server. Forms consist of various input elements such as text boxes, checkboxes, radio buttons, drop-down menus, and buttons. These form elements are organized into tabs and groups for better structure and usability. By grouping related elements together and using tabs to separate different sections, users can navigate and complete the form more efficiently. The following UML diagram illustrates the relationships and internal structure, serving as a schema for form designs:
 
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
@@ -2499,9 +2320,7 @@ new/reset│ ├────────>│ │  Process│ │         │ │
          └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
 ```
 
-Form classes and associated form controls are available for entering data, ensuring a 
-consistent and user-friendly experience. The user interface of the form is structured as 
-follows to ensure a variable display of the controls:
+Form classes and associated form controls are available for entering data, ensuring a consistent and user-friendly experience. The user interface of the form is structured as follows to ensure a variable display of the controls:
 
 ```
 ╔Form═════════════════════════════════════════════════════════════════════╗
@@ -2701,11 +2520,7 @@ The arrangement of the form contents can be controlled by the `ControlFormItemGr
 ```
 
 ## Session model
-A session establishes a state-based connection between the client and WebExpress using the 
-otherwise stateless HTTP(S) protocol. The session is assigned to a cookie and is personalized. 
-The cookie consists of a guid. Further data is not stored in the cookie, but on the server 
-side in the `session` object. The following UML diagram illustrates the relationships and 
-structure involved:
+A session establishes a state-based connection between the client and WebExpress using the otherwise stateless HTTP(S) protocol. The session is assigned to a cookie and is personalized. The cookie consists of a guid. Further data is not stored in the cookie, but on the server side in the `session` object. The following UML diagram illustrates the relationships and structure involved:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2772,14 +2587,10 @@ structure involved:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-The session manager delivers the currently used session based on the cookie stored in the 
-request. The session, in turn, stores instances of the `ISessionProperty` interface in which 
-the information (e.g. parameters) is stored. 
+The session manager delivers the currently used session based on the cookie stored in the request. The session, in turn, stores instances of the `ISessionProperty` interface in which the information (e.g. parameters) is stored. 
 
 ## Event model
-Events are notifications from the `WebExpress` API or web applications that can be subscribed 
-to and evaluated. To explore the organization, refer to the UML diagram illustrating the 
-structural relationships:
+Events are notifications from the `WebExpress` API or web applications that can be subscribed to and evaluated. To explore the organization, refer to the UML diagram illustrating the structural relationships:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2853,9 +2664,7 @@ structural relationships:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-An event handler is created by defining a class that implements the `IEventHandler` interface. 
-This allows the system to respond to specific events and execute custom logic when those events 
-are triggered. The example below demonstrates how to create a simple event handler:
+An event handler is created by defining a class that implements the `IEventHandler` interface. This allows the system to respond to specific events and execute custom logic when those events are triggered. The example below demonstrates how to create a simple event handler:
 
 ```csharp
 [Event<Event>] 
@@ -2867,18 +2676,14 @@ public sealed class MyEventHandler : IEventHandler
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table presents 
-the available attributes and their corresponding details for defining events:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining events:
 
 |Attribute   |Type           |Multiplicity |Optional |Description
 |------------|---------------|-------------|---------|------------
 |Event       |`IEvent`       |1            |No       |The event at which you want to listen.
 
 ## Job model
-Jobs are tasks that are executed in a time-controlled and repetitive manner. When a plugin 
-is loaded, all jobs containing it are determined by the ScheduleManager and instantiated 
-and started at the specified execution time. The UML diagram below serves to illustrate 
-the relationships and underlying structure:
+Jobs are tasks that are executed in a time-controlled and repetitive manner. When a plugin is loaded, all jobs containing it are determined by the ScheduleManager and instantiated and started at the specified execution time. The UML diagram below serves to illustrate the relationships and underlying structure:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -2967,8 +2772,7 @@ the relationships and underlying structure:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-A job is created by a class that inherits from `Job`. The example below demonstrates how to 
-define a job that starts at 0:30 a.m. on the first day of each month:
+A job is created by a class that inherits from `Job`. The example below demonstrates how to define a job that starts at 0:30 a.m. on the first day of each month:
 
 ```csharp
 [Job("30", "0", "1", "*", "*")] 
@@ -2986,19 +2790,14 @@ public sealed class MyJob : Job
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table presents 
-the available attributes and their corresponding details for defining jobs:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining jobs:
 
 |Attribute |Type      |Multiplicity |Optional |Description
 |----------|----------|-------------|---------|------------
 |Job       |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
 
 ## Task model
-Tasks are another form of concurrent code execution. In contrast to jobs, tasks are executed 
-ad-hoc (e.g. an export task that was triggered by the user). The result may not be available 
-until a later date. However, the web application can still be fully used. If the result is 
-available, information is usually provided (e.g. by means of a notification). The following 
-UML diagram illustrates the relationships and structure involved:
+Tasks are another form of concurrent code execution. In contrast to jobs, tasks are executed ad-hoc (e.g. an export task that was triggered by the user). The result may not be available until a later date. However, the web application can still be fully used. If the result is available, information is usually provided (e.g. by means of a notification). The following UML diagram illustrates the relationships and structure involved:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3089,10 +2888,7 @@ UML diagram illustrates the relationships and structure involved:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Tasks are created dynamically by instantiating a class derived from `Task` and starting it 
-from the `TaskManager`.
-
-The tasks can take the following states:
+Tasks are created dynamically by instantiating a class derived from `Task` and starting it from the `TaskManager`. The tasks can take the following states:
 
 ```
 ╔══════════╗           ╔═══════════╗
@@ -3113,12 +2909,7 @@ The tasks can take the following states:
 
 
 ## Notification model
-Notifications are messages that are displayed to users as pop-up windows. The notifications 
-are globally (visible to all), linked to a session (visible to current users) or to specific 
-roles (visible to selected users). The notifications are displayed in the upper right corner 
-and are retained when a page is changed. Notifications are closed by the user or at the end 
-of the display period. Notifications that are visible to multiple users are removed by closing 
-a user. To better understand the relationships and structure, refer to the UML diagram below:
+Notifications are messages that are displayed to users as pop-up windows. The notifications are globally (visible to all), linked to a session (visible to current users) or to specific roles (visible to selected users). The notifications are displayed in the upper right corner and are retained when a page is changed. Notifications are closed by the user or at the end of the display period. Notifications that are visible to multiple users are removed by closing a user. To better understand the relationships and structure, refer to the UML diagram below:
 
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
@@ -3189,8 +2980,7 @@ a user. To better understand the relationships and structure, refer to the UML d
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-The `NotificationManager` is the central class for notifications. The `AddNotification` method 
-is used to create notifications. The following properties can be assigned to notifications:
+The `NotificationManager` is the central class for notifications. The `AddNotification` method is used to create notifications. The following properties can be assigned to notifications:
 
 |Property   |Optional |Description
 |-----------|---------|-----------------
@@ -3202,9 +2992,7 @@ is used to create notifications. The following properties can be assigned to not
 |Icon       |Yes      |A URI that contains an icon.
 |Type       |Yes      |Is the notification type. The following values are supported: Primary, Secondary, Success, Info, Warning, Danger, Dark, Light, White
 
-Here is an example to illustrate how the `NotificationManager` functions. Notifications can 
-be added with specific properties such as heading, message, icon, and duration. The following 
-snippet demonstrates how to create a simple welcome notification:
+Here is an example to illustrate how the `NotificationManager` functions. Notifications can be added with specific properties such as heading, message, icon, and duration. The following snippet demonstrates how to create a simple welcome notification:
 
 ```csharp
 // Welcome notification
@@ -3217,9 +3005,7 @@ NotificationManager.AddNotification
 );
 ```
 
-The functions of the `NotificationManager` can also be accessed via the REST API interface 
-`{base path}/wxapp/api/v1/popupnotifications` can be accessed. The following methods are 
-available:
+The functions of the `NotificationManager` can also be accessed via the REST API interface `{base path}/wxapp/api/v1/popupnotifications` can be accessed. The following methods are available:
 
 |Method |Parameter             |Description
 |-------|----------------------|----------------
@@ -3228,12 +3014,7 @@ available:
 |Delete |The id                |Deletes an existing notification.
 
 ## Index model
-The index model provides a reverse index to enable fast and efficient searching. A reverse 
-index can significantly speed up access to the data. However, creating and storing a 
-reverse index requires additional storage space and Processing time. The storage requirement 
-increases, especially with large amounts of data can be important. Therefore, it is important 
-to weigh the pros and cons to achieve the best possible performance. The full-text search in 
-`WebExpress` supports the following search options:
+The index model provides a reverse index to enable fast and efficient searching. A reverse index can significantly speed up access to the data. However, creating and storing a reverse index requires additional storage space and Processing time. The storage requirement increases, especially with large amounts of data can be important. Therefore, it is important to weigh the pros and cons to achieve the best possible performance. The full-text search in `WebExpress` supports the following search options:
 
 - Word search
 - Wildcard search
@@ -3280,10 +3061,7 @@ to weigh the pros and cons to achieve the best possible performance. The full-te
 ╚══════════════════════════════════════════════════════╝
 ```
 
-To create a reverse index, the data type to be indexed must be registered in  the 
-`IndexManager`. This ensures that the system is aware of the data type and can properly 
-index it. The example below demonstrates how to implement a data type that adheres to the 
-`IIndexItem` interface and register it:
+To create a reverse index, the data type to be indexed must be registered in the `IndexManager`. This ensures that the system is aware of the data type and can properly index it. The example below demonstrates how to implement a data type that adheres to the `IIndexItem` interface and register it:
 
 ```csharp
 // DataType must implement the IIndexItem interface.
@@ -3297,9 +3075,7 @@ public class DataType : IIndexItem
 WebEx.ComponentHub.GetComponent<IndexManager>().Register<DataType>();
 ```
 
-The reverse index is built by using the `ReBuild` method for all objects or `Add` for 
-an object. The following example demonstrates how to use the `ReIndex` method to rebuild 
-the index for a collection of records:
+The reverse index is built by using the `ReBuild` method for all objects or `Add` for an object. The following example demonstrates how to use the `ReIndex` method to rebuild the index for a collection of records:
 
 ```csharp
 var records = new []
@@ -3311,9 +3087,7 @@ var records = new []
 WebEx.ComponentHub.GetComponent<IndexManager>().ReIndex(records);
 ```
 
-To access the reverse index, WQL (see below) is used. The example below demonstrates 
-how to execute a WQL query via the `IndexManager` to find entries matching specific 
-criteria:
+To access the reverse index, WQL (see below) is used. The example below demonstrates how to execute a WQL query via the `IndexManager` to find entries matching specific criteria:
 
 ```csharp
 var wql = WebEx.ComponentHub.GetComponent<IndexManager>().ExecuteWql("Text ~ \"lorem\"");
@@ -3321,37 +3095,24 @@ var res = wql?.Apply();
 ```
 
 ### WQL
-The WebExpress Query Language (WQL) is a query language that filters and sorts a given 
-amount of data from the reverse index. A statement of the query language is usually 
-sent from the client to the server, which collects, filters and sorts the data in the 
-reverse index and sends it back to the client. Example of a WQL:
+The WebExpress Query Language (WQL) is a query language that filters and sorts a given amount of data from the reverse index. A statement of the query language is usually sent from the client to the server, which collects, filters and sorts the data in the reverse index and sends it back to the client. Example of a WQL:
 
 ```
 Name ~ "WebExpress" and Create < now(-3d) orderby Create desc take 5
 ```
 
-The example returns the first five elements of the dataset that contain the value 
-"WebExpress" in the Name attribute and that were created three days ago (Create attribute) 
-or earlier. The result is sorted in descending order by creation date.
+The example returns the first five elements of the dataset that contain the value `WebExpress` in the Name attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in descending order by creation date.
 
 For detailed information about `WebIndex`, see [concept](https://github.com/ReneSchwarzer/WebExpress.WebIndex/blob/main/doc/concept.md).
 
 ## Identity model
-A large number of web applications are subject to requirements for access protection, 
-integrity and confidentiality. These requirements can be met through identity and access 
-management (IAM). In identity management, identities are managed. In access management, 
-on the other hand, authorized entities are enabled to use a service (application). 
-`WebExpress` supports the following identity management features:
+A large number of web applications are subject to requirements for access protection, integrity and confidentiality. These requirements can be met through identity and access management (IAM). In identity management, identities are managed. In access management, on the other hand, authorized entities are enabled to use a service (application). `WebExpress` supports the following identity management features:
 
 - Provisioning: Provides `WebExpress` with the basic requirements for the entities to carry out their activities. Deprovisioning is the opposite path, in which the prerequisites are withdrawn (e.g. when leaving).
 - Authentication: Handles the identification process of the entities.
 - Authorization: Granting permission for a specific entity to use a specific service.
 
-The provisioning service provides `WebExpress` with the basic requirements for the operation 
-of the identities. This is realized with the help of a user account. The following illustration 
-outlines the lifecycle of a user account. A user account can be in one of two states, `Active` 
-and `Deactivated`. If the events `Create`, `Update`, `Disable`, `Enable` or `Delete` occur, 
-the user account changes its state.
+The provisioning service provides `WebExpress` with the basic requirements for the operation of the identities. This is realized with the help of a user account. The following illustration outlines the lifecycle of a user account. A user account can be in one of two states, `Active` and `Deactivated`. If the events `Create`, `Update`, `Disable`, `Enable` or `Delete` occur, the user account changes its state.
 
 ```
 ╔═══════╗                  ╔═══════════╗
@@ -3381,12 +3142,7 @@ the user account changes its state.
 - On-premises identity management: Each application has its own user management. The cost of setting up the necessary infrastructure is particularly easy here, as identity management is carried out directly by the application. Each application has its own identity domain, which is disadvantageous from a unified identity management perspective.
 - Shared identity management: If the identities are outsourced to a central service and retrieved by the applications, there is shared identity management. Shared identity management allows you to reduce the number of identity domains. 
 
-Entities (people, technical objects, etc.) have one or more identities, which distinguishes 
-them from other entities. An identity is used for identification and consists of a collection 
-of attributes (properties e.g. name, password), which individualizes an entity. Identities can 
-be grouped according to certain characteristics. Furthermore, each group can be assigned one 
-or more roles (e.g. administrator, programmer). The roles determine access to identity 
-permissions. In the following figure, the concept of identity is defined in terms of a UML model.
+Entities (people, technical objects, etc.) have one or more identities, which distinguishes them from other entities. An identity is used for identification and consists of a collection of attributes (properties e.g. name, password), which individualizes an entity. Identities can be grouped according to certain characteristics. Furthermore, each group can be assigned one or more roles (e.g. administrator, programmer). The roles determine access to identity permissions. In the following figure, the concept of identity is defined in terms of a UML model.
 
 ```
   O   1   *  ┌────────────┐ *    * ┌─────────┐ *    * ┌────────┐ *    * ┌────────────┐
@@ -3400,10 +3156,7 @@ Entity           1 │
              └────────────┘
 ```
 
-The identities and groups must be loaded from a persistent data storage. These can be provided 
-by the application or come from external identity management (e.g. LDAP). The roles and identity 
-resources are dictated by the application by hard-implementing them. The UML diagram below 
-highlights the key relationships and structural elements:
+The identities and groups must be loaded from a persistent data storage. These can be provided by the application or come from external identity management (e.g. LDAP). The roles and identity resources are dictated by the application by hard-implementing them. The UML diagram below highlights the key relationships and structural elements:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3561,9 +3314,7 @@ highlights the key relationships and structural elements:
 |Business administrator |Business configuration of the application. For example, the business administrator can define access rights (except system administration) of the entities.
 |System administrator   |Technical configuration of the system. For example, the system administrator can install or update a new application.
 
-In addition to the predefined standard roles, custom roles can also be created by defining them 
-in dedicated classes. The example below demonstrates how to define a custom role using the 
-`IIdentityRole` interface and associate it with a specific permission:
+In addition to the predefined standard roles, custom roles can also be created by defining them in dedicated classes. The example below demonstrates how to define a custom role using the `IIdentityRole` interface and associate it with a specific permission:
 
 ```csharp
 [Name("myRole")]
@@ -3581,9 +3332,7 @@ The role definition classes have the following attributes:
 |Description |String                |1            |Yes      |The description of the role. This can be a key to internationalization.
 |Permission  |`IIdentityPermission` |n            |Yes      |Inherits the characteristics of the specified permission.
 
-Permissions define specific rights or access controls that are allocated to one or more roles 
-within an application. The example below demonstrates how to define a permission using the 
-`IIdentityPermission` interface and assign it to a role:
+Permissions define specific rights or access controls that are allocated to one or more roles within an application. The example below demonstrates how to define a permission using the `IIdentityPermission` interface and assign it to a role:
 
 ```csharp
 [Name("Write content")]
@@ -3593,8 +3342,7 @@ public sealed class MyIdentityPermission : IIdentityPermission
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table presents 
-the available attributes and their corresponding details for defining permissions:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining permissions:
 
 |Attribute   |Type            |Multiplicity |Optional |Description
 |------------|----------------|-------------|---------|-------------
@@ -3602,10 +3350,7 @@ the available attributes and their corresponding details for defining permission
 |Description |String          |1            |Yes      |The description of the permission. This can be a key to internationalization.
 |Role        |`IIdentityRole` |n            |Yes      |Inherits the characteristics of the specified role.
 
-In the case of an authorization check (can an identity be accessed by an identity resource (e.g. page)), it must be 
-checked whether there is at least one transition (identity -> group -> role -> permission). This is done by the 
-function `CheckAccess: (Identity, Permission) > Bool ` of the `IdentityManager`. A return value 
-of `true` means that access can be made.
+In the case of an authorization check (can an identity be accessed by an identity resource (e.g. page)), it must be checked whether there is at least one transition (identity -> group -> role -> permission). This is done by the function `CheckAccess: (Identity, Permission) > Bool ` of the `IdentityManager`. A return value of `true` means that access can be made.
 
 ```
 ╔═══════════════════════════════════════════╗
@@ -3653,9 +3398,7 @@ of `true` means that access can be made.
 The `WebExpress.WebApp.dll` package provides a template for creating business applications.
 
 ## WebApp page
-The template determines the layout of a page. The page is divided into a header, a side area, 
-the page content, and a footer. The individual sections (areas) can be accessed via the class 
-properties. Furthermore, components can bind to these areas and display their contents.
+The template determines the layout of a page. The page is divided into a header, a side area, the page content, and a footer. The individual sections (areas) can be accessed via the class properties. Furthermore, components can bind to these areas and display their contents.
 
 ```
 ╔WebAppPage════════════════════════════════════════════════════════════════════════════╗
@@ -3700,15 +3443,7 @@ properties. Furthermore, components can bind to these areas and display their co
 ```
 
 ### Header
-The business application header contains buttons and submenus to navigate the application 
-at the top level. The `ApplicationNavigator` refers to other (WebExpress) applications. 
-The `AppTitle` contains the name of the application. This comes from the name attribute of 
-the application (see Section 3.3). The AppNavigation links point to key features of the 
-application. The `QuickCreate` button provides functionality for creating records. In the 
-search field, search queries can be passed to the application. The `Help` shaft panel groups 
-the application's help links. The `Notification` button collects all notifications from the 
-application. In the `Avatar` button, the functions of the user account are provided. The 
-`Setting` button contains the functions for configuring the application.
+The business application header contains buttons and submenus to navigate the application at the top level. The `ApplicationNavigator` refers to other (`WebExpress`) applications. The `AppTitle` contains the name of the application. This comes from the name attribute of the application (see Section 3.3). The AppNavigation links point to key features of the application. The `QuickCreate` button provides functionality for creating records. In the search field, search queries can be passed to the application. The `Help` shaft panel groups the application's help links. The `Notification` button collects all notifications from the application. In the `Avatar` button, the functions of the user account are provided. The `Setting` button contains the functions for configuring the application.
 
 ```
                          AppNavigationPreferences
@@ -3747,8 +3482,7 @@ application. In the `Avatar` button, the functions of the user account are provi
 ```
 
 ### Sidebar
-The left side area of the application is responsible for the navigation of a thematically 
-related area/function. Links to sub-functions or data sets can be created and displayed here.
+The left side area of the application is responsible for the navigation of a thematically related area/function. Links to sub-functions or data sets can be created and displayed here.
 
 ```
 ╔Sidebar══════════════╗
@@ -3785,8 +3519,7 @@ related area/function. Links to sub-functions or data sets can be created and di
 ```
 
 ### Content
-The content area is used to display records (for example, as a table or list) or to display 
-and edit a record.
+The content area is used to display records (for example, as a table or list) or to display and edit a record.
 
 ```
 ╔Content═══════════════════════════════════════════════════════════════════════╗
@@ -3817,8 +3550,7 @@ and edit a record.
 ```
 
 ### Toolbar
-The toolbar contains links or buttons with data-independent functions (e.g. switching between 
-lists and table view).
+The toolbar contains links or buttons with data-independent functions (e.g. switching between lists and table view).
 
 ```
 ╔Toolbar══════════════════════════════════════════════════════════════════╗
@@ -3838,8 +3570,7 @@ lists and table view).
 
 
 ### Headline
-The headline displays the title of the displayed data. The title bar also has data-dependent 
-functions and a display of metadata (e.g. creation date, creator).
+The headline displays the title of the displayed data. The title bar also has data-dependent functions and a display of metadata (e.g. creation date, creator).
 
 ```
 ╔Headline═════════════════════════════════════════════════════════════════╗
@@ -3857,8 +3588,7 @@ functions and a display of metadata (e.g. creation date, creator).
                                                                       └────────────┘
 ```
 ### Property
-The properties pane is used to display metadata and properties of the displayed data 
-(for example, attachments). 
+The properties pane is used to display metadata and properties of the displayed data (for example, attachments). 
 
 ```
 ╔Property═══════════╗
@@ -3884,11 +3614,7 @@ The properties pane is used to display metadata and properties of the displayed 
 ```
 
 ### Notfications
-There are three ways to display notifications in web applications. The first way is to 
-display notifications in the `Notification` section of the header. Above all, personalized 
-notifications are displayed here (e.g. new comments on subscribed content). The second way 
-is to display notifications in an area below the header. This is intended for application-
-wide notifications (e.g. scheduled maintenance windows).
+There are three ways to display notifications in web applications. The first way is to display notifications in the `Notification` section of the header. Above all, personalized notifications are displayed here (e.g. new comments on subscribed content). The second way is to display notifications in an area below the header. This is intended for application-wide notifications (e.g. scheduled maintenance windows).
 
 ```
 ╔ToastNotfication═══════════════════════════════════════════════════════════════╗
@@ -3899,8 +3625,7 @@ wide notifications (e.g. scheduled maintenance windows).
 ╚═══════════════════════════════════════════════════════════════════════════════╝
 ```
 
-The third option is to display notifications in a pop-up dialog. This is intended for the 
-display of results (e.g. successful saving).
+The third option is to display notifications in a pop-up dialog. This is intended for the display of results (e.g. successful saving).
 
 ```
 ╔PopupNotfication════════════╗
@@ -3938,8 +3663,7 @@ The search options provide a dialog for filtering records.
 ```
 
 ### Footer
-The footer is located at the bottom of the web application and usually contains information 
-about the copyright, imprint and version.
+The footer is located at the bottom of the web application and usually contains information about the copyright, imprint and version.
 
 ```
 ╔Footer════════════════════════════════════════════════════════════════════════╗
@@ -3995,8 +3719,7 @@ The login page is used to authenticate users.
 ```
 
 ## Status page
-The status pages are displayed in case of errors. This can have different causes. For example, 
-if a requested page was not found.
+The status pages are displayed in case of errors. This can have different causes. For example, if a requested page was not found.
 
 ```
 ╔WebAppPageLogin═══════════════════════════════════════════════════════════════════════╗
@@ -4041,8 +3764,7 @@ if a requested page was not found.
 ```
 
 ## Setting page
-The template is specially adapted to the settings pages. In particular, the side navigation 
-pane and a tab element are automatically populated from the meta information.
+The template is specially adapted to the settings pages. In particular, the side navigation pane and a tab element are automatically populated from the meta information.
 
 ```
 ╔WebAppPageSetting═════════════════════════════════════════════════════════════════════╗
@@ -4087,9 +3809,7 @@ pane and a tab element are automatically populated from the meta information.
 ```
 
 ### Setting tab
-The contents of the `SettingTab` are fed from the `SettingCategory` attributes of the settings 
-pages. For each defined category, a tab element is created and linked to the first element. 
-The `SettingTab` is not displayed if no section or only one section has been defined.
+The contents of the `SettingTab` are fed from the `SettingCategory` attributes of the settings pages. For each defined category, a tab element is created and linked to the first element. The `SettingTab` is not displayed if no section or only one section has been defined.
 
 ```
 ╔SettingTab═════════════════════════════════════════════════════════════════════╗
@@ -4100,8 +3820,7 @@ The `SettingTab` is not displayed if no section or only one section has been def
 ```
 
 ### Setting sidebar
-The settings sidebar groups the different settings thematically. The groups are determined 
-from the `SettingGroup` attributes of the settings pages.
+The settings sidebar groups the different settings thematically. The groups are determined from the `SettingGroup` attributes of the settings pages.
 
 ```
 ╔SettingSidebar═════╗
@@ -4146,11 +3865,7 @@ from the `SettingGroup` attributes of the settings pages.
 ```
 
 ## Theme model
-`WebExpress.WebApp` offers a ready-made layout (e.g. color scheme, fonts, font sizes). This 
-can be adapted to individual needs. The management of the themes is taken over by the 
-`ThemeManager`. An individual topic can be assigned to each application. The configuration 
-of the topics can be done via definition classes or via a settings dialog, which is provided 
-by `WebExpress.WebApp`. The UML diagram below serves to illustrate the relationships and 
+`WebExpress.WebApp` offers a ready-made layout (e.g. color scheme, fonts, font sizes). This can be adapted to individual needs. The management of the themes is taken over by the `ThemeManager`. An individual topic can be assigned to each application. The configuration of the topics can be done via definition classes or via a settings dialog, which is provided by `WebExpress.WebApp`. The UML diagram below serves to illustrate the relationships and 
 underlying structure:
 
 ```
@@ -4170,11 +3885,11 @@ underlying structure:
 ║   ├───────────────────┤            │    ├────────────────────────────────────────┤   ║
 ║   └───────────────────┘            │    │ PluginContext:IPluginContext           │   ║
 ║             Δ                      │    │ ApplicationContext:IApplicationContext │   ║
-║             ¦                      │    │ Image:UriResource                      │   ║
+║             ¦                      │    │ Image:EndpointRoute                    │   ║
 ║             ¦                      │    │ Name:String                            │   ║
 ║             ¦                      │    │ Description:String                     │   ║
 ║             ¦                      │    │ ThemeMode:ThemeMode                    │   ║
-║             ¦                      │    │ ThemeStyle:UriResource                 │   ║
+║             ¦                      │    │ ThemeStyle:EndpointRoute               │   ║
 ║             ¦                      │    └──────────────────────────────┬─────────┘   ║
 ║             ¦                      │                     * ▲         1 │             ║
 ║             ¦                    1 ▼                       │           │             ║
@@ -4250,10 +3965,7 @@ underlying structure:
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-A theme is defined in a class that implements the `ITheme` interface, allowing it to be 
-seamlessly associated with an application. A theme encompasses not only a color scheme 
-to define properties for various UI elements, such as backgrounds, and text, but also 
-additional attributes that contribute to a cohesive visual and functional design.
+A theme is defined in a class that implements the `ITheme` interface, allowing it to be seamlessly associated with an application. A theme encompasses not only a color scheme to define properties for various UI elements, such as backgrounds, and text, but also additional attributes that contribute to a cohesive visual and functional design.
 
 The theme may include:
 
@@ -4263,13 +3975,9 @@ The theme may include:
 - **Animations and transitions:** Custom animations or transition effects that enhance the user experience while aligning with the theme's aesthetic.
 - **Custom Components:** Predefined styles or templates for frequently used UI components like buttons, input fields, or modals.
 
-If a theme is included in the application's assembly, it becomes the default theme 
-automatically. Where more than one theme is defined, the system defaults to the first 
-theme it finds.
+If a theme is included in the application's assembly, it becomes the default theme automatically. Where more than one theme is defined, the system defaults to the first theme it finds.
 
-The example below demonstrates how a theme can define not only color properties but also 
-additional elements like typography and animations to create a consistent and rich user 
-experience within the application.
+The example below demonstrates how a theme can define not only color properties but also additional elements like typography and animations to create a consistent and rich user experience within the application.
 
 ```csharp
 [Name("MyTheme")]
@@ -4289,8 +3997,7 @@ public sealed class MyTheme : IThemeWebApp
 }
 ```
 
-To provide clarity about the metadata specified in the code above, the following table 
-presents the available attributes and their corresponding details:
+To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details:
 
 |Attribute   |Type      |Multiplicity |Optional |Description
 |------------|----------|-------------|---------|---------------------
@@ -4301,10 +4008,7 @@ presents the available attributes and their corresponding details:
 |ThemeStyle  |String    |1            |Yes      |Link to an theme css style (e.g., material, flat, or skeuomorphic).
 
 # Example
-The classic 'Hello World' application serves as a fundamental starting point for understanding 
-how the essential instructions and components come together to form a complete and functional 
-application. The example below demonstrates the minimal setup required to implement an 
-application using plugins, pages, and controls:
+The classic 'Hello World' application serves as a fundamental starting point for understanding how the essential instructions and components come together to form a complete and functional application. The example below demonstrates the minimal setup required to implement an application using plugins, pages, and controls:
 
 ```csharp
 using WebExpress.Core.WebAttribute;
@@ -4331,7 +4035,8 @@ namespace Sample
         public void Render(IRenderContext renderContext, VisualTree visualTree)
         {
             var control = new ControlText(){Text = "Hello World!"};
-            return control.Render(context);
+
+            visualTree.AddContent(control);
         }
     }
 }
