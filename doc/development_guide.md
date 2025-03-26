@@ -369,7 +369,7 @@ The implemented methods from the interface cover the life cycle of the plugin. M
 ║                                                   ¦   │ Version:String          │    ║
 ║                                                   ¦   │ Copyright:String        │    ║
 ║          ┌───────────────┐                        ¦   │ License:String          │    ║
-║          │ <<Interface>> │                        ¦   │ Icon:EndpointRoute      │    ║
+║          │ <<Interface>> │                        ¦   │ Icon:IRoute             │    ║
 ║          │ IComponent    │                        ¦   └─────────────────────────┘    ║
 ║          ├───────────────┤                        ¦                                  ║
 ║          └───────────────┘                        ¦                                  ║
@@ -603,8 +603,8 @@ The methods implemented from the interface cover the life cycle of the applicati
 ║           ¦           │ Description:String           │                               ║
 ║           ¦           │ AssetPath:String             │                               ║
 ║           ¦           │ DataPath:String              │                               ║
-║           ¦           │ ContextPath:EndpointRoute    │                               ║
-║           ¦           │ Icon:EndpointRoute           │                               ║
+║           ¦           │ ContextPath:IRoute           │                               ║
+║           ¦           │ Icon:IRoute                  │                               ║
 ║           ¦           └──────────────────────────────┘                               ║
 ║           ¦                                                                          ║
 ║           ¦                   ┌────────────────┐                                     ║
@@ -710,7 +710,7 @@ Endpoints are (web) elements that can be accessed with a URI (Uniform Resource I
 ║  ¦             │ ApplicationContext:IApplicationContext │           ¦                ║
 ║  ¦             │ Conditions:IEnumerable<ICondition>     │           ¦                ║
 ║  ¦             │ Cache:Bool                             │           ¦                ║
-║  ¦             │ RoutePath:EndpointRoute                │           ¦                ║
+║  ¦             │ Route:IRoute                           │           ¦                ║
 ║  ¦             └────────────────────────────────────────┘           ¦                ║
 ║  ¦                                                                  ¦                ║
 ╚══¦══════════════════════════════════════════════════════════════════¦════════════════╝
@@ -858,7 +858,7 @@ If an asset appears multiple times, the last occurrence is used. This ensures th
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
-║  │            │ RoutePath:EndpointRoute                │                   ¦   │     ║
+║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └────────────────────────────────────────┘                   ¦   │     ║
 ║  │                               Δ                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
@@ -1044,7 +1044,7 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
-║  │            │ RoutePath:EndpointRoute                │                   ¦   │     ║
+║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └────────────────────────────────────────┘                   ¦   │     ║
 ║  │                               Δ                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
@@ -1189,7 +1189,7 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║   │            │ ApplicationContext:IApplicationContext │             ¦         │    ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │             ¦         │    ║
 ║   │            │ Cache:Bool                             │             ¦         │    ║
-║   │            │ RoutePath:EndpointRoute                │             ¦         │    ║
+║   │            │ Route:IRoute                           │             ¦         │    ║
 ║   │            └────────────────────────────────────────┘             ¦         │    ║
 ║   │                                 Δ                                 ¦         │    ║
 ║   │                                 ¦                                 ¦         │    ║
@@ -1260,7 +1260,7 @@ This ensures each page is correctly rendered and sent to the client. To better u
 ║                           Δ                       │ IVisualTreeContext           │   ║
 ║                           ¦                       ├──────────────────────────────┤   ║
 ║                           ¦                       │ Request:Request              │   ║
-║   ┌───────────────────────┴────────────────────┐  │ Uri:EndpointUri              │   ║
+║   ┌───────────────────────┴────────────────────┐  │ Uri:IUri                     │   ║
 ║   │ RenderContext                              │  │ RenderContext:IRenderContext │   ║
 ║   ├────────────────────────────────────────────┤  ├──────────────────────────────┤   ║
 ║   │ Endpoint:IEndpoint                         │  └──────────────────────────────┘   ║
@@ -1423,7 +1423,7 @@ Setting page templates are utilized to manage and configure web applications. Ea
 ║   │       │ ApplicationContext:IApplicationContext │                │    │      ¦    ║
 ║   │       │ Conditions:IEnumerable<ICondition>     │                │    │      ¦    ║
 ║   │       │ Cache:Bool                             │                │    │      ¦    ║
-║   │       │ RoutePath:EndpointRoute                │                │    │      ¦    ║
+║   │       │ Route:IRoute                           │                │    │      ¦    ║
 ║   │       └────────────────────────────────────────┘                │    │      ¦    ║
 ║   │                           Δ                                     │    │      ¦    ║
 ║   │                           ¦     ┌───────────────────────────────┘  * ▼      ¦    ║
@@ -1718,7 +1718,7 @@ The following diagram outlines how the class structure and interactions for the 
 ║   │            │ ApplicationContext:IApplicationContext │                 ¦    │     ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │                 ¦    │     ║
 ║   │            │ Cache:Bool                             │                 ¦    │     ║
-║   │            │ RoutePath:EndpointRoute                │                 ¦    │     ║
+║   │            │ Route:IRoute                           │                 ¦    │     ║
 ║   │            └────────────────────────────────────────┘                 ¦    │     ║
 ║   │                                Δ                                      ¦    │     ║
 ║   │                                ¦                                      ¦    │     ║
@@ -1938,7 +1938,7 @@ To better understand the architecture of the `StatusPageManager` and the `Status
 ║                  │ StatusId:String                        │            ¦             ║
 ║                  │ StatusCode:Int                         │            ¦             ║
 ║                  │ StatusTitle:String                     │            ¦             ║
-║                  │ StatusIcon:EndpointRoute               │            ¦             ║
+║                  │ StatusIcon:IRoute                      │            ¦             ║
 ║                  └────────────────────────────────────────┘            ¦             ║
 ║                                                                        ¦             ║
 ║                               ┌────────────────┐                       ¦             ║
@@ -3885,11 +3885,11 @@ underlying structure:
 ║   ├───────────────────┤            │    ├────────────────────────────────────────┤   ║
 ║   └───────────────────┘            │    │ PluginContext:IPluginContext           │   ║
 ║             Δ                      │    │ ApplicationContext:IApplicationContext │   ║
-║             ¦                      │    │ Image:EndpointRoute                    │   ║
+║             ¦                      │    │ Image:IRoute                           │   ║
 ║             ¦                      │    │ Name:String                            │   ║
 ║             ¦                      │    │ Description:String                     │   ║
 ║             ¦                      │    │ ThemeMode:ThemeMode                    │   ║
-║             ¦                      │    │ ThemeStyle:EndpointRoute               │   ║
+║             ¦                      │    │ ThemeStyle:IRoute                      │   ║
 ║             ¦                      │    └──────────────────────────────┬─────────┘   ║
 ║             ¦                      │                     * ▲         1 │             ║
 ║             ¦                    1 ▼                       │           │             ║
