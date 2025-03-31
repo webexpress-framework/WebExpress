@@ -755,13 +755,7 @@ To include additional resources such as CSS files in the project, they can be em
 </ItemGroup>
 ```
 
-These assets are added as embedded resources in the plugin and are converted into endpoints by the `AssetManager`, which are then integrated into the application's sitemap. The `AssetManager` is a central component responsible for managing and providing static resources within the application. It takes on the task of collecting, organizing, and converting the embedded resources from plugins, `WebExpress.WebApp`, and `WebExpress.UI` into endpoints that can be used by the application. The `AssetManager` ensures that the resources are processed in a defined order to avoid conflicts and maintain the consistency of the provided resources.
-
-The `AssetManager` builds the asset endpoints in the following order:
-1. *Plugins:* Assets from plugins are used first.
-2. *Application:* Next, assets from application are used.
-2. *WebExpress.WebApp:* Next, assets from `WebExpress.WebApp` are used (if available).
-3. *WebExpress.ui:* Finally, assets from `WebExpress.ui` are used (if available).
+Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/asset/<plugin>/x/y/z)` to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/asset/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
 
 The following asset types are supported by the `WebExpress` system: 
 
@@ -793,7 +787,7 @@ The following asset types are supported by the `WebExpress` system:
 | .xml  | XML file              
 | .zip  | ZIP archive           
 
-If an asset appears multiple times, the last occurrence is used. This ensures that the desired version of the asset is used. All assets are placed under the "assets" path, which is located within the main directory of the application. This facilitates the organization and access to the necessary resources. It is important to note that the size of embedded resources increases the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, large files should not be delivered as embedded resources. Below is a UML diagram that highlights the architecture of the `AssetManager` and its management of `Assets`:
+All assets are placed under the "assets" path, which is located within the main directory of the application. This facilitates the organization and access to the necessary resources. It is important to note that the size of embedded resources increases the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, large files should not be delivered as embedded resources. Below is a UML diagram that highlights the architecture of the `AssetManager` and its management of `Assets`:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1709,7 +1703,7 @@ The following diagram outlines how the class structure and interactions for the 
 ║   │                                Δ                                      ¦    │     ║
 ║   │                                ¦                                      ¦    │     ║
 ║   │                                ¦                                      ¦    │     ║
-║   │            ┌───────────────────┴────────────────────┐                 ¦    │     ║
+║   │            ┌───────────────────┴────────────────────┐                 ¦    │     ║l Unicode symbol specifically designated to represent ".NET." Typically, developers use the plain text ".NET" (composed of standard ASCII characters) to refer to the framework. While various logos and graphical representations exist for .NET, they are not part of the Unicode standard.
 ║   │            │ <<Interface>>                          │                 ¦    │     ║
 ║   │            │ IEndpointContext                       │                 ¦    │     ║
 ║   │            ├────────────────────────────────────────┤                 ¦    │     ║
@@ -1782,23 +1776,25 @@ The basic concept of the sitemap is based on mapping the physical file structure
 
 It is important to note that the algorithm removes certain prefixes from the route to ensure a simplified path structure. To help you understand the prefixes that are eliminated by the algorithm, the following table shows the prefixes and their conversion:
 
-|Prefix   |Example
-|---------|---------------
-|WWW      |`WWW.Blog.Post.Index.cs` → `/blog/post`
-|Web      |`Web.Products.List.cs` → `/products/list`
-|WebPage  |`WebPage.About.cs` → `/about`
-|WebPages |`WebPages.Contact.cs` → `/contact`
-|Root     |`Root.Homepage.Index.cs` → `/homepage`
-|WebRoot  |`WebRoot.Products.Index.cs` → `/products`
-|WWWRoot  |`WWWRoot.Blog.Post.PostId.Edit.cs` → `/blog/post/{postId}/edit`
-|Default  |`Default.Blog.Post.cs` → `/blog/post`
+|Prefix   |Full Class Name                 |Resulting Route
+|---------|--------------------------------|------------------
+|WWW      |`WWW.Blog.Post.Index`           |`/blog/post`
+|Web      |`Web.Products.List`             |`/products/list`
+|WebPage  |`WebPage.About`                 |`/about`
+|WebPages |`WebPages.Contact`              |`/contact`
+|Root     |`Root.Homepage.Index`           |`/homepage`
+|WebRoot  |`WebRoot.Products.Index`        |`/products`
+|WWWRoot  |`WWWRoot.Blog.Post.PostId.Edit` |`/blog/post/{postId}/edit`
+|Default  |`Default.Blog.Post`             |`/blog/post`
 
 In addition, the algorithm eliminates certain class name suffixes from the route to generate standardized route paths. If a class name contains one of these suffixes, only the essential part is used to form the path. The following is a summary table that lists the suffix identifiers and the corresponding transformation:
 
-|Suffix     |Example
-|-----------|---------------
-|Controller |`WWW.Blog.Post.IndexController.cs` → `/blog/post`
-|Page       |`WWW.Products.ListPage.cs` → `/products/list`
+|Suffix     |Full Class Name                 |Resulting Route
+|-----------|--------------------------------|------------------
+|Controller |`WWW.Blog.Post.IndexController` |`/blog/post`
+|Page       |`WWW.Products.ListPage`         |`/products/list`
+
+When converting endpoints into routes, the system checks whether an endpoint originates from the plugin that hosts the current application. If so, the plugin’s subdirectory is omitted, resulting in a simplified route (e.g., `/server/app/x/y/z`). In contrast, endpoints from external plugins retain the plugin’s name in the route (e.g., `/server/app/<plugin>/x/y/z`) to clearly indicate their source.
 
 Another central aspect of the concept is handling variable path segments, such as a blog post id. Since namespace names must be valid identifiers and cannot include special characters (like curly braces), variable segments cannot be directly represented as folder or namespace components. Instead, for these dynamic parts a special class `SegmentInfo` is defined. To illustrate this, consider the following code snippet, which demonstrates the implementation of the `SegmentInfo` class.
 
@@ -4030,7 +4026,7 @@ namespace Sample
         public void Run() {}
     }
 
-    public sealed class Home : IPage<VisualTree>
+    public sealed class Index : IPage<VisualTree>
     {
         public void Render(IRenderContext renderContext, VisualTree visualTree)
         {
