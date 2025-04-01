@@ -1091,7 +1091,6 @@ Pages are a fundamental component of web applications, serving as the primary in
 
 ```csharp
 [Title("my page")]
-[Segment("E")]
 [Scope<ScopeGeneral>]
 [Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
@@ -1108,6 +1107,8 @@ To clearly illustrate the metadata described in the code above, the table below 
 |Attribute       |Type              |Multiplicity |Optional |Description
 |----------------|------------------|-------------|---------|----------------
 |Title           |String            |1            |Yes      |The name of the page. This can be an internationalization key.
+|Description     |String            |1            |Yes      |The description of the page. This can be a key to internationalization.
+|WebIcon         |IIcon             |1            |Yes      |The icon that represents the page graphically.
 |Segment         |String, String    |1            |Yes      |The path segment of the resource. The first argument is the path segment. The second argument is the display string.
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
@@ -1535,6 +1536,8 @@ To provide clarity about the metadata specified in the code above, the following
 
 |Attribute      |Type             |Multiplicity |Optional |Description
 |---------------|-----------------|-------------|---------|--------------
+|Title          |String           |1            |Yes      |The title of the setting page. This can be a key to internationalization.
+|Description    |String           |1            |Yes      |The description of the setting page. This can be a key to internationalization.
 |WebIcon        |IIcon            |1            |Yes      |An icon to be displayed along with the link to the settings page.
 |SettingGroup   |ISettingGroup    |1            |Yes      |Each setting page can have a setting group. If no `SettingGroup` is specified, the settings page will not be associated with a group.
 |SettingSection |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
@@ -1616,7 +1619,6 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 The following code selection contains an example class called `MyRestApi` that implements a REST API in `WebExpress`:
 
 ```csharp
-[Segment("E")]
 [Method(CrudMethod.POST)]
 [Method(CrudMethod.GET)]
 [Version(1)]
@@ -1703,7 +1705,7 @@ The following diagram outlines how the class structure and interactions for the 
 ║   │                                Δ                                      ¦    │     ║
 ║   │                                ¦                                      ¦    │     ║
 ║   │                                ¦                                      ¦    │     ║
-║   │            ┌───────────────────┴────────────────────┐                 ¦    │     ║l Unicode symbol specifically designated to represent ".NET." Typically, developers use the plain text ".NET" (composed of standard ASCII characters) to refer to the framework. While various logos and graphical representations exist for .NET, they are not part of the Unicode standard.
+║   │            ┌───────────────────┴────────────────────┐                 ¦    │     ║
 ║   │            │ <<Interface>>                          │                 ¦    │     ║
 ║   │            │ IEndpointContext                       │                 ¦    │     ║
 ║   │            ├────────────────────────────────────────┤                 ¦    │     ║
@@ -1796,7 +1798,13 @@ In addition, the algorithm eliminates certain class name suffixes from the route
 
 When converting endpoints into routes, the system checks whether an endpoint originates from the plugin that hosts the current application. If so, the plugin’s subdirectory is omitted, resulting in a simplified route (e.g., `/server/app/x/y/z`). In contrast, endpoints from external plugins retain the plugin’s name in the route (e.g., `/server/app/<plugin>/x/y/z`) to clearly indicate their source.
 
-Another central aspect of the concept is handling variable path segments, such as a blog post id. Since namespace names must be valid identifiers and cannot include special characters (like curly braces), variable segments cannot be directly represented as folder or namespace components. Instead, for these dynamic parts a special class `SegmentInfo` is defined. To illustrate this, consider the following code snippet, which demonstrates the implementation of the `SegmentInfo` class.
+Variable segments are a key feature in designing dynamic and user-friendly URLs. Unlike `?query` parameters, they enable a clearer structure by treating specific parts of a URL as placeholders, which are replaced with actual values at runtime. This approach greatly enhances the readability and aesthetics of URLs. For instance, a URL like `/blog/post/42` appears far more professional and intuitive than `/blog?post=42`. This structured format improves user experience while also benefiting search engines, as "clean URLs" contribute to better search engine optimization (SEO).
+
+`WebExpress` takes this functionality even further by supporting specific data types such as int (integers) and GUIDs (Globally Unique Identifiers) for dynamic segments. This ensures seamless handling of both numeric identifiers (e.g., `/products/details/314`) and globally unique values (e.g., `/blog/post/{guid}`), making it ideal for applications that depend on precise resource identification. The integration of attributes like `SegmentInt` and `SegmentGuid` in `WebExpress` helps define these dynamic URL segments explicitly, enabling clear routing and robust processing.
+
+In addition to improving aesthetics and functionality, variable segments also offer hierarchical structures that facilitate user-friendly navigation. Users can easily shorten URLs logically to access higher-level sections, such as navigating from `/blog/post/42` to `/blog/post` or `/blog`. This hierarchical design promotes a clean REST-API architecture, emphasizing resource-oriented routes like `/user/123/orders` over traditional queries such as `/orders?user=123`.
+
+The `Index` classes in `WebExpress` can be equipped with type-defining attributes such as `SegmentInt` or `SegmentGuid` to define dynamic segments. These type attributes specify what kind of dynamic values the URL segments can contain, such as integers (int) or globally unique identifiers (GUID). This ensures that the corresponding values are properly processed and validated during routing. To illustrate the concept of `Index` classes and how they can be equipped with type-defining attributes to manage dynamic URL segments, consider the following example. It demonstrates how a specific parameter, such as a blog post ID, can be handled through a custom `BlogPostParameter` class, while the `Index` class represents the dynamic segment in the routing hierarchy:
 
 ```csharp
 public class BlogPostParameter : Parameter
@@ -1808,18 +1816,21 @@ public class BlogPostParameter : Parameter
 }
 
 [SegmentInt<BlogPostParameter>]
-public static class SegmentInfo
+public sealed class Index : IPage
 {
+    public void Process(IRenderContext renderContext, VisualTree visualTree)
+    {
+    }
 }
 ```
 
-The following table describes the attributes used in the `SegmentInfo`:
+The following table describes the attributes used in the `Index`:
 
 |Attribute       |Type       |Multiplicity |Optional |Description
 |----------------|-----------|-------------|---------|----------------
 |SegmentInt      |Parameter  |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter  |1            |Yes      |A variable path segment of type `Guid`.
-|Name            |String     |1            |Yes      |The name of the path segment. This can be a key to internationalization.
+|Title           |String     |1            |Yes      |The title of the path segment. This can be a key to internationalization.
 |Description     |String     |1            |Yes      |The description of the path segment. This can be a key to internationalization.
 |Icon            |IIcon      |1            |Yes      |The icon that represents the path segment graphically.
 
@@ -1830,25 +1841,23 @@ When the application starts, the sitemap uses reflection to traverse all relevan
 ```
    <> MyPlugin.csproj
    ├─...
-   └─📁 WWWW                     (web root)
-     ├─📁 Blog                   (blog section)
-     │ ├─📄 Index.cs             (blog overview)
-     │ └─📁 Post                 (blog post section)
-     │   ├─📁 PostId             (blog post id section)
-     │   │ ├─📄 Edit.cs          (editing an blog post, e.g. /blog/post/42/edit)
-     │   │ ├─📄 Index.cs         (individual post, e.g., /blog/post/42)
-     │   │ └─📄 SegmentInfo.cs   (definition of the postId)
-     │   ├─📄 Add.cs             (adding a new blog post, e.g. /blog/post/add)
-     │   └─📄 Index.cs           (redirecting to the blog overview, e.g. /blog/post)
-     ├─📁 Products               (products section)
-     │ ├─📁 Details              (product details section)
-     │ │ │ └─📄 Index.cs         (product details, e.g., /products/details/314)
-     │ │ └─📄 Index.cs           (redirecting to the product overview)
-     │ ├─📄 Index.cs             (products overview)
-     │ └─📄 List.cs              (product listing)
-     ├─📄 About.cs               (about us)
-     ├─📄 Contact.cs             (contact page)
-     └─📄 Index.cs               (homepage)
+   └─📁 WWWW                 (web root)
+     ├─📁 Blog               (blog section)
+     │ ├─📄 Index.cs         (blog overview)
+     │ └─📁 Post             (blog post section)
+     │   ├─📁 PostId         (blog post id section)
+     │   │ ├─📄 Edit.cs      (editing an blog post, e.g. /blog/post/42/edit)
+     │   │ └─📄 Index.cs     (post with definition of the postId, e.g., /blog/post/42)
+     │   ├─📄 Add.cs         (adding a new blog post, e.g. /blog/post/add)
+     │   └─📄 Index.cs       (redirecting to the blog overview, e.g. /blog/post)
+     ├─📁 Products           (products section)
+     │ ├─📁 Details          (product details section)
+     │ │ └─📄 Index.cs       (product details, e.g., /products/details/314)
+     │ ├─📄 Index.cs         (products overview)
+     │ └─📄 List.cs          (product listing)
+     ├─📄 About.cs           (about us)
+     ├─📄 Contact.cs         (contact page)
+     └─📄 Index.cs           (homepage)
 ```
 
 The insertion into the sitemap is done by sorting the number of route segments in ascending order. Only one endpoint can be assigned per sitemap node. In a competing situation (e.g. variable segments), the first endpoint is used. All other endpoints are not processed. This is indicated in the log by a warning message. 
