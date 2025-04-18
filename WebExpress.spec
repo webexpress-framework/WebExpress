@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
 	<id>WebExpress</id>
-	<version>0.0.5-alpha</version>
+	<version>0.0.8-alpha</version>
 	<title>WebExpress</title>
 	<authors>rene_schwarzer@hotmail.de</authors>
 	<license>MIT</license>
