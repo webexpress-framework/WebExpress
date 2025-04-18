@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>0.0.8.0</Version>
-		<AssemblyVersion>0.0.8.0</AssemblyVersion>
+		<Version>0.0.9.0</Version>
+		<AssemblyVersion>0.0.9.0</AssemblyVersion>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net9.0</TargetFramework>
 		<ApplicationIcon>Rocket.ico</ApplicationIcon>
@@ -15,10 +15,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="WebExpress.WebApp" Version="0.0.8-alpha" />
-		<PackageReference Include="WebExpress.WebCore" Version="0.0.8-alpha" />
-		<PackageReference Include="WebExpress.WebIndex" Version="0.0.8-alpha" />
-		<PackageReference Include="WebExpress.WebUI" Version="0.0.8-alpha" />
+		<PackageReference Include="WebExpress.WebApp" Version="0.0.9-alpha" />
+		<PackageReference Include="WebExpress.WebCore" Version="0.0.9-alpha" />
+		<PackageReference Include="WebExpress.WebIndex" Version="0.0.9-alpha" />
+		<PackageReference Include="WebExpress.WebUI" Version="0.0.9-alpha" />
 	</ItemGroup>
 
 	<ItemGroup>
