@@ -41,7 +41,11 @@ To get started with WebExpress, use the following links and tutorials.
 - [WebExpress.WebUI API Documentation](https://reneschwarzer.github.io/WebExpress.WebUI/) 
 
 ## Tutorials
+Begin with our basic tutorial:
 - [HelloWorld](https://github.com/ReneSchwarzer/WebExpress.Tutorial.HelloWorld#readme)
+- [WebUI](https://github.com/ReneSchwarzer/WebExpress.Tutorial.WebUI#readme)
+- [WebApp](https://github.com/ReneSchwarzer/WebExpress.Tutorial.WebApp#readme)
+- [WebIndex](https://github.com/ReneSchwarzer/WebExpress.Tutorial.WebIndex#readme)
 
 # Tags
 #WebExpress #WebServer
