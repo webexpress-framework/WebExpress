@@ -2020,7 +2020,7 @@ Fragments are components that can be integrated into pages to extend functionali
 ║                            └────────────────┘                       │      ¦         ║
 ║                                    Δ                                │      ¦         ║
 ║                                    ¦                                │      ¦         ║
-║                                    ¦                                │      ¦         ║                                      
+║                                    ¦                                │      ¦         ║
 ║               ┌────────────────────┴───────────────────┐            │      ¦         ║
 ║               │ <<Interface>>                          │ *          │      ¦         ║
 ║               │ IFragmentContext                       │◄───────────┘      ¦         ║
@@ -2031,20 +2031,26 @@ Fragments are components that can be integrated into pages to extend functionali
 ║               │ Cache:Bool                             │                   ¦         ║
 ║               └────────────────────────────────────────┘                   ¦         ║
 ║                                                                            ¦         ║
-║                            ┌────────────────┐                              ¦         ║
-║                            │ <<Interface>>  │                              ¦         ║
-║                            │ IComponent     │                              ¦         ║
-║                            ├────────────────┤                              ¦         ║
-║                            └────────────────┘                              ¦         ║
-║                                    Δ                                       ¦         ║
-║                                    ¦                                       ¦         ║
+║                                                                            ¦         ║
+║                              ┌────────────────┐                            ¦         ║
+║                              │ TRenderContext,│                            ¦         ║
+║  ┌───────────────────────────┤ TVisualTree    ├─┐                          ¦         ║
+║  │ <<Interface>>             └────────────────┘ │                          ¦         ║
+║  │ IWebUIElement                                │                          ¦         ║
+║  ├──────────────────────────────────────────────┤     ┌────────────────┐   ¦         ║
+║  │ Id:String                                    │     │ <<Interface>>  │   ¦         ║
+║  ├──────────────────────────────────────────────┤     │ IComponent     │   ¦         ║
+║  │ Render(TRenderContext,TVisualTree):IHtmlNode │     ├────────────────┤   ¦         ║
+║  └──────────────────────────────────────────────┘     └────────────────┘   ¦         ║
+║                         Δ                                     Δ            ¦         ║
+║                         ¦                                     ¦            ¦         ║
+║                         └----------┬--------------------------┘            ¦         ║
 ║                                    ¦    ┌────────────────┐                 ¦         ║
 ║                                    ¦    │ TRenderContext,│                 ¦         ║
-║             ┌──────────────────────┴────│ TVisualTree    │─┐               ¦         ║
+║             ┌──────────────────────┴────┤ TVisualTree    ├─┐               ¦         ║
 ║             │ <<Interface>>             └────────────────┘ │               ¦         ║
 ║             │ IFragment                                    │               ¦         ║
 ║             ├──────────────────────────────────────────────┤               ¦         ║
-║             │ Render(TRenderContext,TVisualTree):IHtmlNode │               ¦         ║
 ║             └──────────────────────────────────────────────┘               ¦         ║
 ║                                    Δ                                       ¦         ║
 ║                                    ¦                                       ¦         ║
@@ -2112,13 +2118,27 @@ This implementation showcases the core functionality of the `IconInfoCircle` cla
 Controls are units of the web page that are translated into HTML source code by rendering. A Web page consists of nested controls. This UML diagram provides a representation of the relationships and structure of controls:
 
 ```
-╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║            ┌────────────────────────────────────────────────────────────┐            ║
+║                                               ┌────────────────┐                     ║
+║                                               │ TRenderContext,│                     ║
+║                   ┌───────────────────────────┤ TVisualTree    ├─┐                   ║
+║                   │ <<Interface>>             └────────────────┘ │                   ║
+║                   │ IWebUIElement                                │                   ║
+║                   ├──────────────────────────────────────────────┤                   ║
+║                   │ Id:String                                    │                   ║
+║                   ├──────────────────────────────────────────────┤                   ║
+║                   │ Render(TRenderContext,TVisualTree):IHtmlNode │                   ║
+║                   └──────────────────────────────────────────────┘                   ║
+║                                          Δ                                           ║
+╚══════════════════════════════════════════¦═══════════════════════════════════════════╝
+                                           ¦
+╔WebExpress.UI═════════════════════════════¦═══════════════════════════════════════════╗
+║                                          ¦                                           ║
+║            ┌─────────────────────────────┴──────────────────────────────┐            ║
 ║            │ <<Interface>>                                              │            ║
 ║            │ IControl                                                   │            ║
 ║            ├────────────────────────────────────────────────────────────┤            ║
-║            │ Id:String                                                  │            ║
 ║            ├────────────────────────────────────────────────────────────┤            ║
 ║            │ Render(IRenderControlContext,IVisualTreeControl):IHtmlNode │            ║
 ║            └────────────────────────────────────────────────────────────┘            ║
