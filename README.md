@@ -23,9 +23,7 @@ WebExpress is part of the WebExpress family. The project provides a web server f
 - https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
 - https://jquery.com/ (MIT)
-- https://summernote.org/ (MIT)
 - https://popper.js.org/ (MIT)
-- https://github.com/kurtobando/simple-tags (MIT)
 - https://github.com/uxsolutions/bootstrap-datepicker (Apache 2.0)
 - https://github.com/xoofx/markdig (BSD-2-Clause license)
 
