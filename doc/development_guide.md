@@ -1626,10 +1626,10 @@ The following code selection contains an example class called `MyRestApi` that i
 [Authorization(Permission.R, IdentityRoleDefault.Everyone)]
 public sealed class MyRestApi : IRestApi
 {
-    public void CreateData(Request request) {…}
-    public object GetData(Request request) {…}
-    public void UpdateData(Request request) {…}
-    public void DeleteData(Request request) {…}
+    public Response CreateData(Request request) {…}
+    public Response GetData(Request request) {…}
+    public Response UpdateData(Request request) {…}
+    public Response DeleteData(Request request) {…}
 }
 ```
 
@@ -1736,35 +1736,35 @@ The following diagram outlines how the class structure and interactions for the 
 ║                                    ¦                │ POST             │  ¦          ║
 ║                            ┌───────┴────────┐       │ GET              │  ¦          ║
 ║                            │ <<Interface>>  │       │ PATCH            │  ¦          ║
-║                            │ IEndpoint      │       │ DELETE           │  ¦          ║
-║                            ├────────────────┤       └──────────────────┘  ¦          ║
-║                            └────────────────┘                             ¦          ║
+║                            │ IEndpoint      │       │ PUT              │  ¦          ║
+║                            ├────────────────┤       │ DELETE           │  ¦          ║
+║                            └────────────────┘       └──────────────────┘  ¦          ║
 ║                                    Δ                                      ¦          ║
 ║                                    ¦                                      ¦          ║
 ║                                    ¦                                      ¦          ║
-║                     ┌──────────────┴──────────────┐                       ¦          ║
-║                     │ <<Interface>>               │                       ¦          ║
-║                     │ IRestApi                    │                       ¦          ║
-║                     ├─────────────────────────────┤                       ¦          ║
-║                     │ CreateData(Request)         │                       ¦          ║
-║                     │ GetData(Request):Object     │                       ¦          ║
-║                     │ UpdateData(Request)         │                       ¦          ║
-║                     │ DeleteData(Request)         │                       ¦          ║
-║                     └─────────────────────────────┘                       ¦          ║
+║                     ┌──────────────┴───────────────┐                      ¦          ║
+║                     │ <<Interface>>                │                      ¦          ║
+║                     │ IRestApi                     │                      ¦          ║
+║                     ├──────────────────────────────┤                      ¦          ║
+║                     │ CreateData(Request):Response │                      ¦          ║
+║                     │ GetData(Request):Response    │                      ¦          ║
+║                     │ UpdateData(Request):Response │                      ¦          ║
+║                     │ DeleteData(Request):Response │                      ¦          ║
+║                     └──────────────────────────────┘                      ¦          ║
 ║                                     Δ                                     ¦          ║
 ║                                     ¦                                     ¦          ║
 ╚═════════════════════════════════════¦═════════════════════════════════════¦══════════╝
                                       ¦                                     ¦
 ╔MyPlugin═════════════════════════════¦═════════════════════════════════════¦══════════╗
 ║                                     ¦                                     ¦          ║
-║                     ┌───────────────┴─────────────┐                create ¦          ║
-║                     │ MyRestApi                   │◄----------------------┘          ║
-║                     ├─────────────────────────────┤                                  ║
-║                     │ CreateData(Request)         │                                  ║
-║                     │ GetData(Request):Object     │                                  ║
-║                     │ UpdateData(Request)         │                                  ║
-║                     │ DeleteData(Request)         │                                  ║
-║                     └─────────────────────────────┘                                  ║
+║                     ┌───────────────┴──────────────┐               create ¦          ║
+║                     │ MyRestApi                    │◄---------------------┘          ║
+║                     ├──────────────────────────────┤                                 ║
+║                     │ CreateData(Request):Response │                                 ║
+║                     │ GetData(Request):Response    │                                 ║
+║                     │ UpdateData(Request):Response │                                 ║
+║                     │ DeleteData(Request):Response │                                 ║
+║                     └──────────────────────────────┘                                 ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
