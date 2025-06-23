@@ -747,11 +747,13 @@ Parameters can be transferred to the endpoint to be executed in a URI or through
 ### Asset model
 `WebExpress` provides automatically generated endpoints, which are made available to the client application. Assets in this context are static resources such as JavaScript files, CSS files, icons, and other files necessary for the presentation and functionality of the application.
 
-To include additional resources such as CSS files in the project, they can be embedded directly within the project configuration. An example of how to include a CSS file as an embedded resource is shown below:
+To include additional resources such as CSS files in the project, they can be embedded directly within the project configuration. An example of how to include asset files as an embedded resource is shown below:
 
 ```xml
 <ItemGroup>
-    <EmbeddedResource Include="Assets/MyCss.css" />
+	<EmbeddedResource Include="Assets/**/*.*">
+		<LogicalName>$(MSBuildProjectName).Assets.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+	</EmbeddedResource>
 </ItemGroup>
 ```
 
