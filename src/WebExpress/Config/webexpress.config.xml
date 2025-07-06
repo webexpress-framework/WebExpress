@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <config version="1">
 
-    <!-- Loggingeinstellungen modus=[Off|Override|Append], debug=[true|false]-->
+	<!-- Logging settings mode=[Off|Override|Append], debug=[true|false]-->
     <log modus="Off" debug="false" path="/var/log/" encoding="utf-8" filename="webexpress.log" timepattern="dd.MM.yyyy HH:mm:ss" />
 
 	<endpoint uri="http://localhost/"/>
@@ -11,7 +11,7 @@
 		<uploadlimit>3000000000</uploadlimit>
 	</limit>
 
-	<culture>de-DE</culture>
+	<culture>en-US</culture>
 
 	<packages>./packages</packages>
 	<assets>./assets</assets>
