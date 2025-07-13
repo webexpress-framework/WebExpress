@@ -25,7 +25,6 @@ WebExpress is part of the WebExpress family. The project provides a web server f
 - https://jquery.com/ (MIT)
 - https://fontawesome.com/ (CC BY 4.0 and MIT)
 - https://popper.js.org/ (MIT)
-- https://github.com/xoofx/markdig (BSD-2-Clause license)
 
 # Download 
 The current binaries are available for download [here](https://github.com/ReneSchwarzer/WebExpress/releases).
