@@ -9,11 +9,8 @@ The software is freely available as open source (MIT). The software sources can 
 - https://github.com/dotnet/core (MIT)
 - https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
-- https://jquery.com/ (MIT)
-- https://summernote.org/ (MIT)
+- https://fontawesome.com/ (CC BY 4.0 and MIT)
 - https://popper.js.org/ (MIT)
-- https://github.com/kurtobando/simple-tags (MIT)
-- https://github.com/uxsolutions/bootstrap-datepicker (Apache 2.0)
 
 ```
 The MIT License (MIT)
@@ -1195,6 +1192,7 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║   │              * │ <<Interface>>                  │ *               ¦         │    ║
 ║   └───────────────►│ IPageContext                   │◄──────────────────────────┘    ║
 ║                    ├────────────────────────────────┤                 ¦              ║
+║                    │ PageIcon:IIcon                 │                 ¦              ║
 ║                    │ PageTitle:String               │                 ¦              ║
 ║                    │ Scopes:IEnumerable<String>     │                 ¦              ║
 ║                    └────────────────────────────────┘                 ¦              ║
@@ -1433,7 +1431,8 @@ Setting page templates are utilized to manage and configure web applications. Ea
 ║   │      │ ISettingPageContext              │  │    │ Description:String      │ ¦    ║
 ║   │      ├──────────────────────────────────┤  │    │ Section:SettingSection  │ ¦    ║
 ║   │      │ Hide:Bool                        │  │    └─────────────────────────┘ ¦    ║
-║   │      │ Icon:PropertyIcon                │ 1│                                ¦    ║
+║   │      │ PageIcon:IIcon                   │  │                                ¦    ║
+║   │      │ PageTitle:String                 │ 1│                                ¦    ║
 ║   │      │ Category:ISettingCategoryContext ├──┘       ┌──────────────────┐     ¦    ║
 ║   │   ┌──┤ Group:ISettingGroupContext       │ 1      1 │ <<Enumeration>>  │     ¦    ║
 ║   │   │  │ Section:SettingSection           ├─────────►│ SettingSection   │     ¦    ║
