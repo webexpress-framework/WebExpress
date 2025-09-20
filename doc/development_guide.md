@@ -1,10 +1,10 @@
-![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
+![WebExpress-Framework](https://raw.githubusercontent.com/webexpress-framework/.github/main/docs/assets/img/banner.png)
 
 # WebExpress
 `WebExpress` is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, `WebExpress` has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .Net language (e.g. C#).
 
 # License
-The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/ReneSchwarzer/WebExpress. `WebExpress` is based on components that are available as open source:
+The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/webexpress-framework/WebExpress. `WebExpress` is based on components that are available as open source:
 
 - https://github.com/dotnet/core (MIT)
 - https://getbootstrap.com/ (MIT)
@@ -3128,7 +3128,7 @@ Name ~ "WebExpress" and Create < now(-3d) orderby Create desc take 5
 
 The example returns the first five elements of the dataset that contain the value `WebExpress` in the Name attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in descending order by creation date.
 
-For detailed information about `WebIndex`, see [concept](https://github.com/ReneSchwarzer/WebExpress.WebIndex/blob/main/doc/concept.md).
+For detailed information about `WebIndex`, see [concept](https://github.com/webexpress-framework/WebExpress.WebIndex/blob/main/doc/concept.md).
 
 ## Identity model
 A large number of web applications are subject to requirements for access protection, integrity and confidentiality. These requirements can be met through identity and access management (IAM). In identity management, identities are managed. In access management, on the other hand, authorized entities are enabled to use a service (application). `WebExpress` supports the following identity management features:

@@ -1,4 +1,4 @@
-![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
+![WebExpress-Framework](https://raw.githubusercontent.com/webexpress-framework/.github/main/docs/assets/img/banner.png)
 
 # General
 WebExpress is a lightweight web server that has been optimized for use in low-performance environments. Even on 
@@ -12,7 +12,7 @@ comprehensive API and application templates. This allows web applications to be 
 
 # License
 The software is freely available as open source (MIT). The software sources can be obtained 
-from https://github.com/ReneSchwarzer/WebExpress. WebExpress is based on components that are 
+from https://github.com/webexpress-framework/WebExpress. WebExpress is based on components that are 
 available as open source:
 
 - https://github.com/dotnet/core (MIT)
@@ -53,7 +53,7 @@ other operating systems.
 The first step is to write the operating system to an SD card. For this purpose, there is https://downloads.raspberrypi.org/imager/imager.exe 
 a free program (Windows), with the help of which the image is copied to the SD card.
 
-![imager](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/imager.png)
+![imager](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/imager.png)
 
 ## Setting up the operating system
 
@@ -76,23 +76,23 @@ pi@raspberrypi:~ $ sudo raspi-config
 It is recommended to change the password, as well as to set up the Wi-Fi, change the time zone and the host name if necessary. In the 
 remainder of the application guide, the host name ```wx``` is used. In addition, SSH must be activated (to be found under Interface Options).
 
-![raspiconfig](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/raspiconfig.png)
+![raspiconfig](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/raspiconfig.png)
 
 All subsequent steps can now be done via SSH and the Raspberry Pi can be disconnected from the keyboard and screen.
 
 ## Installing the .NET Runtime
 After SSH has been activated, a connection to the Raspberry Pi can be established with the help of an SSH client (e.g. Putty, OpenSSH).
 
-![piconnect](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/piconnect.png)
+![piconnect](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/piconnect.png)
 
 First, the .NET Runtime and the ASP.NET Core Runtime must be installed. Help for this is offered under [1]. The current versions 
 can be obtained free of charge from Microsoft at https://dotnet.microsoft.com/download/dotnet-core.
 
-![downloadnet1](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/downloadnet1.png)
+![downloadnet1](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/downloadnet1.png)
 
 For the Raspberry Pi, the binaries for Linux-Arm32 are to be used. The direct link to the Linux-Arm32 binaries must be copied.
 
-![downloadnet2](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/downloadnet2.png)
+![downloadnet2](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/downloadnet2.png)
 
 The Linux Arm32 archive for the ASP.NET Core Runtime is downloaded to the Raspberry using wget.
 
@@ -124,12 +124,12 @@ pi@wx:~ $ sudo apt-get install mc -y
 
 If necessary, the profile can be extended by ```alias ll='ls -l'```.
 
-![profile](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/profile.png)
+![profile](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/profile.png)
 
 ## Set static IP
 It is recommended to configure a static IP address for the Raspberry under ```/etc/dhcpcd.conf``` (see [2]).
 
-![dhcpcd](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/dhcpcd.png)
+![dhcpcd](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/dhcpcd.png)
 
 ## Multicast Domain Name Service (mDNS)
 For example, Avahi can be used as mDNS. Avahi is an open-source mDNS implementation. At the command prompt, type the following command to install Avahi:
@@ -141,15 +141,15 @@ pi@wx:~ $ sudo apt install avahi-daemon -y
 Once the installation process is complete, local network queries are accepted and answered at ```wx.local```.
 
 ## Installing WebExpress
-WebExpress is provided in packaged form for the Raspberry Pi in the GitHub repository https://github.com/ReneSchwarzer/WebExpress/releases 
+WebExpress is provided in packaged form for the Raspberry Pi in the GitHub repository https://github.com/webexpress-framework/WebExpress/releases 
 free of charge.
 
-![downloadwebexpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/downloadwebexpress.png)
+![downloadwebexpress](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/downloadwebexpress.png)
 
 The binaries of WebExpress can be obtained from GitHub via wget.
 
 ``` bash
-pi@wx:~ $ wget https://github.com/ReneSchwarzer/WebExpress/releases/download/1.4.4.0/WebExpress_1.4.4.0_LiLinuxA32.zip
+pi@wx:~ $ wget https://github.com/webexpress-framework/WebExpress/releases/download/1.4.4.0/WebExpress_1.4.4.0_LiLinuxA32.zip
 ```
 
 In preparation for the installation of WebExpress, a directory must be created under ```/opt/wx``` by unpacking the binaries.
@@ -316,17 +316,17 @@ WebExpress will start automatically after each restart of the Rasperry Pi.
 If https is used with self-generated certificates, the certificates should be stored in the client. The .pfx file must be placed in the 
 certificate store under Trusted Root Certification Authorities.
 
-![certificatestore1](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore1.png)
-![certificatestore2](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore2.png)
-![certificatestore3](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore3.png)
-![certificatestore4](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore4.png)
-![certificatestore5](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore5.png)
-![certificatestore6](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore6.png)
-![certificatestore7](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/certificatestore7.png)
+![certificatestore1](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/certificatestore1.png)
+![certificatestore2](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/certificatestore2.png)
+![certificatestore3](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/certificatestore3.png)
+![certificatestore4](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/certificatestore4.png)
+![certificatestore5](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/certificatestore5.png)
+![certificatestore6](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/certificatestore6.png)
+![certificatestore7](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/certificatestore7.png)
 
 The WebExpress certificate must be trusted in the browser.
 
-![trust](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/ig/trust.png)
+![trust](https://raw.githubusercontent.com/webexpress-framework/WebExpress.Doc/main/assets/ig/trust.png)
 
 # Update
 To ensure security, the Raspberry Pi, its applications and WebExpress must be updated regularly.
@@ -337,7 +337,7 @@ pi@wx:~ $ sudo apt-get update
 pi@wx:~ $ sudo apt-get upgrade
 ```
 
-The WebExpress binaries are also to be updated. For this purpose, the current binaries from https://github.com/ReneSchwarzer/WebExpress/releases must be used (see section Installing WebExpress).
+The WebExpress binaries are also to be updated. For this purpose, the current binaries from https://github.com/webexpress-framework/WebExpress/releases must be used (see section Installing WebExpress).
 
 # Shopping list
 The following hardware is required:

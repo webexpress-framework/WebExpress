@@ -1,4 +1,4 @@
-![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress/main/assets/banner.png)
+![WebExpress-Framework](https://raw.githubusercontent.com/webexpress-framework/.github/main/docs/assets/img/banner.png)
 
 # Code of Conduct
 At `WebExpress`, we believe in fostering an open and welcoming community. Our goal is to create a collaborative and inclusive environment where everyone feels respected and valued. This Code of Conduct outlines our expectations for participant behavior and the consequences for unacceptable behavior. We invite all those who participate in our project to help us create safe and positive experiences for everyone.

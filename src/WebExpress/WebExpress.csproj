@@ -9,7 +9,7 @@
 		<Authors>Rene_Schwarzer@hotmail.de</Authors>
 		<StartupObject>WebExpress.App.Program</StartupObject>
 		<RuntimeIdentifiers>win-x64;linux-x64;linux-arm;</RuntimeIdentifiers>
-		<RepositoryUrl>https://github.com/ReneSchwarzer/WebExpress.Server</RepositoryUrl>
+		<RepositoryUrl>https://github.com/webexpress-framework/WebExpress.Server</RepositoryUrl>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
 	</PropertyGroup>
