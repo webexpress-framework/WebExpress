@@ -3490,8 +3490,16 @@ The business application header contains buttons and submenus to navigate the ap
   ├────────────┤                                                └────────────┘
   │ Link       │← AppNavigatorSecondary
   └────────────┘
-
-        :════════════════════════════════════════════════════════╗
+                        ┌──────────────┐
+                        │ Notification │
+                        ├──────────────┤
+                        │ Link         │← Notification-
+                        ├──────────────┤  Preferences
+                        │ Link         │← Notification-
+                        ├──────────────┤  Primary
+                        │ Link         │← Notification-
+                        └─┬────────────┘  Secondary
+        :═════════════════│══════════════════════════════════════╗
         :────────┐┌Help─┐┌Notification────────┐┌Avatar────┐┌────┐║
         :        ││  ?  ││                    ││          ││  ▼ │║
         :────────┘└───┬─┘└────────────────────┘└┬─────────┘└──┬─┘║
