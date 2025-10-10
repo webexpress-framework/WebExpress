@@ -136,6 +136,7 @@ The components of `WebExpress` and its applications are centrally managed in the
 |StatusPageManager           |Represent HTML pages that are returned with a StatusCode other than 200.
 |AssetManager                |Assets like static java script files are delivered by `WebExpress`.
 |ResourceManager             |Resources are contents that are delivered by `WebExpress`. These include, for example, websites that consist of HTML source code, arbitrary files (e.g. css, JavaScript, images) and REST interfaces, which are mainly used for communication via HTTP(S) with (other) systems.
+|IncludeManager              |Manages the dynamic integration of JavaScript and CSS files into the HTML header. In release mode, the files are delivered bundled and minified.
 |ThemeManager                |Provides color and layout schemes for customizing applications.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
 |SitemapManager              |Manages the structure of the website, including navigation between different pages.
@@ -143,7 +144,7 @@ The components of `WebExpress` and its applications are centrally managed in the
 |SessionManager              |Responsible for storing session data generated during the user session.
 |TaskManager                 |Management of ad-hoc tasks.
 |IdentityManager             |Users or technical objects that are used for identity and access management.
-|SettingPageManager          |Manages the settings of the application.    
+|SettingPageManager          |Manages the settings of the application.
 
 In addition, you can create your own components and register them in the `ComponentHub`. The following UML diagram illustrates the relationships and internal structure of the `ComponentManager` and the components it manages:
 
@@ -758,33 +759,33 @@ Assets embedded in each plugin are converted into endpoints by the `AssetManager
 
 The following asset types are supported by the `WebExpress` system: 
 
-| Type  | Description           
+| Type  | Description
 |-------|-----------------------
-| .bmp  | BMP image             
-| .css  | CSS stylesheet        
-| .csv  | CSV file               
-| .doc  | Microsoft Word    
-| .docx | Microsoft Word    
-| .gif  | GIF image             
-| .htm  | HTML file             
-| .html | HTML file             
-| .ico  | Icon file             
-| .jpeg | JPEG image            
-| .jpg  | JPEG image      
-| .js   | Java script file     
-| .json | JSON file             
-| .mp3  | MP3 audio             
-| .mp4  | MP4 video             
-| .pdf  | PDF document          
-| .png  | PNG image             
-| .ppt  | Microsoft PowerPoint  
-| .svg  | SVG image             
-| .txt  | Text file             
-| .wav  | WAV audio             
-| .xls  | Microsoft Excel       
-| .xlx  | Microsoft Excel       
-| .xml  | XML file              
-| .zip  | ZIP archive           
+| .bmp  | BMP image
+| .css  | CSS stylesheet
+| .csv  | CSV file
+| .doc  | Microsoft Word
+| .docx | Microsoft Word
+| .gif  | GIF image
+| .htm  | HTML file
+| .html | HTML file
+| .ico  | Icon file
+| .jpeg | JPEG image
+| .jpg  | JPEG image
+| .js   | Java script file
+| .json | JSON file
+| .mp3  | MP3 audio
+| .mp4  | MP4 video
+| .pdf  | PDF document
+| .png  | PNG image
+| .ppt  | Microsoft PowerPoint
+| .svg  | SVG image
+| .txt  | Text file
+| .wav  | WAV audio
+| .xls  | Microsoft Excel
+| .xlx  | Microsoft Excel
+| .xml  | XML file
+| .zip  | ZIP archive          
 
 All assets are placed under the "assets" path, which is located within the main directory of the application. This facilitates the organization and access to the necessary resources. It is important to note that the size of embedded resources increases the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, large files should not be delivered as embedded resources. Below is a UML diagram that highlights the architecture of the `AssetManager` and its management of `Assets`:
 
@@ -1042,11 +1043,12 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║  │                               Δ                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
-║  │                      ┌────────┴─────────┐                               ¦   │     ║
-║  │                    * │ <<Interface>>    │ *                             ¦   │     ║
-║  └─────────────────────►│ IResourceContext │◄──────────────────────────────────┘     ║
-║                         ├──────────────────┤                               ¦         ║
-║                         └──────────────────┘                               ¦         ║
+║  │                  ┌────────────┴───────────────┐                         ¦   │     ║
+║  │                * │ <<Interface>>              │ *                       ¦   │     ║
+║  └─────────────────►│ IResourceContext           │◄────────────────────────────┘     ║
+║                     ├────────────────────────────┤                         ¦         ║
+║                     │ Scopes:IEnumerable<IScope> │                         ¦         ║
+║                     └────────────────────────────┘                         ¦         ║
 ║                                                                            ¦         ║
 ║                          ┌────────────────┐                                ¦         ║
 ║                          │ <<Interface>>  │                                ¦         ║
@@ -1084,6 +1086,237 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+
+### Include-Modell
+
+The include model describes the dynamic integration of client-side resources, such as JavaScript and CSS, into the HTML header. In contrast to the `AssetManager`, which provides static content directly, the `IncludeManager` manages references to scripts and stylesheets. It ensures the correct loading order, considers operating modes (debug and release), and handles the consistent registration and deregistration of resources when plugins are loaded or unloaded. In debug mode, JavaScript and CSS files are still delivered individually via the `AssetManager` to provide transparency and traceability during development. In release mode, however, the `IncludeManager` combines the resources for each plugin and provides two additional endpoints through which the minimized and bundled JavaScript and CSS files are delivered. This means it is responsible for efficient delivery, while the technical file serving relies on the existing infrastructure. The following example shows how to implement a JavaScript include:
+
+```csharp
+[Scope<ScopeGeneral>]
+[JavaScript("myscript.js")]
+public sealed class MyJavaScriptInclude : IIncludeJavaScript
+{
+}
+```
+
+To better understand the metadata used in the code above, the following table presents the available attributes and their meanings:
+
+|Attribute       |Type              |Multiplicity |Optional |Description
+|----------------|------------------|-------------|---------|----------------
+|Cache           |-                 |1            |Yes      |Specifies whether the resource is created once and reused with each call.
+|Scope           |`IScope`          |n            |Yes      |The scope of the page.
+|JavaScript      |string            |n            |No       |The file name or path of the JavaScript resource.
+
+Similarly, a CSS include can be defined:
+
+```csharp
+[Scope<ScopeGeneral>]
+[Css("mycss.css")]
+public sealed class MyCssInclude : IIncludeCss
+{
+}
+```
+
+The following table explains the available attributes and their meanings for CSS includes:
+
+|Attribute       |Type              |Multiplicity |Optional |Description
+|----------------|------------------|-------------|---------|----------------
+|Cache           |-                 |1            |Yes      |Specifies whether the resource is created once and reused with each call.
+|Scope           |`IScope`          |n            |Yes      |The scope of the page.
+|Css             |string            |n            |No       |The file name or path of the CSS resource.
+
+The following sequence diagram illustrates the lifecycle of include resources in interaction with the `IncludeManager`. It shows how JavaScript or CSS files are registered and processed.
+
+```
+┌────────┐ ┌────────┐ ┌─────────┐ ┌─────────┐
+│ Web    │ │ HTTP   │ │ Package │ │ Plugin  │
+│ Client │ │ Server │ │ Manager │ │ Manager │              ┌──────────┐
+└────┬───┘ └────┬───┘ └────┬────┘ └────┬────┘              │ MyPlugin │
+     ¦          ¦          ¦           ¦                   │          │
+    ┌─┐        ┌─┐        ┌─┐ Register┌─┐                  └────┬─────┘
+    │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ ├─────────────────────>┌─┐
+    │ │        │ │        │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │        Initialization│ │
+    │ │        │ │        │ │         │ ├─────────────────────>│ │
+    │ │        │ │        │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │                      └─┘
+    │ │        │ │        │ │         │ │     ┌─────────┐
+    │ │        │ │        │ │         │ │     │ App.    │
+    │ │        │ │        │ │         │ │     │ Manager │               ┌───────┐
+    │ │        │ │        │ │         │ │     └────┬────┘               │ MyApp │
+    │ │        │ │        │ │         │ │          ¦                    │       │
+    │ │        │ │        │ │         │ │AddPlugin┌─┐                   └───┬───┘
+    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
+    │ │        │ │        │ │         │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │         │ │        Initialization│ │
+    │ │        │ │        │ │         │ │         │ ├─────────────────────>│ │
+    │ │        │ │        │ │         │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │<--------┤ │                      └─┘
+    │ │        │ │        │ │         │ │         └─┘
+    │ │        │ │        │ │         │ │
+    │ │        │ │        │ │         │ │     ┌──────────┐        ┌─────────┐
+    │ │        │ │        │ │         │ │     │ Endpoint │        │ Include │
+    │ │        │ │        │ │         │ │     │ Manager  │        │ Manager │
+    │ │        │ │        │ │         │ │     └────┬─────┘        └────┬────┘
+    │ │        │ │        │ │         │ │          ¦                   ¦     ┌─────────┐
+    │ │        │ │        │ │         │ │         ┌─┐                 ┌─┐    │ My      │
+    │ │        │ │        │ │         │ │         │ │                 │ │    │ Include │
+    │ │        │ │        │ │         │ │         │ │                 │ │    └────┬────┘
+    │ │        │ │        │ │         │ │         │ │            Create Instacnce ¦
+    │ │        │ │        │ │         │ │         │ │                 │ ├───────>┌─┐
+    │ │        │ │        │ │         │ │         │ │Register         │ │<-------└─┘
+    │ │        │ │        │ │         │ │         │ │<────────────────┤ │
+    │ │        │ │        │ │         │ │         │ ├---------------->│ │
+    │ │        │ │        │ │         │ │         │ │    ┌─────────┐  │ │
+    │ │        │ │        │ │         │ │         │ │    │ Sitemap │  │ │
+    │ │        │ │        │ │         │ │         │ │    │ Manager │  │ │
+    │ │        │ │        │ │         │ │         │ │    └────┬────┘  │ │
+    │ │        │ │        │ │         │ │         │ │         ¦       │ │
+    │ │        │ │        │ │         │ │         │ │        ┌─┐      │ │
+    │ │        │ │        │ │         │ │AddPlugin│ │        │ │      │ │
+    │ │        │ │        │ │         │ ├────────>│ │        │ │      │ │
+    │ │        │ │        │ │         │ │         │ │ Refresh│ │      │ │
+    │ │        │ │        │ │         │ │         │ ├───────>│ │      │ │
+    │ │        │ │        │ │         │ │         │ │<-------┤ │      │ │
+    │ │        │ │        │ │         │ │<--------┤ │        │ │      │ │
+    │ │        │ │        │ │<--------┤ │         │ │        │ │      │ │
+    │ │ Request│ │        │ │         │ │         │ │        │ │      │ │
+    │ ├───────>│ │        │ │         │ │     Search Resource│ │      │ │
+    │ │        │ ├──────────────────────────────────────────>│ │      │ │ ┌────────────┐
+    │ │        │ │<------------------------------------------┤ │      │ │ │ Include    │
+    │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │ Endpoint   │
+    │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
+    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
+    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌─┐
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ Process│ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>│ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
+    │ │        │ │        │ │         │ │         │ │<----------------┤ │      │ │
+    │ │Response│ │<-------------------------------┤ │        │ │      │ │      │ │
+    │ │<-------┤ │        │ │         │ │         │ │        │ │      │ │      │ │
+    └─┘        └─┘        └─┘         └─┘         └─┘        └─┘      └─┘      └─┘
+```
+
+The following class diagram illustrates the architecture of the `IncludeManager` for managing JavaScript and CSS includes. The `IncludeManager` is integrated as a central component in the `IComponentHub` and coordinates the dynamic integration of client-side resources. In debug mode, the actual delivery of individual files is still handled by existing endpoints, such as asset endpoints or resource nodes. Under normal circumstances (release mode), the `IncludeManager` provides its own endpoints that deliver the bundled and minified JavaScript and CSS files.
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║     ┌───────────────────┐                                                            ║
+║     │ <<Interface>>     │                                                            ║
+║     │ IComponentManager │                                                            ║
+║     ├───────────────────┤                                                            ║
+║     └───────────────────┘                                                            ║
+║        Δ            Δ                                                                ║
+║        ¦            └-----------------------------┐                                  ║
+║        ¦                                          ¦                                  ║
+║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
+║        ¦                 * │ <<Interface>>                                 │         ║
+║        ¦             ┌────►│ ISitemapManager                               │         ║
+║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
+║        ¦             │     │ Refresh()                                     │   │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦             │                                                         │     ║
+║        ¦             │   ┌──────────────────────────────────┐                  │     ║
+║        ¦             │   │ <<Interface>>                    │                  │     ║
+║        ¦             │   │ IComponentHub                    │                  │     ║
+║        ¦             │ 1 ├──────────────────────────────────┤                  │     ║
+║        ¦             └───┤ SitemapManager:ISitemapManager   │ 1                │     ║
+║        ¦                 │ IncludeManager:IIncludeManager   ├───┐              │     ║
+║        ¦                 │ …                                │   │              │     ║
+║        ¦                 └──────────────────────────────────┘   │              │     ║
+║        ¦                                       ┌────────────────┘              │     ║
+║        └-----------------┐                     │                               │     ║
+║                          ¦                   1 ▼                               │     ║
+║                ┌─────────┴─────────────────────────────┐                       │     ║
+║                │ <<Interface>>                         │                       │     ║
+║                │ IIncludeManager                       ├-------------------┐   │     ║
+║                ├───────────────────────────────────────┤                   ¦   │     ║
+║                │ AddInclude:Event                      │                   ¦   │     ║
+║                │ RemoveInclude:Event                   │                   ¦   │     ║
+║              1 ├───────────────────────────────────────┤                   ¦   │     ║
+║  ┌─────────────┤ Includes:IEnumerable<IIncludeContext> │                   ¦   │     ║
+║  │             ├───────────────────────────────────────┤                   ¦   │     ║
+║  │             │ GetIncludes(IApplicationContext,Type) │                   ¦   │     ║
+║  │             │  :IEnumerable<IIncludeContext>        │                   ¦   │     ║
+║  │             └───────────────────────────────────────┘                   ¦   │     ║
+║  │                                                                         ¦   │     ║
+║  │                        ┌────────────────┐                               ¦   │     ║
+║  │                        │ <<Interface>>  │                               ¦   │     ║
+║  │                        │ IContext       │                               ¦   │     ║
+║  │                        ├────────────────┤                               ¦   │     ║
+║  │                        └────────────────┘                               ¦   │     ║
+║  │                                Δ                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │            ┌───────────────────┴────────────────────┐                   ¦   │     ║
+║  │            │ <<Interface>>                          │                   ¦   │     ║
+║  │            │ IEndpointContext                       │                   ¦   │     ║
+║  │            ├────────────────────────────────────────┤                   ¦   │     ║
+║  │            │ EndpointId:String                      │                   ¦   │     ║
+║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
+║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
+║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Cache:Bool                             │                   ¦   │     ║
+║  │            │ Route:IRoute                           │                   ¦   │     ║
+║  │            └────────────────────────────────────────┘                   ¦   │     ║
+║  │                                Δ                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │            ┌───────────────────┴────────────────────┐                   ¦   │     ║
+║  │            │ <<Interface>>                          │                   ¦   │     ║
+║  │            │ IIncludeContext                        │                   ¦   │     ║
+║  │            ├────────────────────────────────────────┤                   ¦   │     ║
+║  │            │ IncludeType:Type                       │                   ¦   │     ║
+║  │            │ Scopes:IEnumerable<IScope>             │                   ¦   │     ║
+║  │            └────────────────────────────────────────┘                   ¦   │     ║
+║  │                               Δ                                         ¦   │     ║
+║  │                               ¦                                         ¦   │     ║
+║  │                               ¦                                         ¦   │     ║
+║  │                      ┌────────┴────────┐                                ¦   │     ║
+║  │                    * │ <<Interface>>   │ *                              ¦   │     ║
+║  └─────────────────────►│ IIncludeContext │◄───────────────────────────────────┘     ║
+║                         ├─────────────────┤                                ¦         ║
+║                         └─────────────────┘                                ¦         ║
+║                                                                            ¦         ║
+║                         ┌────────────────┐                                 ¦         ║
+║                         │ <<Interface>>  │                                 ¦         ║
+║                         │ IComponent     │                                 ¦         ║
+║                         ├────────────────┤                                 ¦         ║
+║                         └────────────────┘                                 ¦         ║
+║                                 Δ                                          ¦         ║
+║                                 ¦                                          ¦         ║
+║                                 ¦                                          ¦         ║
+║                         ┌───────┴────────┐                                 ¦         ║
+║                         │ <<Interface>>  │                                 ¦         ║
+║                         │ IEndpoint      │                                 ¦         ║
+║                         ├────────────────┤                                 ¦         ║
+║                         └────────────────┘                                 ¦         ║
+║                                 Δ                                          ¦         ║
+║                                 ¦                                          ¦         ║
+║               ┌-----------------┴------------------┐                       ¦         ║
+║               ¦                                    ¦                       ¦         ║
+║               ¦                      ┌─────────────┴─────────────┐  create ¦         ║
+║               ¦                      │ JavaScriptIncludeEndpoint │◄--------┤         ║
+║               ¦                      ├───────────────────────────┤         ¦         ║
+║               ¦                      │                           │         ¦         ║
+║               ¦                      └───────────────────────────┘         ¦         ║
+║               ¦                                                            ¦         ║
+║     ┌─────────┴──────────┐                                          create ¦         ║
+║     │ CssIncludeEndpoint │◄------------------------------------------------┘         ║
+║     ├────────────────────┤                                                           ║
+║     │                    │                                                           ║
+║     └────────────────────┘                                                           ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
 
 ### Page model
 Pages are a fundamental component of web applications, serving as the primary interface through which users interact with the content and functionalities provided by the application. Pages can contain a variety of elements, including text, images, videos, forms, and interactive components, all designed to enhance the user experience. When a plugin is loaded, pages marked as page are automatically identified and included in the sitemap. This process ensures that all relevant pages are easily accessible and properly indexed. Pages are virtual constructs, implemented through specific derivations such as HTML documents, dynamic web pages, or single-page applications (SPAs). The following example demonstrates the implementation of a page:
