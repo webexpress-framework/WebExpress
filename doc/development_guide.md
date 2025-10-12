@@ -1089,41 +1089,24 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 
 ### Include-Modell
 
-The include model describes the dynamic integration of client-side resources, such as JavaScript and CSS, into the HTML header. In contrast to the `AssetManager`, which provides static content directly, the `IncludeManager` manages references to scripts and stylesheets. It ensures the correct loading order, considers operating modes (debug and release), and handles the consistent registration and deregistration of resources when plugins are loaded or unloaded. In debug mode, JavaScript and CSS files are still delivered individually via the `AssetManager` to provide transparency and traceability during development. In release mode, however, the `IncludeManager` combines the resources for each plugin and provides two additional endpoints through which the minimized and bundled JavaScript and CSS files are delivered. This means it is responsible for efficient delivery, while the technical file serving relies on the existing infrastructure. The following example shows how to implement a JavaScript include:
+The include model describes the dynamic integration of client-side resources, such as JavaScript and CSS, into the HTML header. In contrast to the `AssetManager`, which provides static content directly, the `IncludeManager` manages references to scripts and stylesheets. It ensures the correct loading order, considers operating modes (debug and release), and handles the consistent registration and deregistration of resources when plugins are loaded or unloaded. In debug mode, JavaScript and CSS files are still delivered individually via the `AssetManager` to provide transparency and traceability during development. In release mode, however, the `IncludeManager` combines the resources for each plugin and provides two additional endpoints through which the minimized and bundled JavaScript and CSS files are delivered. This means it is responsible for efficient delivery, while the technical file serving relies on the existing infrastructure. The following example shows how to implement a JavaScript and a style sheet  include:
 
 ```csharp
 [Scope<ScopeGeneral>]
-[JavaScript("myscript.js")]
-public sealed class MyJavaScriptInclude : IIncludeJavaScript
+[Asset("myscript.js")]
+[Asset("mycss.css")]
+public sealed class MyInclude : IInclude
 {
 }
 ```
 
 To better understand the metadata used in the code above, the following table presents the available attributes and their meanings:
 
-|Attribute       |Type              |Multiplicity |Optional |Description
-|----------------|------------------|-------------|---------|----------------
-|Cache           |-                 |1            |Yes      |Specifies whether the resource is created once and reused with each call.
-|Scope           |`IScope`          |n            |Yes      |The scope of the page.
-|JavaScript      |string            |n            |No       |The file name or path of the JavaScript resource.
-
-Similarly, a CSS include can be defined:
-
-```csharp
-[Scope<ScopeGeneral>]
-[Css("mycss.css")]
-public sealed class MyCssInclude : IIncludeCss
-{
-}
-```
-
-The following table explains the available attributes and their meanings for CSS includes:
-
-|Attribute       |Type              |Multiplicity |Optional |Description
-|----------------|------------------|-------------|---------|----------------
-|Cache           |-                 |1            |Yes      |Specifies whether the resource is created once and reused with each call.
-|Scope           |`IScope`          |n            |Yes      |The scope of the page.
-|Css             |string            |n            |No       |The file name or path of the CSS resource.
+|Attribute |Type              |Multiplicity |Optional |Description
+|----------|------------------|-------------|---------|----------------
+|Cache     |Bool              |1            |Yes      |Specifies whether the resource is created once and reused with each call.
+|Scope     |`IScope`          |n            |Yes      |The scope of the page.
+|Asset     |String            |n            |No       |The file name or path of the JavaScript or StyleSheet resource.
 
 The following sequence diagram illustrates the lifecycle of include resources in interaction with the `IncludeManager`. It shows how JavaScript or CSS files are registered and processed.
 
