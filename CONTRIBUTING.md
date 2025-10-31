@@ -1,4 +1,4 @@
-![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
+![WebExpress-Framework](https://raw.githubusercontent.com/webexpress-framework/.github/main/docs/assets/img/banner.png)
 
 # Contributing to WebExpress
 First of all, thank you for considering contributing to `WebExpress`! We appreciate your support and efforts in 

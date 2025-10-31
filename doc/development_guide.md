@@ -1,19 +1,16 @@
-![WebExpress](https://raw.githubusercontent.com/ReneSchwarzer/WebExpress.Doc/main/assets/banner.png)
+![WebExpress-Framework](https://raw.githubusercontent.com/webexpress-framework/.github/main/docs/assets/img/banner.png)
 
 # WebExpress
 `WebExpress` is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, `WebExpress` has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .Net language (e.g. C#).
 
 # License
-The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/ReneSchwarzer/WebExpress. `WebExpress` is based on components that are available as open source:
+The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/webexpress-framework/WebExpress. `WebExpress` is based on components that are available as open source:
 
 - https://github.com/dotnet/core (MIT)
 - https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
-- https://jquery.com/ (MIT)
-- https://summernote.org/ (MIT)
+- https://fontawesome.com/ (CC BY 4.0 and MIT)
 - https://popper.js.org/ (MIT)
-- https://github.com/kurtobando/simple-tags (MIT)
-- https://github.com/uxsolutions/bootstrap-datepicker (Apache 2.0)
 
 ```
 The MIT License (MIT)
@@ -139,6 +136,7 @@ The components of `WebExpress` and its applications are centrally managed in the
 |StatusPageManager           |Represent HTML pages that are returned with a StatusCode other than 200.
 |AssetManager                |Assets like static java script files are delivered by `WebExpress`.
 |ResourceManager             |Resources are contents that are delivered by `WebExpress`. These include, for example, websites that consist of HTML source code, arbitrary files (e.g. css, JavaScript, images) and REST interfaces, which are mainly used for communication via HTTP(S) with (other) systems.
+|IncludeManager              |Manages the dynamic integration of JavaScript and CSS files into the HTML header. In release mode, the files are delivered bundled and minified.
 |ThemeManager                |Provides color and layout schemes for customizing applications.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
 |SitemapManager              |Manages the structure of the website, including navigation between different pages.
@@ -146,7 +144,7 @@ The components of `WebExpress` and its applications are centrally managed in the
 |SessionManager              |Responsible for storing session data generated during the user session.
 |TaskManager                 |Management of ad-hoc tasks.
 |IdentityManager             |Users or technical objects that are used for identity and access management.
-|SettingPageManager          |Manages the settings of the application.    
+|SettingPageManager          |Manages the settings of the application.
 
 In addition, you can create your own components and register them in the `ComponentHub`. The following UML diagram illustrates the relationships and internal structure of the `ComponentManager` and the components it manages:
 
@@ -747,11 +745,13 @@ Parameters can be transferred to the endpoint to be executed in a URI or through
 ### Asset model
 `WebExpress` provides automatically generated endpoints, which are made available to the client application. Assets in this context are static resources such as JavaScript files, CSS files, icons, and other files necessary for the presentation and functionality of the application.
 
-To include additional resources such as CSS files in the project, they can be embedded directly within the project configuration. An example of how to include a CSS file as an embedded resource is shown below:
+To include additional resources such as CSS files in the project, they can be embedded directly within the project configuration. An example of how to include asset files as an embedded resource is shown below:
 
 ```xml
 <ItemGroup>
-    <EmbeddedResource Include="Assets/MyCss.css" />
+	<EmbeddedResource Include="Assets/**/*.*">
+		<LogicalName>$(MSBuildProjectName).Assets.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+	</EmbeddedResource>
 </ItemGroup>
 ```
 
@@ -759,33 +759,33 @@ Assets embedded in each plugin are converted into endpoints by the `AssetManager
 
 The following asset types are supported by the `WebExpress` system: 
 
-| Type  | Description           
+| Type  | Description
 |-------|-----------------------
-| .bmp  | BMP image             
-| .css  | CSS stylesheet        
-| .csv  | CSV file               
-| .doc  | Microsoft Word    
-| .docx | Microsoft Word    
-| .gif  | GIF image             
-| .htm  | HTML file             
-| .html | HTML file             
-| .ico  | Icon file             
-| .jpeg | JPEG image            
-| .jpg  | JPEG image      
-| .js   | Java script file     
-| .json | JSON file             
-| .mp3  | MP3 audio             
-| .mp4  | MP4 video             
-| .pdf  | PDF document          
-| .png  | PNG image             
-| .ppt  | Microsoft PowerPoint  
-| .svg  | SVG image             
-| .txt  | Text file             
-| .wav  | WAV audio             
-| .xls  | Microsoft Excel       
-| .xlx  | Microsoft Excel       
-| .xml  | XML file              
-| .zip  | ZIP archive           
+| .bmp  | BMP image
+| .css  | CSS stylesheet
+| .csv  | CSV file
+| .doc  | Microsoft Word
+| .docx | Microsoft Word
+| .gif  | GIF image
+| .htm  | HTML file
+| .html | HTML file
+| .ico  | Icon file
+| .jpeg | JPEG image
+| .jpg  | JPEG image
+| .js   | Java script file
+| .json | JSON file
+| .mp3  | MP3 audio
+| .mp4  | MP4 video
+| .pdf  | PDF document
+| .png  | PNG image
+| .ppt  | Microsoft PowerPoint
+| .svg  | SVG image
+| .txt  | Text file
+| .wav  | WAV audio
+| .xls  | Microsoft Excel
+| .xlx  | Microsoft Excel
+| .xml  | XML file
+| .zip  | ZIP archive          
 
 All assets are placed under the "assets" path, which is located within the main directory of the application. This facilitates the organization and access to the necessary resources. It is important to note that the size of embedded resources increases the size of the plugin, which can lead to longer load times and higher memory consumption. Therefore, large files should not be delivered as embedded resources. Below is a UML diagram that highlights the architecture of the `AssetManager` and its management of `Assets`:
 
@@ -879,8 +879,8 @@ Resources are typically assets that can come in various forms, such as images, v
 
 ```csharp
 [Segment("E")]
-[Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
-[Authorization(Permission.R, IdentityRoleDefault.Everyone)]
+[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
+[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
 public sealed class MyResource : IResource
 {
 }
@@ -894,7 +894,7 @@ To provide clarity about the metadata specified in the code above, the following
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
+|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
@@ -907,9 +907,9 @@ A cached resource is created on the first call and persists until the associated
 │ Client │ │ Server │ │ Manager │ │ Manager │              ┌──────────┐
 └────┬───┘ └────┬───┘ └────┬────┘ └────┬────┘              │ MyPlugin │
      ¦          ¦          ¦           ¦                   │          │
-    ┌─┐        ┌─┐        ┌─┐ Register┌─┐                  └────┬─────┘
+    ┌┴┐        ┌┴┐        ┌┴┐ Register┌┴┐                  └────┬─────┘
     │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
-    │ │        │ │        │ │         │ ├─────────────────────>┌─┐
+    │ │        │ │        │ │         │ ├─────────────────────>┌┴┐
     │ │        │ │        │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │        Initialization│ │
     │ │        │ │        │ │         │ ├─────────────────────>│ │
@@ -920,9 +920,9 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │        │ │         │ │     │ Manager │               ┌───────┐
     │ │        │ │        │ │         │ │     └────┬────┘               │ MyApp │
     │ │        │ │        │ │         │ │          ¦                    │       │
-    │ │        │ │        │ │         │ │AddPlugin┌─┐                   └───┬───┘
+    │ │        │ │        │ │         │ │AddPlugin┌┴┐                   └───┬───┘
     │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
-    │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
+    │ │        │ │        │ │         │ │         │ ├─────────────────────>┌┴┐
     │ │        │ │        │ │         │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │         │ │        Initialization│ │
     │ │        │ │        │ │         │ │         │ ├─────────────────────>│ │
@@ -935,7 +935,7 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │        │ │         │ │     │ Manager  │        │ Manager  │
     │ │        │ │        │ │         │ │     └────┬─────┘        └────┬─────┘
     │ │        │ │        │ │         │ │          ¦                   ¦
-    │ │        │ │        │ │         │ │         ┌─┐Register         ┌─┐
+    │ │        │ │        │ │         │ │         ┌┴┐Register         ┌┴┐
     │ │        │ │        │ │         │ │         │ │<────────────────┤ │
     │ │        │ │        │ │         │ │         │ ├---------------->│ │
     │ │        │ │        │ │         │ │         │ │                 │ │
@@ -946,7 +946,7 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │        │ │         │ │         │ │    │ Manager │  │ │
     │ │        │ │        │ │         │ │         │ │    └────┬────┘  │ │
     │ │        │ │        │ │         │ │         │ │         ¦       │ │
-    │ │        │ │        │ │         │ │         │ │        ┌─┐      │ │
+    │ │        │ │        │ │         │ │         │ │        ┌┴┐      │ │
     │ │        │ │        │ │         │ │AddPlugin│ │        │ │      │ │
     │ │        │ │        │ │         │ ├────────>│ │        │ │      │ │
     │ │        │ │        │ │         │ │         │ │ Refresh│ │      │ │
@@ -961,7 +961,7 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │            │
     │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
     │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
-    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌─┐
+    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌┴┐
     │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
     │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
     │ │        │ │        │ │         │ │         │ │        │ │      │ Process│ │
@@ -1043,11 +1043,12 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║  │                               Δ                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
 ║  │                               ¦                                         ¦   │     ║
-║  │                      ┌────────┴─────────┐                               ¦   │     ║
-║  │                    * │ <<Interface>>    │ *                             ¦   │     ║
-║  └─────────────────────►│ IResourceContext │◄──────────────────────────────────┘     ║
-║                         ├──────────────────┤                               ¦         ║
-║                         └──────────────────┘                               ¦         ║
+║  │                  ┌────────────┴───────────────┐                         ¦   │     ║
+║  │                * │ <<Interface>>              │ *                       ¦   │     ║
+║  └─────────────────►│ IResourceContext           │◄────────────────────────────┘     ║
+║                     ├────────────────────────────┤                         ¦         ║
+║                     │ Scopes:IEnumerable<IScope> │                         ¦         ║
+║                     └────────────────────────────┘                         ¦         ║
 ║                                                                            ¦         ║
 ║                          ┌────────────────┐                                ¦         ║
 ║                          │ <<Interface>>  │                                ¦         ║
@@ -1086,14 +1087,228 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+### Include-Modell
+
+The include model describes the dynamic integration of client-side resources, such as JavaScript and CSS, into the HTML header. In contrast to the `AssetManager`, which provides static content directly, the `IncludeManager` manages references to scripts and stylesheets. It ensures the correct loading order, considers operating modes (debug and release), and handles the consistent registration and deregistration of resources when plugins are loaded or unloaded. In debug mode, JavaScript and CSS files are still delivered individually via the `AssetManager` to provide transparency and traceability during development. In release mode, however, the `IncludeManager` combines the resources for each plugin and provides two additional endpoints through which the minimized and bundled JavaScript and CSS files are delivered. This means it is responsible for efficient delivery, while the technical file serving relies on the existing infrastructure. The following example shows how to implement a JavaScript and a style sheet  include:
+
+```csharp
+[Scope<ScopeGeneral>]
+[Asset("myscript.js")]
+[Asset("mycss.css")]
+public sealed class MyInclude : IInclude
+{
+}
+```
+
+To better understand the metadata used in the code above, the following table presents the available attributes and their meanings:
+
+|Attribute |Type              |Multiplicity |Optional |Description
+|----------|------------------|-------------|---------|----------------
+|Cache     |Bool              |1            |Yes      |Specifies whether the resource is created once and reused with each call.
+|Scope     |`IScope`          |n            |Yes      |The scope of the page.
+|Asset     |String            |n            |No       |The file name or path of the JavaScript or StyleSheet resource.
+
+The following sequence diagram illustrates the lifecycle of include resources in interaction with the `IncludeManager`. It shows how JavaScript or CSS files are registered and processed.
+
+```
+┌────────┐ ┌────────┐ ┌─────────┐ ┌─────────┐
+│ Web    │ │ HTTP   │ │ Package │ │ Plugin  │
+│ Client │ │ Server │ │ Manager │ │ Manager │              ┌──────────┐
+└────┬───┘ └────┬───┘ └────┬────┘ └────┬────┘              │ MyPlugin │
+     ¦          ¦          ¦           ¦                   │          │
+    ┌─┐        ┌─┐        ┌─┐ Register┌─┐                  └────┬─────┘
+    │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ ├─────────────────────>┌─┐
+    │ │        │ │        │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │        Initialization│ │
+    │ │        │ │        │ │         │ ├─────────────────────>│ │
+    │ │        │ │        │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │                      └─┘
+    │ │        │ │        │ │         │ │     ┌─────────┐
+    │ │        │ │        │ │         │ │     │ App.    │
+    │ │        │ │        │ │         │ │     │ Manager │               ┌───────┐
+    │ │        │ │        │ │         │ │     └────┬────┘               │ MyApp │
+    │ │        │ │        │ │         │ │          ¦                    │       │
+    │ │        │ │        │ │         │ │AddPlugin┌─┐                   └───┬───┘
+    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
+    │ │        │ │        │ │         │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │         │ │        Initialization│ │
+    │ │        │ │        │ │         │ │         │ ├─────────────────────>│ │
+    │ │        │ │        │ │         │ │         │ │<---------------------┤ │
+    │ │        │ │        │ │         │ │<--------┤ │                      └─┘
+    │ │        │ │        │ │         │ │         └─┘
+    │ │        │ │        │ │         │ │
+    │ │        │ │        │ │         │ │     ┌──────────┐        ┌─────────┐
+    │ │        │ │        │ │         │ │     │ Endpoint │        │ Include │
+    │ │        │ │        │ │         │ │     │ Manager  │        │ Manager │
+    │ │        │ │        │ │         │ │     └────┬─────┘        └────┬────┘
+    │ │        │ │        │ │         │ │          ¦                   ¦     ┌─────────┐
+    │ │        │ │        │ │         │ │         ┌─┐                 ┌─┐    │ My      │
+    │ │        │ │        │ │         │ │         │ │                 │ │    │ Include │
+    │ │        │ │        │ │         │ │         │ │                 │ │    └────┬────┘
+    │ │        │ │        │ │         │ │         │ │            Create Instacnce ¦
+    │ │        │ │        │ │         │ │         │ │                 │ ├───────>┌─┐
+    │ │        │ │        │ │         │ │         │ │Register         │ │<-------└─┘
+    │ │        │ │        │ │         │ │         │ │<────────────────┤ │
+    │ │        │ │        │ │         │ │         │ ├---------------->│ │
+    │ │        │ │        │ │         │ │         │ │    ┌─────────┐  │ │
+    │ │        │ │        │ │         │ │         │ │    │ Sitemap │  │ │
+    │ │        │ │        │ │         │ │         │ │    │ Manager │  │ │
+    │ │        │ │        │ │         │ │         │ │    └────┬────┘  │ │
+    │ │        │ │        │ │         │ │         │ │         ¦       │ │
+    │ │        │ │        │ │         │ │         │ │        ┌─┐      │ │
+    │ │        │ │        │ │         │ │AddPlugin│ │        │ │      │ │
+    │ │        │ │        │ │         │ ├────────>│ │        │ │      │ │
+    │ │        │ │        │ │         │ │         │ │ Refresh│ │      │ │
+    │ │        │ │        │ │         │ │         │ ├───────>│ │      │ │
+    │ │        │ │        │ │         │ │         │ │<-------┤ │      │ │
+    │ │        │ │        │ │         │ │<--------┤ │        │ │      │ │
+    │ │        │ │        │ │<--------┤ │         │ │        │ │      │ │
+    │ │ Request│ │        │ │         │ │         │ │        │ │      │ │
+    │ ├───────>│ │        │ │         │ │     Search Resource│ │      │ │
+    │ │        │ ├──────────────────────────────────────────>│ │      │ │ ┌────────────┐
+    │ │        │ │<------------------------------------------┤ │      │ │ │ Include    │
+    │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │ Endpoint   │
+    │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
+    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
+    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌─┐
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ Process│ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>│ │
+    │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
+    │ │        │ │        │ │         │ │         │ │<----------------┤ │      │ │
+    │ │Response│ │<-------------------------------┤ │        │ │      │ │      │ │
+    │ │<-------┤ │        │ │         │ │         │ │        │ │      │ │      │ │
+    └─┘        └─┘        └─┘         └─┘         └─┘        └─┘      └─┘      └─┘
+```
+
+The following class diagram illustrates the architecture of the `IncludeManager` for managing JavaScript and CSS includes. The `IncludeManager` is integrated as a central component in the `IComponentHub` and coordinates the dynamic integration of client-side resources. In debug mode, the actual delivery of individual files is still handled by existing endpoints, such as asset endpoints or resource nodes. Under normal circumstances (release mode), the `IncludeManager` provides its own endpoints that deliver the bundled and minified JavaScript and CSS files.
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║     ┌───────────────────┐                                                            ║
+║     │ <<Interface>>     │                                                            ║
+║     │ IComponentManager │                                                            ║
+║     ├───────────────────┤                                                            ║
+║     └───────────────────┘                                                            ║
+║        Δ            Δ                                                                ║
+║        ¦            └-----------------------------┐                                  ║
+║        ¦                                          ¦                                  ║
+║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
+║        ¦                 * │ <<Interface>>                                 │         ║
+║        ¦             ┌────►│ ISitemapManager                               │         ║
+║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
+║        ¦             │     │ Refresh()                                     │   │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦             │                                                         │     ║
+║        ¦             │   ┌──────────────────────────────────┐                  │     ║
+║        ¦             │   │ <<Interface>>                    │                  │     ║
+║        ¦             │   │ IComponentHub                    │                  │     ║
+║        ¦             │ 1 ├──────────────────────────────────┤                  │     ║
+║        ¦             └───┤ SitemapManager:ISitemapManager   │ 1                │     ║
+║        ¦                 │ IncludeManager:IIncludeManager   ├───┐              │     ║
+║        ¦                 │ …                                │   │              │     ║
+║        ¦                 └──────────────────────────────────┘   │              │     ║
+║        ¦                                       ┌────────────────┘              │     ║
+║        └-----------------┐                     │                               │     ║
+║                          ¦                   1 ▼                               │     ║
+║                ┌─────────┴──────────────────────────────┐                      │     ║
+║                │ <<Interface>>                          │                      │     ║
+║                │ IIncludeManager                        ├------------------┐   │     ║
+║                ├────────────────────────────────────────┤                  ¦   │     ║
+║                │ AddInclude:Event                       │                  ¦   │     ║
+║                │ RemoveInclude:Event                    │                  ¦   │     ║
+║              1 ├────────────────────────────────────────┤                  ¦   │     ║
+║  ┌─────────────┤ Includes:IEnumerable<IIncludeContext>  │                  ¦   │     ║
+║  │             ├────────────────────────────────────────┤                  ¦   │     ║
+║  │             │ GetIncludes(IApplicationContext,Type): │                  ¦   │     ║
+║  │             │   IEnumerable<IIncludeContext>         │                  ¦   │     ║
+║  │             └────────────────────────────────────────┘                  ¦   │     ║
+║  │                                                                         ¦   │     ║
+║  │                        ┌────────────────┐                               ¦   │     ║
+║  │                        │ <<Interface>>  │                               ¦   │     ║
+║  │                        │ IContext       │                               ¦   │     ║
+║  │                        ├────────────────┤                               ¦   │     ║
+║  │                        └────────────────┘                               ¦   │     ║
+║  │                                Δ                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │            ┌───────────────────┴────────────────────┐                   ¦   │     ║
+║  │            │ <<Interface>>                          │                   ¦   │     ║
+║  │            │ IEndpointContext                       │                   ¦   │     ║
+║  │            ├────────────────────────────────────────┤                   ¦   │     ║
+║  │            │ EndpointId:String                      │                   ¦   │     ║
+║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
+║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
+║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Cache:Bool                             │                   ¦   │     ║
+║  │            │ Route:IRoute                           │                   ¦   │     ║
+║  │            └────────────────────────────────────────┘                   ¦   │     ║
+║  │                                Δ                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │                                ¦                                        ¦   │     ║
+║  │            ┌───────────────────┴────────────────────┐                   ¦   │     ║
+║  │            │ <<Interface>>                          │                   ¦   │     ║
+║  │            │ IIncludeContext                        │                   ¦   │     ║
+║  │            ├────────────────────────────────────────┤                   ¦   │     ║
+║  │            │ IncludeType:Type                       │                   ¦   │     ║
+║  │            │ Scopes:IEnumerable<IScope>             │                   ¦   │     ║
+║  │            └────────────────────────────────────────┘                   ¦   │     ║
+║  │                               Δ                                         ¦   │     ║
+║  │                               ¦                                         ¦   │     ║
+║  │                               ¦                                         ¦   │     ║
+║  │                      ┌────────┴────────┐                                ¦   │     ║
+║  │                    * │ <<Interface>>   │ *                              ¦   │     ║
+║  └─────────────────────►│ IIncludeContext │◄───────────────────────────────────┘     ║
+║                         ├─────────────────┤                                ¦         ║
+║                         └─────────────────┘                                ¦         ║
+║                                                                            ¦         ║
+║                         ┌────────────────┐                                 ¦         ║
+║                         │ <<Interface>>  │                                 ¦         ║
+║                         │ IComponent     │                                 ¦         ║
+║                         ├────────────────┤                                 ¦         ║
+║                         └────────────────┘                                 ¦         ║
+║                                 Δ                                          ¦         ║
+║                                 ¦                                          ¦         ║
+║                                 ¦                                          ¦         ║
+║                         ┌───────┴────────┐                                 ¦         ║
+║                         │ <<Interface>>  │                                 ¦         ║
+║                         │ IEndpoint      │                                 ¦         ║
+║                         ├────────────────┤                                 ¦         ║
+║                         └────────────────┘                                 ¦         ║
+║                                 Δ                                          ¦         ║
+║                                 ¦                                          ¦         ║
+║               ┌-----------------┴------------------┐                       ¦         ║
+║               ¦                                    ¦                       ¦         ║
+║               ¦                      ┌─────────────┴─────────────┐  create ¦         ║
+║               ¦                      │ JavaScriptIncludeEndpoint │◄--------┤         ║
+║               ¦                      ├───────────────────────────┤         ¦         ║
+║               ¦                      │                           │         ¦         ║
+║               ¦                      └───────────────────────────┘         ¦         ║
+║               ¦                                                            ¦         ║
+║     ┌─────────┴──────────┐                                          create ¦         ║
+║     │ CssIncludeEndpoint │◄------------------------------------------------┘         ║
+║     ├────────────────────┤                                                           ║
+║     │                    │                                                           ║
+║     └────────────────────┘                                                           ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+
 ### Page model
 Pages are a fundamental component of web applications, serving as the primary interface through which users interact with the content and functionalities provided by the application. Pages can contain a variety of elements, including text, images, videos, forms, and interactive components, all designed to enhance the user experience. When a plugin is loaded, pages marked as page are automatically identified and included in the sitemap. This process ensures that all relevant pages are easily accessible and properly indexed. Pages are virtual constructs, implemented through specific derivations such as HTML documents, dynamic web pages, or single-page applications (SPAs). The following example demonstrates the implementation of a page:
 
 ```csharp
 [Title("my page")]
 [Scope<ScopeGeneral>]
-[Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
-[Authorization(Permission.R, IdentityRoleDefault.Everyone)]
+[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
+[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
 public sealed class MyPage : IPage
 {
     public void Process(IRenderContext renderContext, VisualTree visualTree)
@@ -1114,7 +1329,7 @@ To clearly illustrate the metadata described in the code above, the table below 
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Scope           |`IScope`          |n            |Yes      |The scope of the page.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
+|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 
@@ -1193,6 +1408,7 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║   │              * │ <<Interface>>                  │ *               ¦         │    ║
 ║   └───────────────►│ IPageContext                   │◄──────────────────────────┘    ║
 ║                    ├────────────────────────────────┤                 ¦              ║
+║                    │ PageIcon:IIcon                 │                 ¦              ║
 ║                    │ PageTitle:String               │                 ¦              ║
 ║                    │ Scopes:IEnumerable<String>     │                 ¦              ║
 ║                    └────────────────────────────────┘                 ¦              ║
@@ -1431,7 +1647,8 @@ Setting page templates are utilized to manage and configure web applications. Ea
 ║   │      │ ISettingPageContext              │  │    │ Description:String      │ ¦    ║
 ║   │      ├──────────────────────────────────┤  │    │ Section:SettingSection  │ ¦    ║
 ║   │      │ Hide:Bool                        │  │    └─────────────────────────┘ ¦    ║
-║   │      │ Icon:PropertyIcon                │ 1│                                ¦    ║
+║   │      │ PageIcon:IIcon                   │  │                                ¦    ║
+║   │      │ PageTitle:String                 │ 1│                                ¦    ║
 ║   │      │ Category:ISettingCategoryContext ├──┘       ┌──────────────────┐     ¦    ║
 ║   │   ┌──┤ Group:ISettingGroupContext       │ 1      1 │ <<Enumeration>>  │     ¦    ║
 ║   │   │  │ Section:SettingSection           ├─────────►│ SettingSection   │     ¦    ║
@@ -1562,7 +1779,7 @@ One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, De
   │ Client  │         │ Server  │         │ Rest    │         │ API     │
   └────┬────┘         └────┬────┘         └────┬────┘         └────┬────┘
        ¦                   ¦                   ¦                   ¦
-      ┌─┐     POST Request┌─┐                 ┌─┐                 ┌─┐
+      ┌┴┐     POST Request┌┴┐                 ┌┴┐                 ┌┴┐
 create│ ├────────────────>│ │          Process│ │                 │ │
       │ │                 │ ├────────────────>│ │       CreateData│ │
       │ │                 │ │                 │ ├────────────────>│ │
@@ -1571,9 +1788,9 @@ create│ ├────────────────>│ │          P
       │ │                 │ │                 │ │<----------------│ │
       │ │Response (201)   │ │<----------------│ │                 │ │
       │ │<----------------│ │                 │ │                 │ │
-      └─┘                 └─┘                 └─┘                 └─┘
+      └┬┘                 └┬┘                 └┬┘                 └┬┘
        ¦                   ¦                   ¦                   ¦ 
-      ┌─┐      GET Request┌─┐                 ┌─┐                 ┌─┐
+      ┌┴┐      GET Request┌┴┐                 ┌┴┐                 ┌┴┐
   read│ ├────────────────>│ │          Process│ │                 │ │
       │ │                 │ ├────────────────>│ │          GetData│ │
       │ │                 │ │                 │ ├────────────────>│ │
@@ -1582,9 +1799,9 @@ create│ ├────────────────>│ │          P
       │ │                 │ │                 │ │<----------------│ │
       │ │Response (200)   │ │<----------------│ │                 │ │
       │ │<----------------│ │                 │ │                 │ │
-      └─┘                 └─┘                 └─┘                 └─┘
+      └┬┘                 └┬┘                 └┬┘                 └┬┘
        ¦                   ¦                   ¦                   ¦ 
-      ┌─┐    PATCH Request┌─┐                 ┌─┐                 ┌─┐
+      ┌┴┐    PATCH Request┌┴┐                 ┌┴┐                 ┌┴┐
 update│ ├────────────────>│ │          Process│ │                 │ │
       │ │                 │ ├────────────────>│ │       UpdateData│ │
       │ │                 │ │                 │ ├────────────────>│ │
@@ -1593,9 +1810,9 @@ update│ ├────────────────>│ │          P
       │ │                 │ │                 │ │<----------------│ │
       │ │Response (200)   │ │<----------------│ │                 │ │
       │ │<----------------│ │                 │ │                 │ │
-      └─┘                 └─┘                 └─┘                 └─┘
+      └┬┘                 └┬┘                 └┬┘                 └┬┘
        ¦                   ¦                   ¦                   ¦ 
-      ┌─┐   DELETE Request┌─┐                 ┌─┐                 ┌─┐
+      ┌┴┐   DELETE Request┌┴┐                 ┌┴┐                 ┌┴┐
 delete│ ├────────────────>│ │          Process│ │                 │ │
       │ │                 │ ├────────────────>│ │       DeleteData│ │
       │ │                 │ │                 │ ├────────────────>│ │
@@ -1622,14 +1839,14 @@ The following code selection contains an example class called `MyRestApi` that i
 [Method(CrudMethod.POST)]
 [Method(CrudMethod.GET)]
 [Version(1)]
-[Authorization(Permission.RWX, IdentityRoleDefault.SystemAdministrator)]
-[Authorization(Permission.R, IdentityRoleDefault.Everyone)]
+[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
+[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
 public sealed class MyRestApi : IRestApi
 {
-    public void CreateData(Request request) {…}
-    public object GetData(Request request) {…}
-    public void UpdateData(Request request) {…}
-    public void DeleteData(Request request) {…}
+    public Response CreateData(Request request) {…}
+    public Response GetData(Request request) {…}
+    public Response UpdateData(Request request) {…}
+    public Response DeleteData(Request request) {…}
 }
 ```
 
@@ -1641,7 +1858,7 @@ This class uses various attributes to define the CRUD (Create, Read, Update, Del
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |Method          |GrudMethod        |n            |Yes      |The method attribute defines which CRUD operations (Create, Read, Update, Delete) can be executed.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a role (specifying the id) (see section notification model).
+|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 
@@ -1736,35 +1953,35 @@ The following diagram outlines how the class structure and interactions for the 
 ║                                    ¦                │ POST             │  ¦          ║
 ║                            ┌───────┴────────┐       │ GET              │  ¦          ║
 ║                            │ <<Interface>>  │       │ PATCH            │  ¦          ║
-║                            │ IEndpoint      │       │ DELETE           │  ¦          ║
-║                            ├────────────────┤       └──────────────────┘  ¦          ║
-║                            └────────────────┘                             ¦          ║
+║                            │ IEndpoint      │       │ PUT              │  ¦          ║
+║                            ├────────────────┤       │ DELETE           │  ¦          ║
+║                            └────────────────┘       └──────────────────┘  ¦          ║
 ║                                    Δ                                      ¦          ║
 ║                                    ¦                                      ¦          ║
 ║                                    ¦                                      ¦          ║
-║                     ┌──────────────┴──────────────┐                       ¦          ║
-║                     │ <<Interface>>               │                       ¦          ║
-║                     │ IRestApi                    │                       ¦          ║
-║                     ├─────────────────────────────┤                       ¦          ║
-║                     │ CreateData(Request)         │                       ¦          ║
-║                     │ GetData(Request):Object     │                       ¦          ║
-║                     │ UpdateData(Request)         │                       ¦          ║
-║                     │ DeleteData(Request)         │                       ¦          ║
-║                     └─────────────────────────────┘                       ¦          ║
+║                     ┌──────────────┴───────────────┐                      ¦          ║
+║                     │ <<Interface>>                │                      ¦          ║
+║                     │ IRestApi                     │                      ¦          ║
+║                     ├──────────────────────────────┤                      ¦          ║
+║                     │ CreateData(Request):Response │                      ¦          ║
+║                     │ GetData(Request):Response    │                      ¦          ║
+║                     │ UpdateData(Request):Response │                      ¦          ║
+║                     │ DeleteData(Request):Response │                      ¦          ║
+║                     └──────────────────────────────┘                      ¦          ║
 ║                                     Δ                                     ¦          ║
 ║                                     ¦                                     ¦          ║
 ╚═════════════════════════════════════¦═════════════════════════════════════¦══════════╝
                                       ¦                                     ¦
 ╔MyPlugin═════════════════════════════¦═════════════════════════════════════¦══════════╗
 ║                                     ¦                                     ¦          ║
-║                     ┌───────────────┴─────────────┐                create ¦          ║
-║                     │ MyRestApi                   │◄----------------------┘          ║
-║                     ├─────────────────────────────┤                                  ║
-║                     │ CreateData(Request)         │                                  ║
-║                     │ GetData(Request):Object     │                                  ║
-║                     │ UpdateData(Request)         │                                  ║
-║                     │ DeleteData(Request)         │                                  ║
-║                     └─────────────────────────────┘                                  ║
+║                     ┌───────────────┴──────────────┐               create ¦          ║
+║                     │ MyRestApi                    │◄---------------------┘          ║
+║                     ├──────────────────────────────┤                                 ║
+║                     │ CreateData(Request):Response │                                 ║
+║                     │ GetData(Request):Response    │                                 ║
+║                     │ UpdateData(Request):Response │                                 ║
+║                     │ DeleteData(Request):Response │                                 ║
+║                     └──────────────────────────────┘                                 ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
@@ -2020,7 +2237,7 @@ Fragments are components that can be integrated into pages to extend functionali
 ║                            └────────────────┘                       │      ¦         ║
 ║                                    Δ                                │      ¦         ║
 ║                                    ¦                                │      ¦         ║
-║                                    ¦                                │      ¦         ║                                      
+║                                    ¦                                │      ¦         ║
 ║               ┌────────────────────┴───────────────────┐            │      ¦         ║
 ║               │ <<Interface>>                          │ *          │      ¦         ║
 ║               │ IFragmentContext                       │◄───────────┘      ¦         ║
@@ -2031,20 +2248,26 @@ Fragments are components that can be integrated into pages to extend functionali
 ║               │ Cache:Bool                             │                   ¦         ║
 ║               └────────────────────────────────────────┘                   ¦         ║
 ║                                                                            ¦         ║
-║                            ┌────────────────┐                              ¦         ║
-║                            │ <<Interface>>  │                              ¦         ║
-║                            │ IComponent     │                              ¦         ║
-║                            ├────────────────┤                              ¦         ║
-║                            └────────────────┘                              ¦         ║
-║                                    Δ                                       ¦         ║
-║                                    ¦                                       ¦         ║
+║                                                                            ¦         ║
+║                              ┌────────────────┐                            ¦         ║
+║                              │ TRenderContext,│                            ¦         ║
+║  ┌───────────────────────────┤ TVisualTree    ├─┐                          ¦         ║
+║  │ <<Interface>>             └────────────────┘ │                          ¦         ║
+║  │ IWebUIElement                                │                          ¦         ║
+║  ├──────────────────────────────────────────────┤     ┌────────────────┐   ¦         ║
+║  │ Id:String                                    │     │ <<Interface>>  │   ¦         ║
+║  ├──────────────────────────────────────────────┤     │ IComponent     │   ¦         ║
+║  │ Render(TRenderContext,TVisualTree):IHtmlNode │     ├────────────────┤   ¦         ║
+║  └──────────────────────────────────────────────┘     └────────────────┘   ¦         ║
+║                         Δ                                     Δ            ¦         ║
+║                         ¦                                     ¦            ¦         ║
+║                         └----------┬--------------------------┘            ¦         ║
 ║                                    ¦    ┌────────────────┐                 ¦         ║
 ║                                    ¦    │ TRenderContext,│                 ¦         ║
-║             ┌──────────────────────┴────│ TVisualTree    │─┐               ¦         ║
+║             ┌──────────────────────┴────┤ TVisualTree    ├─┐               ¦         ║
 ║             │ <<Interface>>             └────────────────┘ │               ¦         ║
 ║             │ IFragment                                    │               ¦         ║
 ║             ├──────────────────────────────────────────────┤               ¦         ║
-║             │ Render(TRenderContext,TVisualTree):IHtmlNode │               ¦         ║
 ║             └──────────────────────────────────────────────┘               ¦         ║
 ║                                    Δ                                       ¦         ║
 ║                                    ¦                                       ¦         ║
@@ -2112,13 +2335,27 @@ This implementation showcases the core functionality of the `IconInfoCircle` cla
 Controls are units of the web page that are translated into HTML source code by rendering. A Web page consists of nested controls. This UML diagram provides a representation of the relationships and structure of controls:
 
 ```
-╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║            ┌────────────────────────────────────────────────────────────┐            ║
+║                                               ┌────────────────┐                     ║
+║                                               │ TRenderContext,│                     ║
+║                   ┌───────────────────────────┤ TVisualTree    ├─┐                   ║
+║                   │ <<Interface>>             └────────────────┘ │                   ║
+║                   │ IWebUIElement                                │                   ║
+║                   ├──────────────────────────────────────────────┤                   ║
+║                   │ Id:String                                    │                   ║
+║                   ├──────────────────────────────────────────────┤                   ║
+║                   │ Render(TRenderContext,TVisualTree):IHtmlNode │                   ║
+║                   └──────────────────────────────────────────────┘                   ║
+║                                          Δ                                           ║
+╚══════════════════════════════════════════¦═══════════════════════════════════════════╝
+                                           ¦
+╔WebExpress.UI═════════════════════════════¦═══════════════════════════════════════════╗
+║                                          ¦                                           ║
+║            ┌─────────────────────────────┴──────────────────────────────┐            ║
 ║            │ <<Interface>>                                              │            ║
 ║            │ IControl                                                   │            ║
 ║            ├────────────────────────────────────────────────────────────┤            ║
-║            │ Id:String                                                  │            ║
 ║            ├────────────────────────────────────────────────────────────┤            ║
 ║            │ Render(IRenderControlContext,IVisualTreeControl):IHtmlNode │            ║
 ║            └────────────────────────────────────────────────────────────┘            ║
@@ -2188,63 +2425,81 @@ A form in HTML is an interactive element that allows users to enter data and sen
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║                                     ┌──────────┐                                     ║
-║                                     │ IControl │                                     ║
-║                                     ├──────────┤                                     ║
-║                                     │ …        │                                     ║
-║                                     └──────────┘                                     ║
-║                                          Δ                                           ║
-║                                          ¦                                           ║
-║                                          ¦                                           ║
-║                                     ┌────┴────┐                                      ║
-║                                     │ Control │                                      ║
-║                                     ├─────────┤                                      ║
-║                                     │ …       │                                      ║
-║                                     └─────────┘                                      ║
-║                                          Δ                                           ║
-║                                          │                                           ║
-║                                          │                                           ║
-║              ┌───────────────────────────┴─────────────────────────────┐             ║
-║              │ ControlForm                                             │             ║
-║              ├─────────────────────────────────────────────────────────┤             ║
-║              │ Name:String                                             │             ║
-║              ├─────────────────────────────────────────────────────────┤             ║
-║              │ OnValidation():Bool                                     │             ║
-║              │ Render(IRenderFormContext,IVisualTreeControl):IHtmlNode │             ║
-║              └─────────────────────────────────────────────────────────┘             ║
-║                                        1 ▲                                           ║
-║                                          │                                           ║
-║                                        * │                                           ║
-║          ┌───────────────────────────────┴────────────────────────────────┐          ║
-║          │ ControlFormTab                                                 │          ║
-║          ├────────────────────────────────────────────────────────────────┤          ║
-║          │ Name:String                                                    │          ║
-║          ├────────────────────────────────────────────────────────────────┤          ║
-║          │ Render(IRenderControlFormContext,IVisualTreeControl):IHtmlNode │          ║
-║          └────────────────────────────────────────────────────────────────┘          ║
-║                                        1 ▲                                           ║
-║                                          │                                           ║
-║                                        * │                                           ║
-║          ┌───────────────────────────────┴────────────────────────────────┐          ║
-║          │ ControlFormGroup                                               │          ║
-║          ├────────────────────────────────────────────────────────────────┤          ║
-║          │ Name:String                                                    │          ║
-║          ├────────────────────────────────────────────────────────────────┤          ║
-║          │ Render(IRenderControlFormContext,IVisualTreeControl):IHtmlNode │          ║
-║          └────────────────────────────────────────────────────────────────┘          ║
-║                                        1 ▲                                           ║
-║                                          │                                           ║
-║                                        * │                                           ║
-║          ┌───────────────────────────────┴────────────────────────────────┐          ║
-║          │ ControlFormItem                                                │          ║
-║          ├────────────────────────────────────────────────────────────────┤          ║
-║          │ Label:String                                                   │          ║
-║          │ Name:String                                                    │          ║
-║          │ Description:String                                             │          ║
-║          ├────────────────────────────────────────────────────────────────┤          ║
-║          │ OnValidation():Bool                                            │          ║
-║          │ Render(IRenderControlFormContext,IVisualTreeControl):IHtmlNode │          ║
-║          └────────────────────────────────────────────────────────────────┘          ║
+║                                      ┌──────────┐                                    ║
+║                                      │ IControl │                                    ║
+║                                      ├──────────┤                                    ║
+║                                      │ …        │                                    ║
+║                                      └──────────┘                                    ║
+║                                           Δ                                          ║
+║                                           ¦                                          ║
+║                                           ¦                                          ║
+║                                      ┌────┴────┐                                     ║
+║                                      │ Control │                                     ║
+║                                      ├─────────┤                                     ║
+║                                      │ …       │                                     ║
+║                                      └─────────┘                                     ║
+║                                           Δ                                          ║
+║                                           │                                          ║
+║                                           │                                          ║
+║               ┌───────────────────────────┴─────────────────────────────┐            ║
+║               │ ControlForm                                             │            ║
+║               ├─────────────────────────────────────────────────────────┤            ║
+║               │ Name:String                                             │            ║
+║               ├─────────────────────────────────────────────────────────┤            ║
+║               │ OnValidation():Bool                                     │            ║
+║               │ Render(IRenderFormContext,IVisualTreeControl):IHtmlNode │            ║
+║               └─────────────────────────────────────────────────────────┘            ║
+║                                         1 ▲                                          ║
+║                                           │                                          ║
+║                                         * │                                          ║
+║           ┌───────────────────────────────┴────────────────────────────────┐         ║
+║           │ ControlFormTab                                                 │         ║
+║           ├────────────────────────────────────────────────────────────────┤         ║
+║           │ Name:String                                                    │         ║
+║           ├────────────────────────────────────────────────────────────────┤         ║
+║           │ Render(IRenderControlFormContext,IVisualTreeControl):IHtmlNode │         ║
+║           └────────────────────────────────────────────────────────────────┘         ║
+║                                         1 ▲                                          ║
+║                                           │                                          ║
+║                                         * │                                          ║
+║           ┌───────────────────────────────┴────────────────────────────────┐         ║
+║           │ ControlFormGroup                                               │         ║
+║           ├────────────────────────────────────────────────────────────────┤         ║
+║           │ Name:String                                                    │         ║
+║           ├────────────────────────────────────────────────────────────────┤         ║
+║           │ Render(IRenderControlFormContext,IVisualTreeControl):IHtmlNode │         ║
+║           └────────────────────────────────────────────────────────────────┘         ║
+║                                         1 ▲                                          ║
+║                                           │                                          ║
+║                                         * │                                          ║
+║           ┌───────────────────────────────┴────────────────────────────────┐         ║
+║           │ ControlFormItem                                                │         ║
+║           ├────────────────────────────────────────────────────────────────┤         ║
+║           │ Label:String                                                   │         ║
+║           │ Name:String                                                    │         ║
+║           │ Description:String                                             │         ║
+║           ├────────────────────────────────────────────────────────────────┤         ║
+║           │ Render(IRenderControlFormContext,IVisualTreeControl):IHtmlNode │         ║
+║           └────────────────────────────────────────────────────────────────┘         ║
+║                                           Δ                                          ║
+║                                           │                                          ║
+║                                           │                                          ║
+║     ┌─────────────────────────────────────┴────────────────────────────────────┐     ║
+║     │ ControlFormItemInput                                                     │     ║
+║     ├──────────────────────────────────────────────────────────────────────────┤     ║
+║     │ Label:String                                                             │     ║
+║     │ Name:String                                                              │     ║
+║     │ Description:String                                                       │     ║
+║     │ Icon:IIcon                                                               │     ║
+║     │ Help:String                                                              │     ║
+║     │ Disabled: Bool                                                           │     ║
+║     │ Tag: Object                                                              │     ║
+║     ├──────────────────────────────────────────────────────────────────────────┤     ║
+║     │ Initialize(Action<ControlFormEventItemInitialize>):IControlFormItemInput │     ║
+║     │ Validate(Action<ControlFormEventItemValidate>):IControlFormItemInput     │     ║
+║     │ Process(Action<ControlFormEventItemProzess>):IControlFormItemInput       │     ║
+║     │ Render(IRenderControlFormContext,IVisualTreeControl):IHtmlNode           │     ║
+║     └──────────────────────────────────────────────────────────────────────────┘     ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
@@ -2252,75 +2507,58 @@ A form in HTML is an interactive element that allows users to enter data and sen
 A form takes user input and forwards it to the web server for processing:
 
 ```
-     ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
-     │ Web     │ │ HTTP    │ │ MyPage  │ │ Form    │ │ FormTab │ │FormGroup│ │ FormItem│
-     │ Client  │ │ Server  │ │         │ │         │ │         │ │         │ │         │
-     └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
-          ¦           ¦           ¦           ¦           ¦           ¦           ¦
-         ┌─┐  Request┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
-new/reset│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
-         │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
-         │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
-         │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
-         │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
-         │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
-         │ │         │ │         │ │       ┌─┤ Initialize│ Initialize│ Initialize│ │
-         │ │         │ │         Initialize│ │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │       ┌─┤ │     Set │ │     Set │ │      Set│ │
-         │ │         │ │         │ │   Fill│ │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
-         │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
-         │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
-         │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
-         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
-          ¦           ¦           ¦           ¦           ¦           ¦           ¦
-         ┌─┐  Request┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
-  refresh│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
-         │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
-         │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
-         │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
-         │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
-         │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
-         │ │         │ │         │ │       ┌─┤ Initialize│ Initialize│ Initialize│ │
-         │ │         │ │         Initialize│ │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
-         │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
-         │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
-         │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
-         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
-          ¦           ¦           ¦           ¦           ¦           ¦           ¦
-         ┌─┐  Request┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐         ┌─┐
-   submit│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
-         │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
-         │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
-         │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
-         │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
-         │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
-         │ │         │ │         │ │       ┌─┤ Initialize│ Initialize│ Initialize│ │
-         │ │         │ │         Initialize│ │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │         │ │         │ │         │ │         │ │
-         │ │         │ │         │ │       ┌─┤ │ Validate│ │ Validate│ │ Validate│ │
-         │ │         │ │         Validation│ │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │       └>│ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │         │ │         │ │         │ │         │ │
-         │ │         │ │         │ │       ┌─┤ │         │ │         │ │         │ │
-         │ │         │ │         │  Process│ │ │         │ │         │ │         │ │
-         │ │         │ │         │ │       └>│ │         │ │         │ │         │ │
-         │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
-         │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
-         │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
-         │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
-         │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
-         │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
-         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
+  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+  │ Web     │ │ HTTP    │ │ MyPage  │ │ Form    │ │ FormTab │ │FormGroup│ │ FormItem│
+  │ Client  │ │ Server  │ │         │ │         │ │         │ │         │ │         │
+  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘
+       ¦           ¦           ¦           ¦           ¦           ¦           ¦
+      ┌┴┐  Request┌┴┐         ┌┴┐         ┌┴┐         ┌┴┐         ┌┴┐         ┌┴┐
+  init│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
+      │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
+      │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
+      │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
+      │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
+      │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
+      │ │         │ │         │ │         │ Initialize│ Initialize│ Initialize│ │
+      │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+      │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+      │ │         │ │         │ │       ┌─┤ │         │ │         │ │         │ │
+      │ │         │ │         Initialize│ │ │         │ │         │ │         │ │
+      │ │         │ │         │ │       └>│ │         │ │         │ │         │ │
+      │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
+      │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+      │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+      │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
+      │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
+      │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
+      └┬┘         └┬┘         └┬┘         └┬┘         └┬┘         └┬┘         └┬┘
+       ¦           ¦           ¦           ¦           ¦           ¦           ¦
+      ┌┴┐  Request┌┴┐         ┌┴┐         ┌┴┐         ┌┴┐         ┌┴┐         ┌┴┐
+submit│ ├────────>│ │  Process│ │         │ │         │ │         │ │         │ │
+      │ │         │ ├────────>│ │         │ │         │ │         │ │         │ │
+      │ │         │ │       ┌─┤ │         │ │         │ │         │ │         │ │
+      │ │         │ │ Render│ │ │         │ │         │ │         │ │         │ │
+      │ │         │ │       └>│ │   Render│ │         │ │         │ │         │ │
+      │ │         │ │         │ ├────────>│ │         │ │         │ │         │ │
+      │ │         │ │         │ │         │ │ Validate│ │ Validate│ │ Validate│ │
+      │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+      │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+      │ │         │ │         │ │       ┌─┤ │         │ │         │ │         │ │
+      │ │         │ │         │ Validate│ │ │         │ │         │ │         │ │
+      │ │         │ │         │ │       └>│ │         │ │         │ │         │ │
+      │ │         │ │         │ │         │ │  Process│ │  Process│ │  Process│ │
+      │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+      │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+      │ │         │ │         │ │       ┌─┤ │         │ │         │ │         │ │
+      │ │         │ │         │ │Process│ │ │         │ │         │ │         │ │
+      │ │         │ │         │ │       └>│ │         │ │         │ │         │ │
+      │ │         │ │         │ │         │ │   Render│ │   Render│ │   Render│ │
+      │ │         │ │         │ │         │ ├────────>│ ├────────>│ ├────────>│ │
+      │ │         │ │         │ │         │ │<--------│ │<--------│ │<--------│ │
+      │ │         │ │         │ │<--------│ │         │ │         │ │         │ │
+      │ │Response │ │<--------│ │         │ │         │ │         │ │         │ │
+      │ │<--------│ │         │ │         │ │         │ │         │ │         │ │
+      └─┘         └─┘         └─┘         └─┘         └─┘         └─┘         └─┘
 ```
 
 Form classes and associated form controls are available for entering data, ensuring a consistent and user-friendly experience. The user interface of the form is structured as follows to ensure a variable display of the controls:
@@ -3106,7 +3344,7 @@ Name ~ "WebExpress" and Create < now(-3d) orderby Create desc take 5
 
 The example returns the first five elements of the dataset that contain the value `WebExpress` in the Name attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in descending order by creation date.
 
-For detailed information about `WebIndex`, see [concept](https://github.com/ReneSchwarzer/WebExpress.WebIndex/blob/main/doc/concept.md).
+For detailed information about `WebIndex`, see [concept](https://github.com/webexpress-framework/WebExpress.WebIndex/blob/main/doc/concept.md).
 
 ## Identity model
 A large number of web applications are subject to requirements for access protection, integrity and confidentiality. These requirements can be met through identity and access management (IAM). In identity management, identities are managed. In access management, on the other hand, authorized entities are enabled to use a service (application). `WebExpress` supports the following identity management features:
@@ -3145,12 +3383,12 @@ The provisioning service provides `WebExpress` with the basic requirements for t
 - On-premises identity management: Each application has its own user management. The cost of setting up the necessary infrastructure is particularly easy here, as identity management is carried out directly by the application. Each application has its own identity domain, which is disadvantageous from a unified identity management perspective.
 - Shared identity management: If the identities are outsourced to a central service and retrieved by the applications, there is shared identity management. Shared identity management allows you to reduce the number of identity domains. 
 
-Entities (people, technical objects, etc.) have one or more identities, which distinguishes them from other entities. An identity is used for identification and consists of a collection of attributes (properties e.g. name, password), which individualizes an entity. Identities can be grouped according to certain characteristics. Furthermore, each group can be assigned one or more roles (e.g. administrator, programmer). The roles determine access to identity permissions. In the following figure, the concept of identity is defined in terms of a UML model.
+Entities (e.g., people, technical systems, services) possess one or more identities, which distinguish them from other entities. An identity is used for identification and consists of a collection of attributes (e.g., name, password) that individualize the entity. Identities can be grouped based on shared characteristics. Each group can be assigned one or more policies, which define the permissions granted to the group or its members. These policies determine what actions are allowed on specific resources. The following UML diagram illustrates the concept of identity and its relationships to groups, policies, and permissions:
 
 ```
-  O   1   *  ┌────────────┐ *    * ┌─────────┐ *    * ┌────────┐ *    * ┌────────────┐
- /░\ ───────►│  Identity  ├───────►│  Group  ├───────►│  Role  ├───────►│ Permission │
- /‾\         └─────┬──────┘        └─────────┘        └────────┘        └────────────┘
+  O   1   *  ┌────────────┐ *    * ┌─────────┐ *    * ┌──────────┐ *    * ┌────────────┐
+ /░\ ───────►│  Identity  ├───────►│  Group  ├───────►│  Policy  ├───────►│ Permission │
+ /‾\         └─────┬──────┘        └─────────┘        └──────────┘        └────────────┘
 Entity           1 │
                    │
                  * ▼
@@ -3159,7 +3397,7 @@ Entity           1 │
              └────────────┘
 ```
 
-The identities and groups must be loaded from a persistent data storage. These can be provided by the application or come from external identity management (e.g. LDAP). The roles and identity resources are dictated by the application by hard-implementing them. The UML diagram below highlights the key relationships and structural elements:
+Identities and groups must be loaded from a persistent data source, which may be provided by the application itself or retrieved from an external identity management system (e.g., LDAP). Policies and identity-related resources are defined and enforced by the application, typically through static configuration or hardcoded logic. The UML diagram below highlights the key relationships and structural elements:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3187,7 +3425,7 @@ The identities and groups must be loaded from a persistent data storage. These c
 ║ ¦                        ├─────────────────────────────────────────────┤             ║
 ║ ¦                        │ Identities:IEnumerable<IIdentity>           │             ║
 ║ ¦                        │ Groups:IEnumerable<IIdentityGroup>          │             ║
-║ ¦                        │ Roles:IEnumerable<IIdentityRole>            │             ║
+║ ¦                        │ Policies:IEnumerable<IIdentityPolicy>       │             ║
 ║ ¦                        │ Permission:IEnumerable<IIdentityPermission> │             ║
 ║ ¦                        ├─────────────────────────────────────────────┤             ║
 ║ ¦                        │ AddIdentity(IIdentity)                      │             ║
@@ -3201,44 +3439,47 @@ The identities and groups must be loaded from a persistent data storage. These c
 ║ ¦                            1 │        1 │         1 │        1 │                   ║
 ║ ¦                 ┌────────────┘          │           │          └─────┐             ║
 ║ ¦                 │                    ┌──┘           │                │             ║
-║ ¦               * ▼                    │              └───┐            │             ║
-║ ¦  ┌───────────────────────────────┐   │                  │            │             ║
-║ ¦  │ <<Interface>>                 │   │                  │            │             ║
-║ ¦  │ IIdentity                     │   │                  │            │             ║
-║ ¦  ├───────────────────────────────┤   │                  │            │             ║
-║ ¦  │ Id:Guid                       │   │                  │            │             ║
-║ ¦  │ Name:String                   │   │                  │            │             ║
-║ ¦  │ EMail:String                  │   │                  │            │             ║
-║ ¦  │ State:AccountState            │   │                  │            │             ║
-║ ¦  │ Groups:                       │   │                  │            │             ║
-║ ¦  │   IEnumerable<IIdentityGroup> │   │                  │            │             ║
-║ ¦  ├───────────────────────────────┤   │                  │            │             ║
-║ ¦  │ Login()                       │   │                  │            │             ║
-║ ¦  │ Logout()                      │   │                  │            │             ║
-║ ¦  └───────────────────────────────┘   │                  │            │             ║
-║ ¦              Δ                       │                  │            │             ║
-║ ¦              ¦                     * ▼                  │            │             ║
-║ ¦              ¦    ┌──────────────────────────────┐      │            │             ║
-║ ¦              ¦    │ <<Interface>>                │      │            │             ║
-║ ¦              ¦    │ IIdentityGroup               │      │            │             ║
-║ ¦              ¦    ├──────────────────────────────┤      │            │             ║
-║ ¦              ¦    │ Id:Guid                      │      │            │             ║
-║ ¦              ¦    │ Name:String                  │      │            │             ║
-║ ¦              ¦    │ Roles:IEnumerable<String>    │      │            │             ║
-║ ¦              ¦    ├──────────────────────────────┤      │            │             ║
-║ ¦              ¦    └──────────────────────────────┘      │            │             ║
-║ ¦              ¦         Δ                                │            │             ║
-║ ¦              ¦         ¦                                │            │             ║
-║ ¦              ¦         ¦                              * ▼            │             ║
-║ ¦              ¦         ¦   ┌───────────────────────────────────┐     │             ║
-║ ¦              ¦         ¦   │ <<Interface>>                     │     │             ║
-║ ¦              ¦         ¦   │ IIdentityRole                     │     │             ║
-║ ¦              ¦         ¦   ├───────────────────────────────────┤     │             ║
-║ ¦              ¦         ¦   │ Id:String                         │     │             ║
-║ ¦              ¦         ¦   │ Name:String                       │     │             ║
-║ ¦              ¦         ¦   │ Description:String                │     │             ║
-║ ¦              ¦         ¦   ├───────────────────────────────────┤     │             ║
-║ ¦              ¦         ¦   └───────────────────────────────────┘     │             ║
+║ ¦               * ▼                    │              └──┐             │             ║
+║ ¦  ┌───────────────────────────────┐   │                 │             │             ║
+║ ¦  │ <<Interface>>                 │   │                 │             │             ║
+║ ¦  │ IIdentity                     │   │                 │             │             ║
+║ ¦  ├───────────────────────────────┤   │                 │             │             ║
+║ ¦  │ Id:Guid                       │   │                 │             │             ║
+║ ¦  │ Name:String                   │   │                 │             │             ║
+║ ¦  │ EMail:String                  │   │                 │             │             ║
+║ ¦  │ State:AccountState            │   │                 │             │             ║
+║ ¦  │ Groups:                       │   │                 │             │             ║
+║ ¦  │   IEnumerable<IIdentityGroup> │   │                 │             │             ║
+║ ¦  ├───────────────────────────────┤   │                 │             │             ║
+║ ¦  │ Login()                       │   │                 │             │             ║
+║ ¦  │ Logout()                      │   │                 │             │             ║
+║ ¦  └───────────────────────────────┘   │                 │             │             ║
+║ ¦              Δ                       │                 │             │             ║
+║ ¦              ¦                     * ▼                 │             │             ║
+║ ¦              ¦    ┌────────────────────────────────┐   │             │             ║
+║ ¦              ¦    │ <<Interface>>                  │   │             │             ║
+║ ¦              ¦    │ IIdentityGroup                 │   │             │             ║
+║ ¦              ¦    ├────────────────────────────────┤   │             │             ║
+║ ¦              ¦    │ Id:Guid                        │   │             │             ║
+║ ¦              ¦    │ Name:String                    │   │             │             ║
+║ ¦              ¦    │ Policies:                      │   │             │             ║
+║ ¦              ¦    │   IEnumerable<IIdentityPolicy> │   │             │             ║
+║ ¦              ¦    ├────────────────────────────────┤   │             │             ║
+║ ¦              ¦    └────────────────────────────────┘   │             │             ║
+║ ¦              ¦         Δ                               │             │             ║
+║ ¦              ¦         ¦                               │             │             ║
+║ ¦              ¦         ¦                             * ▼             │             ║
+║ ¦              ¦         ¦    ┌────────────────────────────────────┐   │             ║
+║ ¦              ¦         ¦    │ <<Interface>>                      │   │             ║
+║ ¦              ¦         ¦    │ IIdentityPolicy                    │   │             ║
+║ ¦              ¦         ¦    ├────────────────────────────────────┤   │             ║
+║ ¦              ¦         ¦    │ Id:String                          │   │             ║
+║ ¦              ¦         ¦    │ Name:String                        │   │             ║
+║ ¦              ¦         ¦    │ Description:String                 │   │             ║
+║ ¦              ¦         ¦    │ Permissions:                       │   │             ║
+║ ¦              ¦         ¦    │   IEnumerable<IIdentityPermission> │   │             ║
+║ ¦              ¦         ¦    ├────────────────────────────────────┤   │             ║
+║ ¦              ¦         ¦    └────────────────────────────────────┘   │             ║
 ║ ¦              ¦         ¦                      Δ                    * ▼             ║
 ║ ¦              ¦         ¦                      ¦          ┌─────────────────────┐   ║
 ║ ¦              ¦         ¦                      ¦          │ <<Interface>>       │   ║
@@ -3257,39 +3498,42 @@ The identities and groups must be loaded from a persistent data storage. These c
 ║ ¦              ¦                       ¦        ¦                    ¦               ║
 ║ ¦  ┌───────────┴───────────────────┐   ¦        ¦                    └-┐             ║
 ║ ¦  │ MyIdentity                    │   ¦        ¦                      ¦             ║
-║ ¦  ├───────────────────────────────┤   ¦        └---------┐            ¦             ║
-║ ¦  │ Id:Guid                       │   ¦                  ¦            ¦             ║
-║ ¦  │ Name:String                   │   ¦                  ¦            ¦             ║
-║ ¦  │ EMail:String                  │   ¦                  ¦            ¦             ║
-║ ¦  │ State:AccountState            │1  ¦                  ¦            ¦             ║
-║ ¦  │ Groups:                       ├───¦─────┐            ¦            ¦             ║
-║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │            ¦            ¦             ║
-║ ¦  ├───────────────────────────────┤   ¦     │            ¦            ¦             ║
-║ ¦  │ Login()                       │   ¦     │            ¦            ¦             ║
-║ ¦  │ Logout()                      │   ¦     │            ¦            ¦             ║
-║ ¦  └───────────────────────────────┘   ¦     │            ¦            ¦             ║
-║ ¦                                      ¦     │            ¦            ¦             ║
-║ ¦                                    * ¦   * ▼            ¦            ¦             ║
-║ ¦                   ┌──────────────────┴───────────┐      ¦            ¦             ║
-║ ¦                   │ MyIdentityGroup              │      ¦            ¦             ║
-║ ¦                   ├──────────────────────────────┤      ¦            ¦             ║
-║ ¦                   │ Id:Guid                      │      ¦            ¦             ║
-║ ¦                   │ Name:String                  │1     ¦            ¦             ║
-║ ¦                   │ Roles:IEnumerable<String>    ├──┐   ¦            ¦             ║
-║ ¦                   ├──────────────────────────────┤  │   ¦            ¦             ║
-║ ¦                   └──────────────────────────────┘  │   ¦            ¦             ║
-║ ¦                                                     │   ¦            ¦             ║
-║ ¦                                                     │   ¦            ¦             ║
-║ ¦                                                   * ▼   ¦            ¦             ║
-║ ¦                 create     ┌────────────────────────────┴──────┐     ¦             ║
-║ ├---------------------------►│ MyIdentityRole                    │     ¦             ║
-║ ¦                            ├───────────────────────────────────┤     ¦             ║
-║ ¦                            │ Id:String                         │     ¦             ║
-║ ¦                            │ Name:String                       │     ¦             ║
-║ ¦                            │ Description:String                │     ¦             ║
-║ ¦                            ├───────────────────────────────────┤     ¦             ║
-║ ¦                            └───────────────────────────────────┘     ¦             ║
-║ ¦                                                                      ¦             ║
+║ ¦  ├───────────────────────────────┤   ¦        └------------┐         ¦             ║
+║ ¦  │ Id:Guid                       │   ¦                     ¦         ¦             ║
+║ ¦  │ Name:String                   │   ¦                     ¦         ¦             ║
+║ ¦  │ EMail:String                  │   ¦                     ¦         ¦             ║
+║ ¦  │ State:AccountState            │1  ¦                     ¦         ¦             ║
+║ ¦  │ Groups:                       ├───¦─────┐               ¦         ¦             ║
+║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │               ¦         ¦             ║
+║ ¦  ├───────────────────────────────┤   ¦     │               ¦         ¦             ║
+║ ¦  │ Login()                       │   ¦     │               ¦         ¦             ║
+║ ¦  │ Logout()                      │   ¦     │               ¦         ¦             ║
+║ ¦  └───────────────────────────────┘   ¦     │               ¦         ¦             ║
+║ ¦                                      ¦     │               ¦         ¦             ║
+║ ¦                                    * ¦   * ▼               ¦         ¦             ║
+║ ¦                   ┌──────────────────┴─────────────┐       ¦         ¦             ║
+║ ¦                   │ MyIdentityGroup                │       ¦         ¦             ║
+║ ¦                   ├────────────────────────────────┤       ¦         ¦             ║
+║ ¦                   │ Id:Guid                        │       ¦         ¦             ║
+║ ¦                   │ Name:String                    │1      ¦         ¦             ║
+║ ¦                   │ Policies:                      ├──┐    ¦         ¦             ║
+║ ¦                   │   IEnumerable<IIdentityPolicy> │  │    ¦         ¦             ║
+║ ¦                   ├────────────────────────────────┤  │    ¦         ¦             ║
+║ ¦                   └────────────────────────────────┘  │    ¦         ¦             ║
+║ ¦                                                       │    ¦         ¦             ║
+║ ¦                                                     * ▼    ¦         ¦             ║
+║ ¦                 create  ┌──────────────────────────────────┴─┐       ¦             ║
+║ ├------------------------►│ MyIdentityPolicy                   │       ¦             ║
+║ ¦                         ├────────────────────────────────────┤       ¦             ║
+║ ¦                         │ Id:String                          │       ¦             ║
+║ ¦                         │ Name:String                        │       ¦             ║
+║ ¦                         │ Description:String                 │1      ¦             ║
+║ ¦                         │ Permissions:                       ├──┐    ¦             ║
+║ ¦                         │   IEnumerable<IIdentityPermission> │  │    ¦             ║
+║ ¦                         ├────────────────────────────────────┤  │    ¦             ║
+║ ¦                         └────────────────────────────────────┘  │    ¦             ║
+║ ¦                                                                 │    ¦             ║
+║ ¦                                                               * ▼    ¦             ║
 ║ ¦                                             create       ┌───────────┴──────────┐  ║
 ║ └---------------------------------------------------------►│ MyIdentityPermission │  ║
 ║                                                            ├──────────────────────┤  ║
@@ -3308,38 +3552,37 @@ The identities and groups must be loaded from a persistent data storage. These c
 |------|------------------
 |All   | All identities are members of the group.
 
-`WebExpress` provides the following roles:
+`WebExpress` provides the following policies:
 
-|Role                   |Description
-|-----------------------|----------------------
-|Anonymous              |Without authenticating the entity.
-|Authenticates          |All authenticated entities.
-|Business administrator |Business configuration of the application. For example, the business administrator can define access rights (except system administration) of the entities.
-|System administrator   |Technical configuration of the system. For example, the system administrator can install or update a new application.
+|Policy              |Description
+|--------------------|----------------------
+|PublicAccess        |Grants access to public resources without authentication.
+|AuthenticatedAccess |Grants general access to authenticated users.
+|SystemAccess        |Allows system-level operations like installing, updating, and maintaining the application.
 
-In addition to the predefined standard roles, custom roles can also be created by defining them in dedicated classes. The example below demonstrates how to define a custom role using the `IIdentityRole` interface and associate it with a specific permission:
+In addition to the predefined standard policies, custom policies can also be created by defining them in dedicated classes. The example below demonstrates how to define a custom policy using the `IIdentityPolicy` interface and associate it with a specific permission:
 
 ```csharp
-[Name("myRole")]
+[Name("myPolicy")]
 [Permission<MyIdentityPermission>()]
-public sealed class MyIdentityRole : IIdentityRole
+public sealed class MyIdentityPolicy : IIdentityPolicy
 {
 }
 ```
 
-The role definition classes have the following attributes:
+The policy definition classes have the following attributes:
 
 |Attribute   |Type                  |Multiplicity |Optional |Description
 |------------|----------------------|-------------|---------|-------------
-|Name        |String                |1            |No       |The human-readable name of the role or an internationalization key.
-|Description |String                |1            |Yes      |The description of the role. This can be a key to internationalization.
+|Name        |String                |1            |No       |The human-readable name of the policy or an internationalization key.
+|Description |String                |1            |Yes      |The description of the policy. This can be a key to internationalization.
 |Permission  |`IIdentityPermission` |n            |Yes      |Inherits the characteristics of the specified permission.
 
-Permissions define specific rights or access controls that are allocated to one or more roles within an application. The example below demonstrates how to define a permission using the `IIdentityPermission` interface and assign it to a role:
+Permissions define specific rights or access controls that are allocated to one or more policies within an application. The example below demonstrates how to define a permission using the `IIdentityPermission` interface and assign it to a policy:
 
 ```csharp
 [Name("Write content")]
-[Role<MyIdentityRole>()]
+[Policy<MyIdentityPolicy>()]
 public sealed class MyIdentityPermission : IIdentityPermission
 {
 }
@@ -3347,13 +3590,13 @@ public sealed class MyIdentityPermission : IIdentityPermission
 
 To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining permissions:
 
-|Attribute   |Type            |Multiplicity |Optional |Description
-|------------|----------------|-------------|---------|-------------
-|Name        |String          |1            |No       |The human-readable name of the permission or an internationalization key.
-|Description |String          |1            |Yes      |The description of the permission. This can be a key to internationalization.
-|Role        |`IIdentityRole` |n            |Yes      |Inherits the characteristics of the specified role.
+|Attribute   |Type              |Multiplicity |Optional |Description
+|------------|------------------|-------------|---------|-------------
+|Name        |String            |1            |No       |The human-readable name of the permission or an internationalization key.
+|Description |String            |1            |Yes      |The description of the permission. This can be a key to internationalization.
+|Policy      |`IIdentityPolicy` |n            |Yes      |Inherits the characteristics of the specified policy.
 
-In the case of an authorization check (can an identity be accessed by an identity resource (e.g. page)), it must be checked whether there is at least one transition (identity -> group -> role -> permission). This is done by the function `CheckAccess: (Identity, Permission) > Bool ` of the `IdentityManager`. A return value of `true` means that access can be made.
+In the case of an authorization check (can an identity be accessed by an identity resource (e.g. page)), it must be checked whether there is at least one transition (identity -> group -> policy -> permission). This is done by the function `CheckAccess: (Identity, Permission) > Bool ` of the `IdentityManager`. A return value of `true` means that access can be made.
 
 ```
 ╔═══════════════════════════════════════════╗
@@ -3372,9 +3615,9 @@ In the case of an authorization check (can an identity be accessed by an identit
   │                          │   Is current identity authenticated?    │        │
   │                      Yes │                                         │        │
   │                          ▼                                         │        │
-  │  ┌────────────────────────────────────────────────┐                │        │
-  │  │ Determine Identity/Group/Role/Permission paths │                │        │
-  │  └────────────────────────┬───────────────────────┘                │        │
+  │ ┌──────────────────────────────────────────────────┐               │        │
+  │ │ Determine Identity/Group/Policy/Permission paths │               │        │
+  │ └─────────────────────────┬────────────────────────┘               │        │
   │                           │                                        │        │
   │                 ┌─────────┴─────────────────────────────────┐      │        │
   │                 │  Is there at least one path?              │      │        │
@@ -3468,8 +3711,16 @@ The business application header contains buttons and submenus to navigate the ap
   ├────────────┤                                                └────────────┘
   │ Link       │← AppNavigatorSecondary
   └────────────┘
-
-        :════════════════════════════════════════════════════════╗
+                        ┌──────────────┐
+                        │ Notification │
+                        ├──────────────┤
+                        │ Link         │← Notification-
+                        ├──────────────┤  Preferences
+                        │ Link         │← Notification-
+                        ├──────────────┤  Primary
+                        │ Link         │← Notification-
+                        └─┬────────────┘  Secondary
+        :═════════════════│══════════════════════════════════════╗
         :────────┐┌Help─┐┌Notification────────┐┌Avatar────┐┌────┐║
         :        ││  ?  ││                    ││          ││  ▼ │║
         :────────┘└───┬─┘└────────────────────┘└┬─────────┘└──┬─┘║
@@ -3529,26 +3780,26 @@ The content area is used to display records (for example, as a table or list) or
 ║┌Toolbar─────────────────────────────────────────────────────────────────────┐║
 ║│                                                                            │║
 ║└────────────────────────────────────────────────────────────────────────────┘║
-║┌Main────────────────────────────────────────────────────────────────────────┐║
-║│┌Headline───────────────────────────────────────────────┐┌Property─────────┐│║
-║││                                                       ││                 ││║
-║││                                                       ││                 ││║
-║│└───────────────────────────────────────────────────────┘│                 ││║
-║│┌Preferences────────────────────────────────────────────┐│                 ││║
-║││                                                       ││                 ││║
-║││                                                       ││                 ││║
-║│└───────────────────────────────────────────────────────┘│                 ││║
-║│┌Primary────────────────────────────────────────────────┐│                 ││║
-║││                                                       ││                 ││║
-║││                                                       ││                 ││║
-║││                                                       ││                 ││║
-║││                                                       ││                 ││║
-║│└───────────────────────────────────────────────────────┘│                 ││║
-║│┌Secondary──────────────────────────────────────────────┐│                 ││║
-║││                                                       ││                 ││║
-║││                                                       ││                 ││║
-║│└───────────────────────────────────────────────────────┘└─────────────────┘│║
-║└────────────────────────────────────────────────────────────────────────────┘║
+║┌Main─────────────────────────────────────────────────────┐┌Property─────────┐║
+║│┌Headline───────────────────────────────────────────────┐││                 │║
+║││                                                       │││                 │║
+║││                                                       │││                 │║
+║│└───────────────────────────────────────────────────────┘││                 │║
+║│┌Preferences────────────────────────────────────────────┐││                 │║
+║││                                                       │││                 │║
+║││                                                       │││                 │║
+║│└───────────────────────────────────────────────────────┘││                 │║
+║│┌Primary────────────────────────────────────────────────┐││                 │║
+║││                                                       │││                 │║
+║││                                                       │││                 │║
+║││                                                       │││                 │║
+║││                                                       │││                 │║
+║│└───────────────────────────────────────────────────────┘││                 │║
+║│┌Secondary──────────────────────────────────────────────┐││                 │║
+║││                                                       │││                 │║
+║││                                                       │││                 │║
+║│└───────────────────────────────────────────────────────┘││                 │║
+║└─────────────────────────────────────────────────────────┘└─────────────────┘║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
 

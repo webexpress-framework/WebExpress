@@ -3,6 +3,9 @@ using WebExpress.WebCore;
 
 namespace WebExpress.App
 {
+    /// <summary>
+    /// Serves as the entry point for the application.
+    /// </summary>
     internal class Program
     {
         /// <summary>
