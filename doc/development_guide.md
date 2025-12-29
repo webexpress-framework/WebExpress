@@ -1,10 +1,10 @@
 ![WebExpress-Framework](https://raw.githubusercontent.com/webexpress-framework/.github/main/docs/assets/img/banner.png)
 
 # WebExpress
-`WebExpress` is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, `WebExpress` has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .Net language (e.g. C#).
+**WebExpress** is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, **WebExpress** has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .Net language (e.g. C#).
 
 # License
-The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/webexpress-framework/WebExpress. `WebExpress` is based on components that are available as open source:
+The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/webexpress-framework/WebExpress. **WebExpress** is based on components that are available as open source:
 
 - https://github.com/dotnet/core (MIT)
 - https://getbootstrap.com/ (MIT)
@@ -40,7 +40,7 @@ SOFTWARE.
 The development of a web application without the need to use HTML, CSS, or JavaScript, but exclusively using C#, could revolutionize web development. A web framework programmed entirely in C# offers numerous advantages. Modularity allows for the independent development and testing of components, facilitating reusability and maintenance. Plugins can be added to extend functionality without altering the core of the framework. Using such a framework can significantly reduce development time. Prepared components allow developers to focus on business logic, leading to faster time-to-market and reduced costs. Development, debugging, and deployment processes can be fully carried out with C# tools like Visual Studio. This provides a unified development environment that enhances efficiency and simplifies troubleshooting. The need to deal with various technologies is eliminated, reducing complexity and improving maintainability. Frameworks like Angular, React, or Vue.js require knowledge of HTML, CSS, and JavaScript. These technologies are powerful but also complex and require a steep learning curve. A C#-based framework eliminates these hurdles, enabling quicker onboarding and higher productivity. A C#-based web framework offers numerous advantages. It simplifies web development, increases efficiency and productivity, and reduces complexity. With pre-built components and a unified development environment, high-quality web applications can be created faster and more cost-effectively. Such a framework could fundamentally change the way web applications are developed.
 
 # Architecture
-`WebExpress` is deliberately kept very simple. It consists only of basic functionalities for processing HTTP and HTTPS requests, an API and a plugin system for extending the functionalities. This means that `WebExpress` itself is not able to generate content. The plugin system is required for this. Plugins are .Net assemblies, which create content based on the `WebExpress` API. The plugins are loaded and executed by `WebExpress`. `WebExpress` controls the plugins and distributes the http(s) requests to the responsible plugin. The plugins answer the requests, create the content and transfer it to `WebExpress`. Finally, the content is delivered as an HTTP response via `WebExpress`. `WebExpress` uses `Kestrel` to process http(s) requests.
+**WebExpress** is deliberately kept very simple. It consists only of basic functionalities for processing HTTP and HTTPS requests, an API and a plugin system for extending the functionalities. This means that **WebExpress** itself is not able to generate content. The plugin system is required for this. Plugins are .Net assemblies, which create content based on the **WebExpress** API. The plugins are loaded and executed by **WebExpress**. **WebExpress** controls the plugins and distributes the http(s) requests to the responsible plugin. The plugins answer the requests, create the content and transfer it to **WebExpress**. Finally, the content is delivered as an HTTP response via **WebExpress**. **WebExpress** uses `Kestrel` to process http(s) requests.
 
 ```
 ╔WebExpress════════════════════════════════════════════════════════════════════════════╗
@@ -70,7 +70,7 @@ The development of a web application without the need to use HTML, CSS, or JavaS
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` consists of several program libraries, which serve as the basis for `WebExpress` projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` program library represents the application that takes control of the individual functions and components. The `WebExpress.exe` program library is generic and can be replaced by its own program library.
+**WebExpress** consists of several program libraries, which serve as the basis for **WebExpress** projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` program library represents the application that takes control of the individual functions and components. The `WebExpress.exe` program library is generic and can be replaced by its own program library.
 
 ```
 ╔WebExpress.exe════════════════════════════════════════════════════════════════════════╗
@@ -88,7 +88,7 @@ The development of a web application without the need to use HTML, CSS, or JavaS
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-In the context of `WebExpress`, (web) applications are deployed. An application is the logical combination of Components. Components, in turn, are amalgamations of (web) elements. Elements reflect content (e.g. web pages). The relationships between `WebExpress`, packages, applications, and elements are illustrated in the following figure: 
+In the context of **WebExpress**, (web) applications are deployed. An application is the logical combination of Components. Components, in turn, are amalgamations of (web) elements. Elements reflect content (e.g. web pages). The relationships between **WebExpress**, packages, applications, and elements are illustrated in the following figure: 
 
 ```
 ╔WebExpress════════════════════════════════════════════════════════════════════════════╗
@@ -123,19 +123,19 @@ In the context of `WebExpress`, (web) applications are deployed. An application 
 ```
 
 ## Component model
-The components of `WebExpress` and its applications are centrally managed in the `ComponentHub`. The following component managers are available in `WebExpress`:
+The components of **WebExpress** and its applications are centrally managed in the `ComponentHub`. The following component managers are available in **WebExpress**:
 
 |Component                   |Description
 |----------------------------|-----------------------
 |LogManager                  |Allows to create, view, and delete logs used for troubleshooting and monitoring system performance.
-|PackageManager              |Management of packages that extend the functionality of `WebExpress`.
-|PluginManager               |Management of extension addons that extend the functionality of `WebExpress`.
+|PackageManager              |Management of packages that extend the functionality of **WebExpress**.
+|PluginManager               |Management of extension addons that extend the functionality of **WebExpress**.
 |ApplicationManager          |An application is the logical combination of functionalities into an application system.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |JobManager                  |Jobs can be used for cyclic processing of tasks.  
 |StatusPageManager           |Represent HTML pages that are returned with a StatusCode other than 200.
-|AssetManager                |Assets like static java script files are delivered by `WebExpress`.
-|ResourceManager             |Resources are contents that are delivered by `WebExpress`. These include, for example, websites that consist of HTML source code, arbitrary files (e.g. css, JavaScript, images) and REST interfaces, which are mainly used for communication via HTTP(S) with (other) systems.
+|AssetManager                |Assets like static java script files are delivered by **WebExpress**.
+|ResourceManager             |Resources are contents that are delivered by **WebExpress**. These include, for example, websites that consist of HTML source code, arbitrary files (e.g. css, JavaScript, images) and REST interfaces, which are mainly used for communication via HTTP(S) with (other) systems.
 |IncludeManager              |Manages the dynamic integration of JavaScript and CSS files into the HTML header. In release mode, the files are delivered bundled and minified.
 |ThemeManager                |Provides color and layout schemes for customizing applications.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
@@ -208,7 +208,7 @@ In addition, you can create your own components and register them in the `Compon
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` supports the creation of `IComponent` instances using dependency injection. This allows dependencies to be automatically injected when an instance of a component is created. The following constructor parameters can be indexed by injection:
+**WebExpress** supports the creation of `IComponent` instances using dependency injection. This allows dependencies to be automatically injected when an instance of a component is created. The following constructor parameters can be indexed by injection:
 
 | Constructor Parameter | Description 
 |-----------------------|-------------
@@ -220,7 +220,7 @@ In addition, you can create your own components and register them in the `Compon
 By using dependency injection, it is ensured that all required dependencies are automatically provided when the instance of the component is created.
 
 ## Package model
-`WebExpress` is designed by its open and modular plugin system, which supports many usage scenarios. The distribution of the plugins and other software components (e.g. Entity Framework) takes place as `WebExpress` packages. `WebExpress` is able to read these packets and execute the code in them. Packages can contain both managed code and native libraries (e.g. for Linux) and be dependent on other packages. The recursive resolution of the dependencies is done by `WebExpress`. The `WebExpress` packages are ZIP-compressed files that can provide libraries for multiple platforms. They have the `wxp` file extension. A `WebExpress` package has the following structure:
+**WebExpress** is designed by its open and modular plugin system, which supports many usage scenarios. The distribution of the plugins and other software components (e.g. Entity Framework) takes place as **WebExpress** packages. **WebExpress** is able to read these packets and execute the code in them. Packages can contain both managed code and native libraries (e.g. for Linux) and be dependent on other packages. The recursive resolution of the dependencies is done by **WebExpress**. The **WebExpress** packages are ZIP-compressed files that can provide libraries for multiple platforms. They have the `wxp` file extension. A **WebExpress** package has the following structure:
 
 ```
    📦 <packagename>.<version>.wxp
@@ -255,7 +255,7 @@ The packages are versioned and can assume the following states:
              └───────────┘
 ```
 
-- **Available** - The package is available, but not yet loaded by the `WebExpress`. 
+- **Available** - The package is available, but not yet loaded by the **WebExpress**. 
 - **Active** - The package has been loaded and is ready for use. 
 - **Disable** - The package has been disabled. The use of the package is not possible.
 
@@ -273,11 +273,11 @@ The `PackageManager` is responsible for provisioning the packages. This has the 
 |Directory/ File |Description
 |----------------|-----------------------
 |packages        |The home directory that contains the catalog and packages.
-|package         |Each active package is unpacked in a separate directory. This directory contains the libraries of the `WebExpress` packages for the installed framework and platform.
+|package         |Each active package is unpacked in a separate directory. This directory contains the libraries of the **WebExpress** packages for the installed framework and platform.
 |catalog.xml     |The catalog.xml file collects all metadata (including the package state) of the installed packages.
 |package.wxp     |Each installed package is saved unpacked for future actions.
 
-New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning service cyclically scans the directory for new packets and loads them. If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). In addition package, the directory of the deactivated package is deleted and all contents (components) are removed from the running `WebExpress`. When `WebExpress` boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and loading the package into the package directory. When a package is deleted, it is removed from the package directory and from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime via the following classes:
+New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning service cyclically scans the directory for new packets and loads them. If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). In addition package, the directory of the deactivated package is deleted and all contents (components) are removed from the running **WebExpress**. When **WebExpress** boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and loading the package into the package directory. When a package is deleted, it is removed from the package directory and from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime via the following classes:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -304,7 +304,7 @@ New packages can be installed on the fly by copying them into the packages direc
 ```
 
 ## Plugin model
-The plugin system can be used to extend both `WebExpress` and application functionalities. Each plugin must have exactly one plugin class that implements `IPlugin`. The following example demonstrates the implementation of a plugin:
+The plugin system can be used to extend both **WebExpress** and application functionalities. Each plugin must have exactly one plugin class that implements `IPlugin`. The following example demonstrates the implementation of a plugin:
 
 ```csharp
 [Name("myplugin")]
@@ -392,7 +392,7 @@ The implemented methods from the interface cover the life cycle of the plugin. M
 ```
 
 ## Internationalization model
-The provision of multilingual applications for different cultures is supported by `WebExpress`. In addition, the following text formatting is also adapted to the corresponding culture:
+The provision of multilingual applications for different cultures is supported by **WebExpress**. In addition, the following text formatting is also adapted to the corresponding culture:
 
 |Text formatting |Description
 |---------------|-----------------
@@ -734,7 +734,7 @@ Parameters can be transferred to the endpoint to be executed in a URI or through
 |Session      |Session   |Parameters, which are stored in the session. 
 
 ### Asset model
-`WebExpress` provides automatically generated endpoints, which are made available to the client application. Assets in this context are static resources such as JavaScript files, CSS files, icons, and other files necessary for the presentation and functionality of the application.
+**WebExpress** provides automatically generated endpoints, which are made available to the client application. Assets in this context are static resources such as JavaScript files, CSS files, icons, and other files necessary for the presentation and functionality of the application.
 
 To include additional resources such as CSS files in the project, they can be embedded directly within the project configuration. An example of how to include asset files as an embedded resource is shown below:
 
@@ -748,7 +748,7 @@ To include additional resources such as CSS files in the project, they can be em
 
 Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/asset/<plugin>/x/y/z)` to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/asset/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
 
-The following asset types are supported by the `WebExpress` system: 
+The following asset types are supported by the **WebExpress** system: 
 
 | Type  | Description
 |-------|-----------------------
@@ -1420,7 +1420,7 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Rendering a page in `WebExpress` involves converting it into an HTML tree, which is then sent to the requesting client for viewing. 
+Rendering a page in **WebExpress** involves converting it into an HTML tree, which is then sent to the requesting client for viewing. 
 
  - `IRenderContext`: Provides all necessary information and methods for the rendering process, including details about the current request. Manages the `IVisualTree`, ensuring it is properly constructed and utilized during rendering.
  - `IVisualTree`: Represents the HTML tree constructed during the rendering process. It can implement various derivatives of the VisualTree class to offer different templates. A template defines the structure and appearance of a page.
@@ -1518,7 +1518,7 @@ This ensures each page is correctly rendered and sent to the client. To better u
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` supports the creation of `IVisualTree` instances through dependency injection. This approach allows dependencies to be automatically provided when an instance of a component is created. The following constructor parameters can be injected:
+**WebExpress** supports the creation of `IVisualTree` instances through dependency injection. This approach allows dependencies to be automatically provided when an instance of a component is created. The following constructor parameters can be injected:
 
 | Constructor Parameter | Description 
 |-----------------------|-------------
@@ -1725,15 +1725,15 @@ To provide clarity about the metadata specified in the code above, the following
 ### RestAPI model
 A REST API (Representational State Transfer Application Programming Interface) is an interface that allows resources to be accessed and manipulated via the HTTP protocol. REST APIs are designed to be simple and scalable by following the principles of REST, such as stateless communication, use of HTTP methods, and resource orientation. By using REST APIs, applications can exchange and integrate data between different systems, facilitating the development of distributed and modular applications.
 
-The integration of REST APIs into `WebExpress` offers several advantages that make the application more dynamic and reactive:
+The integration of REST APIs into **WebExpress** offers several advantages that make the application more dynamic and reactive:
 
 - **Flexibility and scalability**: REST APIs make it possible to develop and scale different frontend and backend components independently of each other. This means that changes can be made to one component without affecting the others, making it easier to maintain and evolve the application.
-- **Real-time data refresh**: By using REST APIs, data can be exchanged in real time between the client and the server. This allows `WebExpress` to respond instantly to user actions and dynamically update the interface without having to reload the entire page.
-- **Interoperability**: REST APIs are platform-independent and can be used by various programming languages and frameworks. This makes it easier to integrate `WebExpress` with other systems and services, which expands the functionality and reach of the application.
+- **Real-time data refresh**: By using REST APIs, data can be exchanged in real time between the client and the server. This allows **WebExpress** to respond instantly to user actions and dynamically update the interface without having to reload the entire page.
+- **Interoperability**: REST APIs are platform-independent and can be used by various programming languages and frameworks. This makes it easier to integrate **WebExpress** with other systems and services, which expands the functionality and reach of the application.
 - **Reusability**: The modular and standardized interfaces of REST APIs make it possible to reuse functions once developed in different parts of the application or even in other projects. This saves development time and resources.
-- **Improved user experience**: By leveraging REST APIs, `WebExpress` can provide a more responsive and interactive user interface. Users can seamlessly navigate through the application and receive instant feedback on their actions, increasing user satisfaction and engagement.
+- **Improved user experience**: By leveraging REST APIs, **WebExpress** can provide a more responsive and interactive user interface. Users can seamlessly navigate through the application and receive instant feedback on their actions, increasing user satisfaction and engagement.
 
-One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. These basic operations allow data to be created, retrieved, updated, and deleted, and form the backbone of many web applications. In `WebExpress`, CRUD operations are supported by a framework that provides HTML and REST API templates to enable a generic view and processing.
+One of the main uses of REST APIs is to implement CRUD (Create, Read, Update, Delete) operations. These basic operations allow data to be created, retrieved, updated, and deleted, and form the backbone of many web applications. In **WebExpress**, CRUD operations are supported by a framework that provides HTML and REST API templates to enable a generic view and processing.
 
 ```
   ┌─────────┐         ┌─────────┐         ┌─────────┐         ┌─────────┐
@@ -1795,7 +1795,7 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 |Update           |Form              |PATCH     |update record
 |Delete (Destroy) |Confirmation form |DELETE    |delete record
 
-The following code selection contains an example class called `MyRestApi` that implements a REST API in `WebExpress`:
+The following code selection contains an example class called `MyRestApi` that implements a REST API in **WebExpress**:
 
 ```csharp
 [Method(CrudMethod.POST)]
@@ -1941,8 +1941,246 @@ The following diagram outlines how the class structure and interactions for the 
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+## WebSocket model
+
+WebExpress supports WebSocket connections as an additional communication channel alongside traditional HTTP request/response endpoints. WebSocket endpoints are registered as specialized endpoint contexts (`ISocketContext`) within the sitemap/endpoint management system and are delegated by the HttpServer to the appropriate handler when a request arrives. WebSocket endpoints are implemented as components (`ISocket`), analogous to page or REST API endpoints, and are managed through a socket manager (`ISocketManager`). The sitemap contains a route for each socket endpoint, allowing incoming URIs to be mapped to the appropriate socket context using the familiar sitemap lookup mechanism.
+
+The following illustration depicts the basic architecture of the WebSocket model. Multiple clients can simultaneously establish persistent connections to the server. These connections are recognized by the `HttpServer`` and routed through the sitemap to the appropriate socket endpoints.
+
+```
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║      ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐        ║
+║      │ Client 1 │   │ Client 2 │   │ Client 3 │   │ Client … │   │ Client n │        ║
+║      └────▲─────┘   └────▲─────┘   └────▲─────┘   └────▲─────┘   └────▲─────┘        ║
+║           │              │              │              │              │              ║
+║           │              │              │              │              │              ║
+║           └──────────────┴──────────────┼──────────────┴──────────────┘              ║
+║                                         │                                            ║
+║                                         │                                            ║
+║                                   ┌─────▼──────┐                                     ║
+║                                   │ WebExpress │                                     ║
+║                                   └────────────┘                                     ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+``` 
+
+Every WebSocket connection follows the typical flow of WebSocket communication. A client first sends a connection request to a server, which forwards it to a responsible management component. There, a new socket instance is created. Afterwards, the WebSocket handshake takes place, during which the server confirms the protocol switch with “101 Switching Protocols”. Once the handshake is complete, the socket instance receives incoming messages through the management layer and can likewise send its own messages back to the client via the same path.
+
+```
+   ┌─────────┐         ┌─────────┐         ┌─────────┐         ┌─────────┐
+   │ Web     │         │ HTTP    │         │ Socket  │         │ My-     │
+   │ Client  │         │ Server  │         │ Manager │         │ Socket  │
+   └────┬────┘         └────┬────┘         └────┬────┘         └────┬────┘
+        ¦                   ¦                   ¦                   ¦
+       ┌┴┐       Ws Request┌┴┐                 ┌┴┐                 ┌┴┐
+ create│ ├────────────────>│ │ HandleConnection│ │                 │ │
+       │ │                 │ ├────────────────>│ │           Create│ │
+       │ │                 │ │                 │ ├────────────────>│ │
+       │ │                 │ │                 │ │                 │ │
+       │ │Handshake (101)  │ │                 │ │<----------------│ │
+       │ │<------------------------------------│ │                 │ │
+       │ │                 │ │                 │ │      OnConnected│ │
+       │ │                 │ │                 │ ├────────────────>│ │
+       │ │                 │ │                 │ │                 │ │
+       │ │                 │ │                 │ │<----------------│ │
+       │ │                 │ │<----------------│ │                 │ │
+       └┬┘                 └┬┘                 └┬┘                 └┬┘
+        ¦                   ¦                   ¦                   ¦ 
+       ┌┴┐                 ┌┴┐          receive┌┴┐                 ┌┴┐
+receive│ ├────────────────────────────────────>│ │        OnReceive│ │
+       │ │                 │ │                 │ ├────────────────>│ │
+       │ │                 │ │                 │ │                 │ │
+       │ │                 │ │                 │ │                 │ │
+       │ │                 │ │                 │ │<----------------│ │
+       │ │<------------------------------------│ │                 │ │
+       └┬┘                 └┬┘                 └┬┘                 └┬┘
+        ¦                   ¦                   ¦                   ¦ 
+       ┌┴┐send             ┌┴┐                 ┌┴┐                 ┌┴┐
+   send│ │<────────────────────────────────────┤ │                 │ │
+       │ │                 │ │                 │ │                 │ │
+       │ │                 │ │                 │ │                 │ │
+       │ │------------------------------------>│ │                 │ │
+       └─┘                 └─┘                 └─┘                 └─┘           
+```
+
+An established WebSocket connection is represented at runtime by a dedicated socket endpoint, which acts as the concrete communication interface through which all WebSocket messages are received and transmitted. For clarity regarding how such an endpoint is configured, the following table summarizes the available metadata attributes and their respective roles in defining these resources:
+
+|Attribute      |Type                   |Multiplicity |Optional |Description
+|---------------|-----------------------|-------------|---------|------------- 
+|Authorization  |Int, String            |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model). 
+|Condition      |`ICondition`           |n            |Yes      |Condition that must be met for the resource to be available. 
+|MessageType    |`MessageTypeAttribute` |1            |Yes      |Defines the message type and optionally the maximum allowed message size. 
+|SubProtocol    |String                 |1            |Yes      |Specifies the sub‑protocol that the socket must use. 
+|MaxMessageSize |ULong                  |1            |Yes      |Sets the maximum allowed message size for incoming messages.
+
+The example implements the `ISocket` interface in the `MySocket` class, demonstrating how to accept a WebSocket connection, receive and send messages, and handle connection closure and errors:
+
+```
+[MessageType(MaxMessageSize.Text)]
+[SubProtocol("chat")]
+[MaxMessageSize(1024)]
+[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
+[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+public sealed class MySocket : ISocket
+{
+    /// <summary>
+    /// Invoked after the websocket handshake has been accepted.
+    /// </summary>
+    public async Task OnConnectedAsync(ISocketMessage connectMessage = null, CancellationToken cancellationToken = default)
+    {
+        ...
+    }
+
+    /// <summary>
+    /// Invoked for each received message fragment or complete message.
+    /// </summary>
+    public async Task OnReceiveAsync(ISocketMessage message, CancellationToken cancellationToken = default)
+    {
+        ...
+    }
+
+    /// <summary>
+    /// Invoked when the websocket connection is closed or is about to be closed.
+    /// </summary>
+    public Task OnDisconnectedAsync(SocketCloseInfo closeInfo)
+    {
+        // perform cleanup for connection (e.g. release resources, update registries)
+        // lowercase inline comments only
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Invoked when an unhandled exception occurs during websocket processing.
+    /// implementers should use this to log and perform cleanup.
+    /// </summary>
+    public Task OnErrorAsync(Exception exception)
+    {
+        ...
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+The UML diagram illustrates the class structure and interactions for web socket endpoints in **WebExpress**, including the `ComponentHub`, `SitemapManager`, `SocketManager`, and `ISocketContext`, as well as the delegation of the upgrade process, connection lifecycle, and message handling to concrete ISocket handlers.
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌────────────────────────────────────┐                                             ║
+║   │ <<Interface>>                      │                                             ║
+║   │ IComponentManager                  │                                             ║
+║   ├────────────────────────────────────┤                                             ║
+║   └─────Δ───────────────────────Δ──────┘                                             ║
+║         ¦                       ¦                                                    ║
+║         ¦                       └-----------------┐                                  ║
+║         ¦                                         ¦                                  ║
+║         ¦                * ┌──────────────────────┴────────────────────────┐         ║
+║         ¦                  │ <<Interface>>                                 │         ║
+║         ¦            ┌─────► ISitemapManager                               │         ║
+║         ¦            │     ├───────────────────────────────────────────────┤ 1       ║
+║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
+║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
+║         ¦            │     │ Refresh()                                     │   │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║         ¦            │     └───────────────────────────────────────────────┘   │     ║
+║         ¦            │                                                         │     ║
+║         ¦            └───────────────┐                                         │     ║
+║         ¦                            │                                         │     ║
+║         ¦                            │   ┌────────────────────────────────┐    │     ║
+║         ¦                            │   │ <<Interface>>                  │    │     ║
+║         ¦                            │   │ IComponentHub                  │    │     ║
+║         ¦                            │ 1 ├────────────────────────────────┤    │     ║
+║         ¦                            └───┤ SitemapManager:ISitemapManager │    │     ║
+║         └--------------┐             ┌───┤ SocketManager:ISocketManager   │    │     ║
+║                        ¦             │ 1 │ …                              │    │     ║
+║                        ¦             │   └────────────────────────────────┘    │     ║
+║                        ¦             └────┐                                    │     ║
+║                        ¦                1 │                                    │     ║
+║              ┌─────────┴──────────────────▼────────────────┐                   │     ║
+║              │ <<Interface>>                               │                   │     ║
+║              │ ISocketManager                              ├--------------┐    │     ║
+║              ├─────────────────────────────────────────────┤              ¦    │     ║
+║              │ AddSocket:Event                             │              ¦    │     ║
+║              │ RemoveSocket:Event                          │              ¦    │     ║
+║            1 ├─────────────────────────────────────────────┤              ¦    │     ║
+║   ┌──────────┤ Sockets:IEnumerable<ISocketContext>         │              ¦    │     ║
+║   │          ├─────────────────────────────────────────────┤              ¦    │     ║
+║   │          │ GetSockets(IPluginContext):                 │              ¦    │     ║
+║   │          │   IEnumerable<ISocketContext>               │              ¦    │     ║
+║   │          │ GetSocket(IApplicationContext,socketId):    │              ¦    │     ║
+║   │          │   ISocketContext                            │              ¦    │     ║
+║   │          └─────────────────────────────────────────────┘              ¦    │     ║
+║   │                                                                       ¦    │     ║
+║   │                        ┌────────────────┐                             ¦    │     ║
+║   │                        │ <<Interface>>  │                             ¦    │     ║
+║   │                        │ IContext       │                             ¦    │     ║
+║   │                        ├────────────────┤                             ¦    │     ║
+║   │                        └───────Δ────────┘                             ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │          ┌─────────────────────┴────────────────────┐                 ¦    │     ║
+║   │          │ <<Interface>>                            │                 ¦    │     ║
+║   │          │ ISocketContext                           │                 ¦    │     ║
+║   │          ├──────────────────────────────────────────┤                 ¦    │     ║
+║   │          │ EndpointId:String                        │                 ¦    │     ║
+║   │          │ PluginContext:IPluginContext             │                 ¦    │     ║
+║   │          │ ApplicationContext:IApplicationContext   │                 ¦    │     ║
+║   │          │ Conditions:IEnumerable<ICondition>       │                 ¦    │     ║
+║   │          │ Cache:Bool                               │                 ¦    │     ║
+║   │          │ Route:IRoute                             │                 ¦    │     ║
+║   │          │ SupportedSubProtocols:IEnumerable<string>│                 ¦    │     ║
+║   │          │ MaxMessageSize:long                      │                 ¦    │     ║
+║   │          │ RequiresAuthentication:bool              │                 ¦    │     ║
+║   │          └─────────────────────Δ────────────────────┘                 ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │                                ¦                                      ¦    │     ║
+║   │             * ┌────────────────┴───────────────────┐                  ¦    │     ║
+║   └───────────────► <<Interface>>                      │ *                ¦    │     ║
+║                   │ ISocketContext                     ◄───────────────────────┘     ║
+║                   ├────────────────────────────────────┤                  ¦          ║
+║                   │ Name:String                        │                  ¦          ║
+║                   │ SupportedSubProtocols:...          │                  ¦          ║
+║                   │ MaxMessageSize:...                 │                  ¦          ║
+║                   └─────────────────┬──────────────────┘                  ¦          ║
+║                                   1 │                                     ¦          ║
+║                                     │                                     ¦          ║
+║                                   1 │                                     ¦          ║
+║          ┌──────────────────────────▼─────────────────────────┐           ¦          ║
+║          │ <<Interface>>                                      │           ¦          ║
+║          │ ISocket                                            │           ¦          ║
+║          ├────────────────────────────────────────────────────┤           ¦          ║
+║          │ OnConnectedAsync(ISocketMessage,CancellationToken):│           ¦          ║
+║          │   Task                                             │           ¦          ║
+║          │ OnReceiveAsync(ISocketMessage,CancellationToken):  │           ¦          ║
+║          │   Task                                             │           ¦          ║
+║          │ OnDisconnectedAsync(SocketCloseInfo):              │           ¦          ║
+║          │   Task                                             │           ¦          ║
+║          │ OnErrorAsync(Exception):                           │           ¦          ║
+║          │   Task                                             │           ¦          ║
+║          └──────────────────────────Δ─────────────────────────┘           ¦          ║
+║                                     ¦                                     ¦          ║
+╚═════════════════════════════════════¦═════════════════════════════════════¦══════════╝
+                                      ¦                                     ¦
+╔MyPlugin═════════════════════════════¦═════════════════════════════════════¦══════════╗
+║                                     ¦                                     ¦          ║
+║                     ┌───────────────┴──────────────┐               create ¦          ║
+║                     │ MySocket                     ◄----------------------┘          ║
+║                     ├──────────────────────────────┤                                 ║
+║                     │ OnConnectedAsync(...)        │                                 ║
+║                     │ OnReceiveAsync(...)          │                                 ║
+║                     │ OnDisconnectedAsync(...)     │                                 ║
+║                     │ OnErrorAsync(...)            │                                 ║
+║                     └──────────────────────────────┘                                 ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+Because WebSocket connections are long-lived and stateful, the number of concurrently connected clients has a direct impact on resource consumption. In typical deployment scenarios, a single **WebExpress** instance can maintain several thousand simultaneous WebSocket connections. Each active WebSocket endpoint instance consumes memory for connection metadata, protocol buffers, and message queues. Under realistic workloads, this results in an estimated baseline footprint of approximately 20–60 KB per connection, depending on message frequency, enabled subprotocols, and application level state. CPU load scales primarily with message throughput rather than connection count, as idle connections impose minimal overhead due to the event driven processing model. To support high-traffic scenarios, **WebExpress** relies on asynchronous message handling within the ISocket implementation and efficient dispatching through the `ISocketManager`. This design avoids thread-per-connection models and enables the system to scale horizontally by running multiple application instances behind a load balancer. Backpressure handling is essential for preventing overload when clients produce messages faster than the server can process them. **WebExpress** enforces configurable message size limits and can reject or close connections that exceed throughput or buffer constraints. For applications with high message rates, batching, throttling, or protocol level compression may be applied to reduce CPU and network overhead.
 
 ## Sitemap model
+
 In a sitemap, all endpoints are listed with their route path. When a web client calls a resource, the associated endpoint is determined from the sitemap and returned to the caller.
 
 The basic concept of the sitemap is based on mapping the physical file structure of the assembly directly as a routing hierarchy. Each folder corresponds to a segment of the route path, with the entire directory structure being converted into a namespace hierarchy during compilation. For example, a path such as `WWWW/Blog/Post` becomes the namespace `WWWW.Blog.Post`, which serves as the foundation for deriving the route path. Within these namespaces, the contained classes (such as `Index.cs`, `Add.cs`, or `Edit.cs`) define the specific endpoints of the corresponding segment. In this process, `Index.cs` functions as the default endpoint, meaning that this filename is not explicitly included in the URI. Thus, a class like `WWWW.Blog.Post.Index.cs` results in the route `/blog/post`.
@@ -1971,11 +2209,11 @@ When converting endpoints into routes, the system checks whether an endpoint ori
 
 Variable segments are a key feature in designing dynamic and user-friendly URLs. Unlike `?query` parameters, they enable a clearer structure by treating specific parts of a URL as placeholders, which are replaced with actual values at runtime. This approach greatly enhances the readability and aesthetics of URLs. For instance, a URL like `/blog/post/42` appears far more professional and intuitive than `/blog?post=42`. This structured format improves user experience while also benefiting search engines, as "clean URLs" contribute to better search engine optimization (SEO).
 
-`WebExpress` takes this functionality even further by supporting specific data types such as int (integers) and GUIDs (Globally Unique Identifiers) for dynamic segments. This ensures seamless handling of both numeric identifiers (e.g., `/products/details/314`) and globally unique values (e.g., `/blog/post/{guid}`), making it ideal for applications that depend on precise resource identification. The integration of attributes like `SegmentInt` and `SegmentGuid` in `WebExpress` helps define these dynamic URL segments explicitly, enabling clear routing and robust processing.
+**WebExpress** takes this functionality even further by supporting specific data types such as int (integers) and GUIDs (Globally Unique Identifiers) for dynamic segments. This ensures seamless handling of both numeric identifiers (e.g., `/products/details/314`) and globally unique values (e.g., `/blog/post/{guid}`), making it ideal for applications that depend on precise resource identification. The integration of attributes like `SegmentInt` and `SegmentGuid` in **WebExpress** helps define these dynamic URL segments explicitly, enabling clear routing and robust processing.
 
 In addition to improving aesthetics and functionality, variable segments also offer hierarchical structures that facilitate user-friendly navigation. Users can easily shorten URLs logically to access higher-level sections, such as navigating from `/blog/post/42` to `/blog/post` or `/blog`. This hierarchical design promotes a clean REST-API architecture, emphasizing resource-oriented routes like `/user/123/orders` over traditional queries such as `/orders?user=123`.
 
-The `Index` classes in `WebExpress` can be equipped with type-defining attributes such as `SegmentInt` or `SegmentGuid` to define dynamic segments. These type attributes specify what kind of dynamic values the URL segments can contain, such as integers (int) or globally unique identifiers (GUID). This ensures that the corresponding values are properly processed and validated during routing. To illustrate the concept of `Index` classes and how they can be equipped with type-defining attributes to manage dynamic URL segments, consider the following example. It demonstrates how a specific parameter, such as a blog post ID, can be handled through a custom `BlogPostParameter` class, while the `Index` class represents the dynamic segment in the routing hierarchy:
+The `Index` classes in **WebExpress** can be equipped with type-defining attributes such as `SegmentInt` or `SegmentGuid` to define dynamic segments. These type attributes specify what kind of dynamic values the URL segments can contain, such as integers (int) or globally unique identifiers (GUID). This ensures that the corresponding values are properly processed and validated during routing. To illustrate the concept of `Index` classes and how they can be equipped with type-defining attributes to manage dynamic URL segments, consider the following example. It demonstrates how a specific parameter, such as a blog post ID, can be handled through a custom `BlogPostParameter` class, while the `Index` class represents the dynamic segment in the routing hierarchy:
 
 ```csharp
 public class BlogPostParameter : Parameter
@@ -2007,7 +2245,7 @@ The following table describes the attributes used in the `Index`:
 
 This class is further decorated with a custom attribute (`SegmentAttribute`) that defines the name of the placeholder (`postId`). During routing, a reflection-based mechanism examines the namespace hierarchy and the set attributes to determine where a dynamic value is expected. The mechanism then extracts the corresponding value from the URL and passes it on to the appropriate endpoint.
 
-When the application starts, the sitemap uses reflection to traverse all relevant classes that represent endpoints (all those that implement the `IEndpoint` interface) and automatically builds a routing tree from them. Below is an example of a typical website structure implemented with `WebExpress`:
+When the application starts, the sitemap uses reflection to traverse all relevant classes that represent endpoints (all those that implement the `IEndpoint` interface) and automatically builds a routing tree from them. Below is an example of a typical website structure implemented with **WebExpress**:
 
 ```
    <> MyPlugin.csproj
@@ -2142,7 +2380,7 @@ To better understand the architecture of the `StatusPageManager` and the `Status
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-If no status page is found in the current application, a default page is created and delivered by `WebExpress`.
+If no status page is found in the current application, a default page is created and delivered by **WebExpress**.
 
 ## Fragment model
 Fragments are components that can be integrated into pages to extend functionalities. Fragments can come from different sources (plugins). When a resource is loaded, the fragments stored in the sections are determined, instantiated and integrated into the resource. A section is a named area within a page (e.g. `Property.Primary`). The following UML diagram illustrates the relationships and internal structure of the `FragmentManager` and its associated fragments:
@@ -2365,7 +2603,7 @@ A control provides the following properties:
 |Enable              |Bool                    |Indicates if the element is enabled.
 
 ### Form
-A form in HTML is an interactive element that allows users to enter data and send it to the `WebExpress` server. Forms consist of various input elements such as text boxes, checkboxes, radio buttons, drop-down menus, and buttons. These form elements are organized into tabs and groups for better structure and usability. By grouping related elements together and using tabs to separate different sections, users can navigate and complete the form more efficiently. The following UML diagram illustrates the relationships and internal structure, serving as a schema for form designs:
+A form in HTML is an interactive element that allows users to enter data and send it to the **WebExpress** server. Forms consist of various input elements such as text boxes, checkboxes, radio buttons, drop-down menus, and buttons. These form elements are organized into tabs and groups for better structure and usability. By grouping related elements together and using tabs to separate different sections, users can navigate and complete the form more efficiently. The following UML diagram illustrates the relationships and internal structure, serving as a schema for form designs:
 
 ```
 ╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
@@ -2771,7 +3009,7 @@ A session establishes a state-based connection between the client and WebExpress
 The session manager delivers the currently used session based on the cookie stored in the request. The session, in turn, stores instances of the `ISessionProperty` interface in which the information (e.g. parameters) is stored. 
 
 ## Event model
-Events are notifications from the `WebExpress` API or web applications that can be subscribed to and evaluated. To explore the organization, refer to the UML diagram illustrating the structural relationships:
+Events are notifications from the **WebExpress** API or web applications that can be subscribed to and evaluated. To explore the organization, refer to the UML diagram illustrating the structural relationships:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3185,7 +3423,7 @@ The functions of the `NotificationManager` can also be accessed via the REST API
 |Delete |The id                |Deletes an existing notification.
 
 ## Index model
-The index model provides a reverse index to enable fast and efficient searching. A reverse index can significantly speed up access to the data. However, creating and storing a reverse index requires additional storage space and Processing time. The storage requirement increases, especially with large amounts of data can be important. Therefore, it is important to weigh the pros and cons to achieve the best possible performance. The full-text search in `WebExpress` supports the following search options:
+The index model provides a reverse index to enable fast and efficient searching. A reverse index can significantly speed up access to the data. However, creating and storing a reverse index requires additional storage space and Processing time. The storage requirement increases, especially with large amounts of data can be important. Therefore, it is important to weigh the pros and cons to achieve the best possible performance. The full-text search in **WebExpress** supports the following search options:
 
 - Word search
 - Wildcard search
@@ -3272,18 +3510,18 @@ The WebExpress Query Language (WQL) is a query language that filters and sorts a
 Name ~ "WebExpress" and Create < now(-3d) orderby Create desc take 5
 ```
 
-The example returns the first five elements of the dataset that contain the value `WebExpress` in the Name attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in descending order by creation date.
+The example returns the first five elements of the dataset that contain the value **WebExpress** in the Name attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in descending order by creation date.
 
 For detailed information about `WebIndex`, see [concept](https://github.com/webexpress-framework/WebExpress.WebIndex/blob/main/doc/concept.md).
 
 ## Identity model
-A large number of web applications are subject to requirements for access protection, integrity and confidentiality. These requirements can be met through identity and access management (IAM). In identity management, identities are managed. In access management, on the other hand, authorized entities are enabled to use a service (application). `WebExpress` supports the following identity management features:
+A large number of web applications are subject to requirements for access protection, integrity and confidentiality. These requirements can be met through identity and access management (IAM). In identity management, identities are managed. In access management, on the other hand, authorized entities are enabled to use a service (application). **WebExpress** supports the following identity management features:
 
-- Provisioning: Provides `WebExpress` with the basic requirements for the entities to carry out their activities. Deprovisioning is the opposite path, in which the prerequisites are withdrawn (e.g. when leaving).
+- Provisioning: Provides **WebExpress** with the basic requirements for the entities to carry out their activities. Deprovisioning is the opposite path, in which the prerequisites are withdrawn (e.g. when leaving).
 - Authentication: Handles the identification process of the entities.
 - Authorization: Granting permission for a specific entity to use a specific service.
 
-The provisioning service provides `WebExpress` with the basic requirements for the operation of the identities. This is realized with the help of a user account. The following illustration outlines the lifecycle of a user account. A user account can be in one of two states, `Active` and `Deactivated`. If the events `Create`, `Update`, `Disable`, `Enable` or `Delete` occur, the user account changes its state.
+The provisioning service provides **WebExpress** with the basic requirements for the operation of the identities. This is realized with the help of a user account. The following illustration outlines the lifecycle of a user account. A user account can be in one of two states, `Active` and `Deactivated`. If the events `Create`, `Update`, `Disable`, `Enable` or `Delete` occur, the user account changes its state.
 
 ```
 ╔═══════╗                  ╔═══════════╗
@@ -3308,7 +3546,7 @@ The provisioning service provides `WebExpress` with the basic requirements for t
 - **Enable:** A deactivated user account can be transferred to the activated state with the help of this event.
 - **Delete:** This event is used for deprovisioning and deletes the user account of an entity.
 
-`WebExpress` supports two methods of identity management:
+**WebExpress** supports two methods of identity management:
 
 - On-premises identity management: Each application has its own user management. The cost of setting up the necessary infrastructure is particularly easy here, as identity management is carried out directly by the application. Each application has its own identity domain, which is disadvantageous from a unified identity management perspective.
 - Shared identity management: If the identities are outsourced to a central service and retrieved by the applications, there is shared identity management. Shared identity management allows you to reduce the number of identity domains. 
@@ -3472,13 +3710,13 @@ Identities and groups must be loaded from a persistent data source, which may be
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-`WebExpress` provides the following default groups:
+**WebExpress** provides the following default groups:
 
 |Group |Description
 |------|------------------
 |All   | All identities are members of the group.
 
-`WebExpress` provides the following policies:
+**WebExpress** provides the following policies:
 
 |Policy              |Description
 |--------------------|----------------------
@@ -3610,7 +3848,7 @@ The template determines the layout of a page. The page is divided into a header,
 ```
 
 ### Header
-The business application header contains buttons and submenus to navigate the application at the top level. The `ApplicationNavigator` refers to other (`WebExpress`) applications. The `AppTitle` contains the name of the application. This comes from the name attribute of the application (see Section 3.3). The AppNavigation links point to key features of the application. The `QuickCreate` button provides functionality for creating records. In the search field, search queries can be passed to the application. The `Help` shaft panel groups the application's help links. The `Notification` button collects all notifications from the application. In the `Avatar` button, the functions of the user account are provided. The `Setting` button contains the functions for configuring the application.
+The business application header contains buttons and submenus to navigate the application at the top level. The `ApplicationNavigator` refers to other (**WebExpress**) applications. The `AppTitle` contains the name of the application. This comes from the name attribute of the application (see Section 3.3). The AppNavigation links point to key features of the application. The `QuickCreate` button provides functionality for creating records. In the search field, search queries can be passed to the application. The `Help` shaft panel groups the application's help links. The `Notification` button collects all notifications from the application. In the `Avatar` button, the functions of the user account are provided. The `Setting` button contains the functions for configuring the application.
 
 ```
                          AppNavigationPreferences
