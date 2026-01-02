@@ -1324,6 +1324,7 @@ To clearly illustrate the metadata described in the code above, the table below 
 |Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
+|Domain          |`IDomain`         |n            |Yes      |Associates the page with one or more logical domains. Domains represent functional areas, modules or workspaces and can be used for routing, filtering or contextual grouping.
 
 Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, which is available in the `RenderContext`, is responsible for the display of the page. The following UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
 
@@ -1738,6 +1739,8 @@ To provide clarity about the metadata specified in the code above, the following
 |SettingGroup   |ISettingGroup    |1            |Yes      |Each setting page can have a setting group. If no `SettingGroup` is specified, the settings page will not be associated with a group.
 |SettingSection |SettingSection   |1            |Yes      |Determines the section by displaying the entry in the setting sidebar.
 |SettingHide    |-                |1            |Yes      |Not displaying the page in the settings
+|Scope          |`IScope`         |n            |Yes      |The scope of the page.
+|Domain         |`IDomain`        |n            |Yes      |Associates the page with one or more logical domains. Domains represent functional areas, modules or workspaces and can be used for routing, filtering or contextual grouping.
                                           
 ### RestAPI model
 
@@ -2137,14 +2140,15 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║   │             └───────────────────Δ────────────────────┘                ¦    │     ║
 ║   │                                 ¦                                     ¦    │     ║
 ║   │                                 ¦                                     ¦    │     ║
-║   │           ┌─────────────────────┴─────────────────────┐               ¦    │     ║
-║   │         * │ <<Interface>>                             │ *             ¦    │     ║
-║   └───────────► ISocketContext                            ◄────────────────────┘     ║
-║               ├───────────────────────────────────────────┤               ¦          ║
-║               │ SupportedSubProtocols:IEnumerable<string> │               ¦          ║
-║               │ MaxMessageSize:long                       │               ¦          ║
-║               │ RequiresAuthentication:bool               │               └----┐     ║
-║               └───────────────────────────────────────────┘                    ¦     ║
+║   │                   ┌─────────────┴───────────────┐                     ¦    │     ║
+║   │                 * │ <<Interface>>               │ *                   ¦    │     ║
+║   └───────────────────► ISocketContext              ◄──────────────────────────┘     ║
+║                       ├─────────────────────────────┤                     ¦          ║
+║                       │ SupportedSubProtocol:string │                     ¦          ║
+║                       │ MaxMessageSize:long         │                     ¦          ║
+║                       │ RequiresAuthentication:bool │                     └----┐     ║
+║                       └─────────────────────────────┘                          ¦     ║
+║                                                                                ¦     ║
 ║                                                ┌───────────────────────────┐   ¦     ║
 ║                                                │ <<Interface>>             │   ¦     ║
 ║                            ┌───────────────┐   │ ISocketConnection         │   ¦     ║
@@ -3440,11 +3444,57 @@ The functions of the `NotificationManager` can also be accessed via the REST API
 |Delete |The id                |Deletes an existing notification.
 
 
-## MessageQueue Manager
+## MessageQueue model
 
-The `MessageQueueManager` is the central component responsible for receiving and forwarding messages within the `WebExpress.WebApp` application layer. Data exchange takes place over a bidirectional WebSocket connection provided by a dedicated socket endpoint. This approach enables direct, event-driven communication between client and server without the overhead of traditional HTTP requests.
+The `MessageQueueManager` is the central component responsible for receiving and forwarding messages within the `WebExpress.WebApp` application layer. Data exchange takes place over a bidirectional `WebSocket` connection provided by a dedicated socket endpoint. This approach enables direct, event-driven communication between client and server without the overhead of traditional HTTP requests.
 
-Any object within **WebExpress** can register with the MessageQueue to receive messages or send its own. Registration is performed through a standardized interface, allowing both client-side and server-side components to participate in message exchange. The MessageQueue manages all connected listeners, distributes incoming messages to the registered recipients, and forwards outgoing messages through the existing WebSocket connection. This makes it possible to reliably implement features such as real-time notifications, chat messages, status updates, or cross-system commands.
+Any object within **WebExpress** can register with the message queue to receive messages or send its own. Registration is performed through a standardized interface, allowing both client-side and server-side components to participate in message exchange. The message queue manages all connected listeners, distributes incoming messages to the registered recipients, and forwards outgoing messages through the existing WebSocket connection. This makes it possible to reliably implement features such as real-time notifications, chat messages, status updates, or cross-system commands.
+
+To support selective and context‑aware communication, the `MessageQueueManager` maintains an internal registry of all active WebSocket sessions. Each session contains the active WebSocket instance, a unique session identifier and a metadata dictionary with contextual information provided by the client. Typical metadata entries include the current route of the client, the tenant context, the active language or additional application‑specific values. The registry acts as a compact in‑memory database and allows the server to identify exactly which clients match a given context and should receive a specific message. This enables precise routing instead of global broadcasting and ensures that server‑initiated messages reach only the intended clients.
+
+**WebExpress** uses a structured and type‑safe addressing model to determine which clients receive a message. Addressing is performed through clearly defined address objects that describe the selection criteria for a client session. The `MessageQueueManager` evaluates these address objects centrally and determines whether a session qualifies as a valid recipient. Predefined address types cover common scenarios and can be extended at any time without modifying the core logic. This model ensures that server‑side components can target specific clients with precision and consistency.
+
+All address types implement a shared interface:
+
+```csharp
+public interface IAddress
+{
+    bool Matches(IClientSession session);
+}
+```
+
+Example: Addressing by URI
+
+```csharp
+public sealed class UriAddress : IAddress
+{
+    public string Uri { get; }
+
+    public UriAddress(string uri)
+    {
+        Uri = uri;
+    }
+
+    public bool Matches(IClientSession session)
+    {
+        return Uri.Equals(session.Uri);
+    }
+}
+```
+
+This structure allows the creation of additional address types such as tenant‑based routing, user‑based routing or combined conditions. The addressing model remains consistent and predictable across all implementations and ensures that server‑side messages reach exactly the clients that match the defined criteria.
+Type‑Safe Message Dispatch
+
+Based on the addressing model, the `MessageQueueManager` provides a type‑safe method for sending messages from the server to selected clients:
+
+```csharp
+public async Task SendAsync(IMessage message, IAddress address, CancellationToken cancellationToken = default)
+{
+    // Serialization, selection of matching sessions and dispatch
+}
+```
+
+The following overview illustrates how these components interact within the **WebExpress** architecture and how the `MessageQueueManager` integrates into the overall system structure.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -3459,19 +3509,36 @@ Any object within **WebExpress** can register with the MessageQueue to receive m
                              ¦
 ╔WebExpress.WebApp═══════════¦═════════════════════════════════════════════════════════╗
 ║                            ¦                                                         ║
-║       ┌────────────────────┴──────────────────────┐    ┌───────────────────────┐     ║
-║       │ <<Interface>>                             │    │ <<Interface>>         │     ║
-║       │ IMessageQueueManager                      │    │ ISocketMessage        │     ║
-║       ├───────────────────────────────────────────┤    ├───────────────────────┤     ║
-║       │ Register(Guid,IMessageQueueSocket)        │    │ Type:String           │     ║
-║       │ Register(String,Action<ISocketMessage>)   │    │ MessageId:String      │     ║
-║       │ Unregister(Guid)                          │    │ ConnectionId:Guid     │     ║
-║       │ Unregister(String,Action<ISocketMessage>) │    │ Sender:String         │     ║
-║       │ SendMessage(ISocketMessage)               │    │ Receivers:            │     ║
-║       └───────────────────────────────────────────┘    │   IEnumerable<String> │     ║
-║                                                        │ Timestamp:DateTime    │     ║
-║                                                        │ Data:Object           │     ║
-║                                                        └───────────────────────┘     ║
+║         ┌──────────────────┴────────────────────┐    ┌────────────────────┐          ║
+║         │ <<Interface>>                         │    │ <<Interface>>      │          ║
+║         │ IMessageQueueManager                  │    │ IMessage           │          ║
+║         ├───────────────────────────────────────┤    ├────────────────────┤          ║
+║         │ Register(Guid,IMessageQueueSocket)    │    │ Type:String        │          ║
+║         │   IMessageQueueManager                │    │ MessageId:String   │          ║
+║         │ Register(String,Action<IMessage>)     │    │ ConnectionId:Guid  │          ║
+║         │   IMessageQueueManager                │    │ Sender:String      │          ║
+║         │ Unregister(Guid):                     │    │ Timestamp:DateTime │          ║
+║         │   IMessageQueueManager                │    │ Data:Object        │          ║
+║         │ Unregister(String,Action<IMessage>):  │    └────────────────────┘          ║
+║         │   IMessageQueueManager                │                                    ║
+║         │ SendAsync(IAddress,IMessage,          │                                    ║
+║         │   CancellationToken):                 │                                    ║
+║         │   Task<IMessageQueueManager>          │                                    ║
+║         └───────────────────────────────────────┘                                    ║
+║                                                                                      ║
+║              ┌──────────────────────────────┐                                        ║
+║              │ <<Interface>>                │                                        ║
+║              │ IAddress                     │                                        ║
+║              ├──────────────────────────────┤                                        ║
+║              │ Matches(IClientSession):bool │                                        ║
+║              └─────────────Δ────────────────┘                                        ║
+║                            ¦                                                         ║
+║                            ¦                                                         ║
+║              ┌─────────────┴────────────────┐                                        ║
+║              │ AddressDomain                │                                        ║
+║              ├──────────────────────────────┤                                        ║
+║              │ Matches(IClientSession):bool │                                        ║
+║              └──────────────────────────────┘                                        ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
