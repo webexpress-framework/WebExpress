@@ -1817,7 +1817,7 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 |-----------------|----------|-----------------
 |Create           |POST      |create record
 |Retrieve (Read)  |GET       |read record(s)
-|Update           |PATCH     |update record
+|Update           |PUT/PATCH |update record
 |Delete (Destroy) |DELETE    |delete record
 
 The following code selection contains an example class called `MyRestApi` that implements a REST API in **WebExpress**:
@@ -1835,6 +1835,7 @@ public sealed class MyRestApi : IRestApiCrud
     public IResponse Retrieve(IRequest request) {…}
     
     [Method(RequestMethod.PUT)]
+    [Method(RequestMethod.PATCH)]
     public IResponse Update(IRequest request) {…}
     
     [Method(RequestMethod.DELETE)]
@@ -1979,6 +1980,72 @@ The following diagram outlines how the class structure and interactions for the 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+In **WebExpress**, the CRUD REST APIs work closely with the `RestForm` control from `WebExpress.WebApp` to provide a fully data‑driven user interface. UI display controls (such as the table control) serve as examples of how records can be presented in a structured format, retrieved through the Table REST API’s `Retrieve` method. They send GET requests to the assigned REST resource and support features such as pagination, sorting, and filtering. Whenever the underlying data changes through POST, PATCH, or DELETE operations, the table can automatically refresh to reflect the current state. 
+
+The `RestForm` component provides a generic form that is directly connected to the CRUD REST API. It automatically detects whether the form is in creation or editing mode and sends POST, PUT, or PATCH requests accordingly. Optionally, a delete function can be integrated, which triggers a DELETE request. The fields of the `RestForm` are dynamically bound to the properties of the REST model, eliminating the need for manual mapping.
+
+By combining UI display controls and `RestForm`, a complete CRUD workflow emerges. These display controls present all existing records, while the `RestForm` enables their creation, modification, and deletion. The REST API serves as the central interface between the user interface and the data model. Changes to the dataset become visible immediately without requiring a page reload. This tight integration between the REST API and the UI components makes **WebExpress** particularly reactive, modular, and easy to maintain. Developers can create complex, interactive applications with minimal effort, based on standardized HTTP operations while still offering a high level of usability.
+
+
+```
+┌─────────┐                ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│ Web     │                │ HTTP    │     │ Page    │     │ Form    │     │ Table   │
+│ Client  │                │ Server  │     │         │     │ Page    │     │ API     │
+└────┬────┘                └────┬────┘     └────┬────┘     └────┬────┘     └────┬────┘
+     ¦                          ¦               ¦               ¦               ¦
+    ┌┴┐                        ┌┴┐             ┌┴┐             ┌┴┐             ┌┴┐
+    │ │             GET Request│ │             │ │             │ │             │ │
+    │ ├───────────────────────>│ │      Process│ │             │ │             │ │
+    │ │                        │ ├────────────>│ │             │ │             │ │
+    │ │                        │ │HTML         │ │             │ │             │ │
+    │ │Response (200)          │ │<------------│ │             │ │             │ │
+    │ │<-----------------------│ │             │ │             │ │             │ │
+    │ │                        │ │             │ │             │ │             │ │
+    │ │  ┌─────────┐           │ │             │ │             │ │             │ │
+    │ │  │ Table   │           │ │             │ │             │ │             │ │
+    │ │  │ Control │           │ │             │ │             │ │             │ │
+    │ │  └────┬────┘           │ │             │ │             │ │             │ │
+    │ │Create ¦                │ │             │ │             │ │             │ │
+    │ ├─────>┌┴┐       Retrieve│ │             │ │             │ │             │ │
+    │ │      │ ├──────────────>│ │             │ │             │ │     Retrieve│ │
+    │ │      │ │               │ ├────────────────────────────────────────────>│ │
+    │ │      │ │               │ │JSON         │ │             │ │             │ │
+    │ │      │ │Response (200) │ │<--------------------------------------------│ │
+    │ │  Edit│ │<--------------│ │             │ │             │ │             │ │
+    │ │   ┌──┤ │               │ │             │ │             │ │             └─┘
+    │ │   └─>│ │    GET Request│ │             │ │             │ │
+    │ ├───────────────────────>│ │             │ │      Process│ │
+    │ │      │ │               │ ├────────────────────────────>│ │
+    │ │      │ │               │ │HTML         │ │             │ │
+    │ │Response (200)          │ │<----------------------------│ │
+    │ │<-----------------------│ │             │ │             │ │ 
+    │ │      │ │               │ │             │ │             │ │ 
+    │ │      │ │  ┌─────────┐  │ │             │ │             │ │         ┌─────────┐
+    │ │      │ │  │ RestForm│  │ │             │ │             │ │         │ CRUD    │
+    │ │Show  │ │  │ Control │  │ │             │ │             │ │         │ API     │
+    │ │Modal │ │  └────┬────┘  │ │             │ │             │ │         └────┬────┘
+    │ ├──┐   │ │       ¦       │ │             │ │             │ │              ¦
+    │ │<─┘   │ │Create┌┴┐      │ │             │ │             │ │             ┌┴┐
+    │ ├──────────────>│Retrieve│ │             │ │             │ │             │ │
+    │ │      │ │      │ ├─────>│ │             │ │             │ │     Retrieve│ │
+    │ │      │ │      │ │      │ ├────────────────────────────────────────────>│ │
+    │ │      │ │      │ │      │ │JSON         │ │             │ │             │ │
+    │ │      │ │      │ │      │ │<--------------------------------------------│ │
+    │ │      │ │      │ │<-----│ │             │ │             │ │             │ │
+    │ │      │ │      │ │Response (200)        │ │             │ │             │ │
+    │ │      │ │      │ │      │ │             │ │             │ │             │ │
+    │ │      │ │      │ │Update│ │             │ │             │ │             │ │
+    │ │      │ │      │ ├─────>│ │             │ │             │ │       Update│ │
+    │ │      │ │      │ │      │ ├────────────────────────────────────────────>│ │
+    │ │      │ │      │ │      │ │             │ │             │ │             │ │
+    │ │      │ │      │ │      │ │<--------------------------------------------│ │
+    │ │      │ Destroy│ │<-----│ │             │ │             │ │             │ │
+    │ ├──────────────>│ │Response (204)        │ │             │ │             │ │
+    │ │      │ │      └X┘      │ │             │ │             │ │             │ │
+    │ │      │ │               │ │             │ │             │ │             │ │
+    └─┘      └─┘               └─┘             └─┘             └─┘             └─┘
+```
+
 ## WebSocket model
 
 WebExpress supports WebSocket connections as an additional communication channel alongside traditional HTTP request/response endpoints. WebSocket endpoints are registered as specialized endpoint contexts (`ISocketContext`) within the sitemap/endpoint management system and are delegated by the HttpServer to the appropriate handler when a request arrives. WebSocket endpoints are implemented as components (`ISocket`), analogous to page or REST API endpoints, and are managed through a socket manager (`ISocketManager`). The sitemap contains a route for each socket endpoint, allowing incoming URIs to be mapped to the appropriate socket context using the familiar sitemap lookup mechanism.
@@ -2001,7 +2068,7 @@ The following illustration depicts the basic architecture of the WebSocket model
 ║                                   └────────────┘                                     ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
-``` 
+```
 
 Every WebSocket connection follows the typical flow of WebSocket communication. A client first sends a connection request to a server, which forwards it to a responsible management component. There, a new socket instance is created. Afterwards, the WebSocket handshake takes place, during which the server confirms the protocol switch with “101 Switching Protocols”. Once the handshake is complete, the socket instance receives incoming messages through the management layer and can likewise send its own messages back to the client via the same path.
 
