@@ -3555,7 +3555,7 @@ Type‑Safe Message Dispatch
 Based on the addressing model, the `MessageQueueManager` provides a type‑safe method for sending messages from the server to selected clients:
 
 ```csharp
-public async Task SendAsync(IMessage message, IAddress address, CancellationToken cancellationToken = default)
+public async Task SendAsync(IEnvelope envelope, IAddress address, CancellationToken cancellationToken = default)
 {
     // Serialization, selection of matching sessions and dispatch
 }
@@ -3578,17 +3578,17 @@ The following overview illustrates how these components interact within the **We
 ║                            ¦                                                         ║
 ║         ┌──────────────────┴────────────────────┐    ┌────────────────────┐          ║
 ║         │ <<Interface>>                         │    │ <<Interface>>      │          ║
-║         │ IMessageQueueManager                  │    │ IMessage           │          ║
+║         │ IMessageQueueManager                  │    │ IEnvelope          │          ║
 ║         ├───────────────────────────────────────┤    ├────────────────────┤          ║
-║         │ Register(Guid,IMessageQueueSocket)    │    │ Type:String        │          ║
+║         │ Register(Guid,IMessageQueueSocket)    │    │ Version:Int        │          ║
+║         │   IMessageQueueManager                │    │ Channel:String     │          ║
+║         │ Register(String,Action<IEnvelope>)    │    │ Type:String        │          ║
 ║         │   IMessageQueueManager                │    │ MessageId:String   │          ║
-║         │ Register(String,Action<IMessage>)     │    │ ConnectionId:Guid  │          ║
+║         │ Unregister(Guid):                     │    │ ConnectionId:Guid  │          ║
 ║         │   IMessageQueueManager                │    │ Sender:String      │          ║
-║         │ Unregister(Guid):                     │    │ Timestamp:DateTime │          ║
-║         │   IMessageQueueManager                │    │ Data:Object        │          ║
-║         │ Unregister(String,Action<IMessage>):  │    └────────────────────┘          ║
-║         │   IMessageQueueManager                │                                    ║
-║         │ SendAsync(IAddress,IMessage,          │                                    ║
+║         │ Unregister(String,Action<IEnvelope>): │    │ Timestamp:DateTime │          ║
+║         │   IMessageQueueManager                │    │ Payload:Object     │          ║
+║         │ SendAsync(IAddress,IEnvelope,         │    └────────────────────┘          ║
 ║         │   CancellationToken):                 │                                    ║
 ║         │   Task<IMessageQueueManager>          │                                    ║
 ║         └───────────────────────────────────────┘                                    ║
@@ -3609,6 +3609,85 @@ The following overview illustrates how these components interact within the **We
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+
+### Message Envelope Structure
+
+The envelope is the standardized message container used by **WebExpress** to transport all real‑time communication through the `MessageQueueManager`. It defines a uniform structure for every message exchanged between client and server, independent of its purpose or origin. By encapsulating metadata and payload in a consistent format, the envelope enables reliable routing, type‑safe processing and predictable behavior across all WebSocket‑based features.
+
+Each envelope consists of two parts: a metadata header and a payload section. The metadata describes how the message should be interpreted and routed. It contains the protocol version, the logical communication channel, the semantic message type, a unique message identifier, a timestamp and the sender information. These fields allow the `MessageQueueManager` to classify the message, apply the appropriate addressing rules and forward it to the correct recipients. The payload contains the domain‑specific data of the message. Its structure depends on the channel and the message type, for example notification content, progress updates, chat messages or WebRTC signaling information.
+
+A typical envelope has the following structure:
+
+```json
+{
+  "version": 1,
+  "channel": "notification",
+  "type": "event",
+  "messageId": "notif-42",
+  "timestamp": "2026-01-16T07:00:00Z",
+  "sender": "NotificationManager",
+  "payload": {
+    "title": "Import running",
+    "message": "The import process is currently at 35 percent.",
+    "severity": "info",
+    "notificationId": "import-2026",
+    "state": "open"
+  }
+}
+```
+
+### Description of the example scenario
+
+A client establishes a persistent connection to the WebExpress server through a WebSocket endpoint. After the handshake is completed, the session is recorded in the internal registry of the `MessageQueueManager`. This session contains the active WebSocket instance as well as metadata such as the current route, the user context, or other application‑specific values.
+
+When the server creates a notification, for example a status message or an indication of a running operation, the message is passed to the `MessageQueueManager` as a structured envelope object. The addressing process is performed using an appropriate address object that defines which sessions should receive the message. Since the client is actively connected and matches the selection criteria, the message is delivered to the client through the existing WebSocket connection.
+
+On the client side, the message is displayed in the notification area of the user interface. The notification remains visible until the user closes it manually or until the server sends a completion message, for example when a task reaches 100 percent. As long as neither of these conditions occurs, the notification is considered open.
+
+If the user navigates to another page, the existing WebSocket connection is closed and a new connection is established. The `MessageQueueManager` registers the new session as a separate entry in the registry and receives the metadata that describes the client’s current context. Since the original notification is still marked as open on the server, it is sent again when the new session is created. The mechanism is the same as before: the message is distributed through the addressing model to all sessions that match the criteria, including the newly established connection.
+
+The client displays the notification again, regardless of the fact that the previous session has already been closed. Only when the user closes the notification window or the server marks the notification as completed is it removed from the server‑side state. From that point on, it is no longer delivered during subsequent page changes.
+
+```
+┌────────┐               ┌────────┐               ┌─────────┐           ┌──────────────┐
+│ Web    │               │ Web    │               │ Message │           │ Notification │
+│ Client │               │ Socket │               │ Queue   │           │ Manager      │
+│        │               │        │               │ Manager │           │              │
+└────┬───┘               └────┬───┘               └────┬────┘           └───────┬──────┘
+     ¦                        ¦                        ¦                        ¦
+    ┌┴┐     WebSocket Connect┌┴┐                      ┌┴┐                      ┌┴┐
+    │ ├─────────────────────>│ │      Register Session│ │                      │ │
+    │ │                      │ ├─────────────────────>│ │                      │ │
+    │ │                      │ │                      │ │ Dispatch Notification│ │
+    │ │                      │ │Notification          │ │<─────────────────────┤ │
+    │ │Notification          │ │<─────────────────────┤ │                      │ │
+    │ │<─────────────────────┤ │                      │ │                      │ │
+    │ │                      │ │                      │ │                      │ │
+------------ User navigates (User does NOT close notification; still active) -----------
+    │ │                      │ │                      │ │                      │ │
+    │ │       WebSocket Close│ │                      │ │                      │ │
+    │ ├─────────────────────>│ │    Unregister Session│ │                      │ │
+    │ │                      │ ├─────────────────────>│ │                      │ │
+    │ │ New WebSocket Connect│ │                      │ │                      │ │
+    │ ├─────────────────────>│ │      Register Session│ │                      │ │
+    │ │                      │ ├─────────────────────>│Check active notifications│
+    │ │                      │ │                      │ ├─────────────────────>│ │
+    │ │                      │ │                      │ │                      │ │
+    │ │                      │ │                      │ │ Dispatch Notification│ │
+    │ │                      │ │Notification          │ │<─────────────────────┤ │
+    │ │Notification          │ │<─────────────────────┤ │                      │ │
+    │ │<─────────────────────┤ │                      │ │                      │ │
+    │ │                      │ │                      │ │                      │ │
+------------------ User closes notification OR server marks it resolved ----------------
+
+    │ │    Close Notification│ │                      │ │                      │ │
+    │ ├─────────────────────>│ │          Update state│ │                      │ │
+    │ │                      │ ├─────────────────────>│ │Mark notification done│ │
+    │ │                      │ │                      │ ├─────────────────────>│ │
+    │ │                      │ │                      │ │                      │ │
+    └─┘                      └─┘                      └─┘                      └─┘
+```
+
 
 ## Index model
 
