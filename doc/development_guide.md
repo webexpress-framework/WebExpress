@@ -4080,7 +4080,7 @@ The template determines the layout of a page. The page is divided into a header,
 ```
 ╔WebAppPage════════════════════════════════════════════════════════════════════════════╗
 ║┌Header──────────────────────────────────────────────────────────────────────────────┐║
-║│ Icon AppTitle     Link ▼  Link ▼  Link ▼     Create ▼     Search    ?          ⚙ ▼ │║
+║│ Icon AppTitle     Link ▼  Link ▼  Link ▼     Create ▼     Search    ?         ⚙ ▼ │║
 ║└────────────────────────────────────────────────────────────────────────────────────┘║
 ║┌ToastNotfication────────────────────────────────────────────────────────────────────┐║
 ║│ Notfications                                             ┌PopupNotfication──────┐ ×│║
