@@ -2050,7 +2050,7 @@ By combining UI display controls and `RestForm`, a complete CRUD workflow emerge
 
 WebExpress supports WebSocket connections as an additional communication channel alongside traditional HTTP request/response endpoints. WebSocket endpoints are registered as specialized endpoint contexts (`ISocketContext`) within the sitemap/endpoint management system and are delegated by the HttpServer to the appropriate handler when a request arrives. WebSocket endpoints are implemented as components (`ISocket`), analogous to page or REST API endpoints, and are managed through a socket manager (`ISocketManager`). The sitemap contains a route for each socket endpoint, allowing incoming URIs to be mapped to the appropriate socket context using the familiar sitemap lookup mechanism.
 
-The following illustration depicts the basic architecture of the WebSocket model. Multiple clients can simultaneously establish persistent connections to the server. These connections are recognized by the `HttpServer`` and routed through the sitemap to the appropriate socket endpoints.
+The following illustration depicts the basic architecture of the WebSocket model. Multiple clients can simultaneously establish persistent connections to the server. These connections are recognized by the `HttpServer` and routed through the sitemap to the appropriate socket endpoints.
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════════════╗
@@ -2130,7 +2130,7 @@ public sealed class MySocket : ISocket
     /// <summary>
     /// Invoked after the websocket handshake has been accepted.
     /// </summary>
-    public void async Task OnConnectedAsync(ISocketConnection webSocket)
+    public async Task OnConnectedAsync(ISocketConnection webSocket)
     {
         ...
     }
@@ -3389,7 +3389,7 @@ Tasks are created dynamically by instantiating a class derived from `Task` and s
 
 ```
 ╔══════════╗           ╔═══════════╗
-║ Created  ║           ║  Canceld  ║
+║ Created  ║           ║ Cancelled ║
 ╚══════════╝           ╚═════▲═════╝
      │                       │
      │                       │
@@ -4065,7 +4065,7 @@ In the case of an authorization check (can an identity be accessed by an identit
              │      │                     │      │  Login successful?      │
           No │      │ Yes        endpoint │   No │                         │ component
          ╔═══▼══════▼═══╗           ╔═════▼══════▼═════╗           ╔═══════▼════════╗
-         ║ Grant access ║           ║ Stautus page 401 ║           ║ Hide component ║
+         ║ Grant access ║           ║ Status page 401  ║           ║ Hide component ║
          ╚══════════════╝           ╚══════════════════╝           ╚════════════════╝
 ```
 
