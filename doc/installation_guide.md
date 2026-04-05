@@ -80,12 +80,12 @@ remainder of the application guide, the host name ```wx``` is used. In addition,
 
 All subsequent steps can now be done via SSH and the Raspberry Pi can be disconnected from the keyboard and screen.
 
-## Installing the .NET Runtime
+## Installing the .NET SDK
 After SSH has been activated, a connection to the Raspberry Pi can be established with the help of an SSH client (e.g. Putty, OpenSSH).
 
 ![piconnect](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/piconnect.png)
 
-First, the .NET Runtime and the ASP.NET Core Runtime must be installed. Help for this is offered under [1]. The current versions 
+First, the .NET SDK must be installed (it includes the .NET Runtime and the ASP.NET Core Runtime). Help for this is offered under [1]. The current versions 
 can be obtained free of charge from Microsoft at https://dotnet.microsoft.com/download/dotnet-core.
 
 ![downloadnet1](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/downloadnet1.png)
@@ -94,7 +94,7 @@ For the Raspberry Pi, the binaries for Linux-Arm32 are to be used. The direct li
 
 ![downloadnet2](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/downloadnet2.png)
 
-The Linux Arm32 archive for the ASP.NET Core Runtime is downloaded to the Raspberry using wget.
+The Linux Arm32 archive for the .NET SDK is downloaded to the Raspberry using wget.
 
 ``` bash
 pi@wx:~ $ wget https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.100/dotnet-sdk-10.0.100-linux-arm.tar.gz 
