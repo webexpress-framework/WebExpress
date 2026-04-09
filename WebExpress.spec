@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
 	<id>WebExpress</id>
-	<version>0.0.10-alpha</version>
+	<version>0.0.11-alpha</version>
 	<title>WebExpress</title>
 	<authors>webexpress-framework@outlook.com</authors>
 	<license>MIT</license>
