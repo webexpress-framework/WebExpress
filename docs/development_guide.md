@@ -711,6 +711,7 @@ Endpoints are (web) elements that can be accessed with a URI (Uniform Resource I
 ║  ¦             │ PluginContext:IPluginContext           │           ¦                ║
 ║  ¦             │ ApplicationContext:IApplicationContext │           ¦                ║
 ║  ¦             │ Conditions:IEnumerable<ICondition>     │           ¦                ║
+║  ¦             │ Policies:IEnumerable<IIdentityPolicy>  │           ¦                ║
 ║  ¦             │ Cache:Bool                             │           ¦                ║
 ║  ¦             │ Route:IRoute                           │           ¦                ║
 ║  ¦             └────────────────────────────────────────┘           ¦                ║
@@ -854,6 +855,7 @@ All assets are placed under the "assets" path, which is located within the main 
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
 ║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └──────────────────Δ─────────────────────┘                   ¦   │     ║
@@ -882,8 +884,7 @@ Resources are typically assets that can come in various forms, such as images, v
 
 ```csharp
 [Segment("E")]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<AuthenticatedAccessPolicy>]
 public sealed class MyResource : IResource
 {
 }
@@ -897,7 +898,7 @@ To provide clarity about the metadata specified in the code above, the following
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
+|Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
@@ -1038,6 +1039,7 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
 ║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └──────────────────Δ─────────────────────┘                   ¦   │     ║
@@ -1242,6 +1244,7 @@ The following class diagram illustrates the architecture of the `IncludeManager`
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
 ║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └───────────────────Δ────────────────────┘                   ¦   │     ║
@@ -1299,8 +1302,7 @@ Pages are a fundamental component of web applications, serving as the primary in
 ```csharp
 [Title("my page")]
 [Scope<ScopeGeneral>]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<AuthenticatedAccessPolicy>]
 public sealed class MyPage : IPage
 {
     public void Process(IRenderContext renderContext, VisualTree visualTree)
@@ -1321,7 +1323,7 @@ To clearly illustrate the metadata described in the code above, the table below 
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Scope           |`IScope`          |n            |Yes      |The scope of the page.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
+|Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Domain          |`IDomain`         |n            |Yes      |Associates the page with one or more logical domains. Domains represent functional areas, modules or workspaces and can be used for routing, filtering or contextual grouping.
@@ -1389,6 +1391,7 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║   │            │ PluginContext:IPluginContext           │             ¦         │    ║
 ║   │            │ ApplicationContext:IApplicationContext │             ¦         │    ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │             ¦         │    ║
+║   │            │ Policies:IEnumerable<IIdentityPolicy>  │             ¦         │    ║
 ║   │            │ Cache:Bool                             │             ¦         │    ║
 ║   │            │ Route:IRoute                           │             ¦         │    ║
 ║   │            └────────────────────Δ───────────────────┘             ¦         │    ║
@@ -1616,6 +1619,7 @@ Setting page templates are utilized to manage and configure web applications. Ea
 ║   │       │ PluginContext:IPluginContext           │                │    │      ¦    ║
 ║   │       │ ApplicationContext:IApplicationContext │                │    │      ¦    ║
 ║   │       │ Conditions:IEnumerable<ICondition>     │                │    │      ¦    ║
+║   │       │ Policies:IEnumerable<IIdentityPolicy>  │                │    │      ¦    ║
 ║   │       │ Cache:Bool                             │                │    │      ¦    ║
 ║   │       │ Route:IRoute                           │                │    │      ¦    ║
 ║   │       └───────────────────Δ────────────────────┘                │    │      ¦    ║
@@ -1824,8 +1828,7 @@ The following code selection contains an example class called `MyRestApi` that i
 
 ```csharp
 [Version(1)]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<SystemAccessPolicy>]
 public sealed class MyRestApi : IRestApiCrud
 {
     [Method(RequestMethod.POST)]
@@ -1850,7 +1853,7 @@ This class uses various attributes to define the CRUD operations. Below are the 
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
+|Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 
@@ -1918,6 +1921,7 @@ The following diagram outlines how the class structure and interactions for the 
 ║   │            │ PluginContext:IPluginContext           │                 ¦    │     ║
 ║   │            │ ApplicationContext:IApplicationContext │                 ¦    │     ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │                 ¦    │     ║
+║   │            │ Policies:IEnumerable<IIdentityPolicy>  │                 ¦    │     ║
 ║   │            │ Cache:Bool                             │                 ¦    │     ║
 ║   │            │ Route:IRoute                           │                 ¦    │     ║
 ║   │            └───────────────────Δ────────────────────┘                 ¦    │     ║
@@ -2111,7 +2115,7 @@ An established WebSocket connection is represented at runtime by a dedicated soc
 
 |Attribute      |Type                   |Multiplicity |Optional |Description
 |---------------|-----------------------|-------------|---------|------------- 
-|Authorization  |Int, String            |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model). 
+|Policy         |`IIdentityPolicy`      |n            |Yes      |Grants authority to a policy.
 |Condition      |`ICondition`           |n            |Yes      |Condition that must be met for the resource to be available. 
 |MessageType    |`MessageTypeAttribute` |1            |Yes      |Defines the message type and optionally the maximum allowed message size. 
 |SubProtocol    |String                 |1            |Yes      |Specifies the sub‑protocol that the socket must use. 
@@ -2123,8 +2127,7 @@ The example implements the `ISocket` interface in the `MySocket` class, demonstr
 [MessageType(MaxMessageSize.Text)]
 [SubProtocol("chat")]
 [MaxMessageSize(1024)]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<PublicAccessPolicy>]
 public sealed class MySocket : ISocket
 {
     /// <summary>
@@ -2202,6 +2205,7 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║   │             │ PluginContext:IPluginContext           │                ¦    │     ║
 ║   │             │ ApplicationContext:IApplicationContext │                ¦    │     ║
 ║   │             │ Conditions:IEnumerable<ICondition>     │                ¦    │     ║
+║   │             │ Policies:IEnumerable<IIdentityPolicy>  │                ¦    │     ║
 ║   │             │ Cache:Bool                             │                ¦    │     ║
 ║   │             │ Route:IRoute                           │                ¦    │     ║
 ║   │             └───────────────────Δ────────────────────┘                ¦    │     ║
@@ -2512,6 +2516,7 @@ Fragments are components that can be integrated into pages to extend functionali
 ║               │ PluginContext:IPluginContext           │                   ¦         ║
 ║               │ ApplicationContext:IApplicationContext │                   ¦         ║
 ║               │ Conditions:IEnumerable<ICondition>     │                   ¦         ║
+║               │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦         ║
 ║               │ Cache:Bool                             │                   ¦         ║
 ║               └────────────────────────────────────────┘                   ¦         ║
 ║                                                                            ¦         ║
