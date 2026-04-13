@@ -3847,36 +3847,42 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║                                                                                      ║
 ║         ┌──────────────────────────────────┐                                         ║
 ║         │ <<Interface>>                    │                                         ║
-║         │ IComponentHub                    │                                         ║
-║         ├──────────────────────────────────┤ 1                                       ║
-║         │ IdentityManager:IIdentityManager ├───────────────┐                         ║
-║         │ …                                │               │                         ║
-║         └──────────────────────────────────┘               │                         ║
-║                                                            │                         ║
-║                         ┌───────────────────┐              │                         ║
-║                         │ <<Interface>>     │              │                         ║
-║                         │ IComponentManager │              │                         ║
-║                         ├───────────────────┤              │                         ║
-║                         └────────Δ──────────┘              │                         ║
-║                                  ¦                         │                         ║
-║                                  ¦                       1 │                         ║
-║                          ┌───────┴─────────────────────────▼───────────┐             ║
-║                          │ <<Interface>>                               │             ║
-║ ┌------------------------┤ IIdentityManager                            │             ║
-║ ¦                        ├─────────────────────────────────────────────┤             ║
-║ ¦                        │ Identities:IEnumerable<IIdentity>           │             ║
-║ ¦                        │ Groups:IEnumerable<IIdentityGroup>          │             ║
-║ ¦                        │ Policies:IEnumerable<IIdentityPolicy>       │             ║
-║ ¦                        │ Permission:IEnumerable<IIdentityPermission> │             ║
-║ ¦                        ├─────────────────────────────────────────────┤             ║
-║ ¦                        │ AddIdentity(IIdentity)                      │             ║
-║ ¦                        │ AddGroup(IIdentityGroup)                    │             ║
-║ ¦                        │ RemoveIdentity(IIdentity)                   │             ║
-║ ¦                        │ RemoveGroup(IIdentityGroup)                 │             ║
-║ ¦                        │ Login(IApplicationContext,Login,Password)   │             ║
-║ ¦                        │ Logout(IApplicationContext)                 │             ║
-║ ¦                        │ ComputeHash(SecureString):String            │             ║
-║ ¦                        └─────┬──────────┬───────────┬──────────┬─────┘             ║
+║         │ IComponentHub                    │       ┌───────────────────────────────┐ ║
+║         ├──────────────────────────────────┤ 1     │ <<Interface>>                 │ ║
+║         │ IdentityManager:IIdentityManager ├────┐  │ IIdentityProvider             │ ║
+║         │ …                                │    │  ├───────────────────────────────┤ ║
+║         └──────────────────────────────────┘    │  ├───────────────────────────────┤ ║
+║                                                 │  │ GetIdentities:                │ ║
+║                         ┌───────────────────┐   │  │   IEnumerable<IIdentity>      │ ║
+║                         │ <<Interface>>     │   │  │ GetGroups:                    │ ║
+║                         │ IComponentManager │   │  │   IEnumerable<IIdentityGroup> │ ║
+║                         ├───────────────────┤   │  │ ValidateCredentials:Bool      │ ║
+║                         └────────Δ──────────┘   │  └─────────────────────────▲─────┘ ║
+║                                  ¦              │                          * │       ║
+║                                  ¦            1 │                            │       ║
+║                         ┌────────┴──────────────▼───────────────────────┐ 1  │       ║
+║                         │ <<Interface>>                                 ├────┘       ║
+║ ┌-----------------------┤ IIdentityManager                              │            ║
+║ ¦                       ├───────────────────────────────────────────────┤            ║
+║ ¦                       │ Policies:IEnumerable<IIdentityPolicy>         │            ║
+║ ¦                       │ Permission:IEnumerable<IIdentityPermission>   │            ║
+║ ¦                       ├───────────────────────────────────────────────┤            ║
+║ ¦                       │ AddIdentity(IIdentity)                        │            ║
+║ ¦                       │ AddGroup(IIdentityGroup)                      │            ║
+║ ¦                       │ RemoveIdentity(IIdentity)                     │            ║
+║ ¦                       │ RemoveGroup(IIdentityGroup)                   │            ║
+║ ¦                       │ Login(IApplicationContext,Login,Password)     │            ║
+║ ¦                       │ Logout(IApplicationContext)                   │            ║
+║ ¦                       │ ComputeHash(SecureString):String              │            ║
+║ ¦                       │ RegisterIdentityProvider(IIdentityProvider,   │            ║
+║ ¦                       │   IApplicationContext)                        │            ║
+║ ¦                       │ UnregisterIdentityProvider(IIdentityProvider, │            ║
+║ ¦                       │   IApplicationContext)                        │            ║
+║ ¦                       │ GetIdentities(IApplicationContext):           │            ║
+║ ¦                       │   IEnumerable<IIdentity>                      │            ║
+║ ¦                       │ GetGroups(IApplicationContext):               │            ║
+║ ¦                       │   IEnumerable<IIdentityGroup>                 │            ║
+║ ¦                       └──────┬──────────┬───────────┬──────────┬──────┘            ║
 ║ ¦                            1 │        1 │         1 │        1 │                   ║
 ║ ¦                 ┌────────────┘          │           │          └─────┐             ║
 ║ ¦                 │                    ┌──┘           │                │             ║
@@ -3888,7 +3894,7 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦  │ Id:Guid                       │   │                 │             │             ║
 ║ ¦  │ Name:String                   │   │                 │             │             ║
 ║ ¦  │ EMail:String                  │   │                 │             │             ║
-║ ¦  │ State:AccountState            │   │                 │             │             ║
+║ ¦  │ State:IdentityState           │   │                 │             │             ║
 ║ ¦  │ Groups:                       │   │                 │             │             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   │                 │             │             ║
 ║ ¦  ├───────────────────────────────┤   │                 │             │             ║
@@ -3941,7 +3947,7 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦  │ Id:Guid                       │   ¦                     ¦         ¦             ║
 ║ ¦  │ Name:String                   │   ¦                     ¦         ¦             ║
 ║ ¦  │ EMail:String                  │   ¦                     ¦         ¦             ║
-║ ¦  │ State:AccountState            │1  ¦                     ¦         ¦             ║
+║ ¦  │ State:IdentityState           │1  ¦                     ¦         ¦             ║
 ║ ¦  │ Groups:                       ├───¦─────┐               ¦         ¦             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │               ¦         ¦             ║
 ║ ¦  ├───────────────────────────────┤   ¦     │               ¦         ¦             ║
