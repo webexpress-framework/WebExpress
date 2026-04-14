@@ -3845,18 +3845,20 @@ Identities and groups must be loaded from a persistent data source, which may be
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║         ┌──────────────────────────────────┐                                         ║
-║         │ <<Interface>>                    │                                         ║
-║         │ IComponentHub                    │       ┌───────────────────────────────┐ ║
-║         ├──────────────────────────────────┤ 1     │ <<Interface>>                 │ ║
-║         │ IdentityManager:IIdentityManager ├────┐  │ IIdentityProvider             │ ║
-║         │ …                                │    │  ├───────────────────────────────┤ ║
-║         └──────────────────────────────────┘    │  ├───────────────────────────────┤ ║
-║                                                 │  │ GetIdentities:                │ ║
-║                         ┌───────────────────┐   │  │   IEnumerable<IIdentity>      │ ║
-║                         │ <<Interface>>     │   │  │ GetGroups:                    │ ║
-║                         │ IComponentManager │   │  │   IEnumerable<IIdentityGroup> │ ║
-║                         ├───────────────────┤   │  │ ValidateCredentials:Bool      │ ║
+║                                                    ┌───────────────────────────────┐ ║
+║                                                    │ <<Interface>>                 │ ║
+║         ┌──────────────────────────────────┐       │ IIdentityProvider             │ ║
+║         │ <<Interface>>                    │       ├───────────────────────────────┤ ║
+║         │ IComponentHub                    │       ├───────────────────────────────┤ ║
+║         ├──────────────────────────────────┤ 1     │ GetIdentities:                │ ║
+║         │ IdentityManager:IIdentityManager ├────┐  │   IEnumerable<IIdentity>      │ ║
+║         │ …                                │    │  │ GetGroups:                    │ ║
+║         └──────────────────────────────────┘    │  │   IEnumerable<IIdentityGroup> │ ║
+║                                                 │  │ Authenticate(IRequest):       │ ║
+║                         ┌───────────────────┐   │  │   IIdentity                   │ ║
+║                         │ <<Interface>>     │   │  │ CreateAuthenticationPrompt(   │ ║
+║                         │ IComponentManager │   │  │   IRequest,IEndpointContext,  │ ║
+║                         ├───────────────────┤   │  │   IIdentity):IResponse        │ ║
 ║                         └────────Δ──────────┘   │  └─────────────────────────▲─────┘ ║
 ║                                  ¦              │                          * │       ║
 ║                                  ¦            1 │                            │       ║
@@ -3871,8 +3873,12 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦                       │ AddGroup(IIdentityGroup)                      │            ║
 ║ ¦                       │ RemoveIdentity(IIdentity)                     │            ║
 ║ ¦                       │ RemoveGroup(IIdentityGroup)                   │            ║
-║ ¦                       │ Login(IApplicationContext,Login,Password)     │            ║
-║ ¦                       │ Logout(IApplicationContext)                   │            ║
+║ ¦                       │ Authenticate(IRequest,IApplicationContext):   │            ║
+║ ¦                       │   IIdentity                                   │            ║
+║ ¦                       │ CreateAuthenticationPrompt(IRequest,          │            ║
+║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
+║ ¦                       │ Login(IRequest,IIdentity):Bool                │            ║
+║ ¦                       │ Logout(IRequest)                              │            ║
 ║ ¦                       │ ComputeHash(SecureString):String              │            ║
 ║ ¦                       │ RegisterIdentityProvider(IIdentityProvider,   │            ║
 ║ ¦                       │   IApplicationContext)                        │            ║
@@ -3882,6 +3888,7 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦                       │   IEnumerable<IIdentity>                      │            ║
 ║ ¦                       │ GetGroups(IApplicationContext):               │            ║
 ║ ¦                       │   IEnumerable<IIdentityGroup>                 │            ║
+║ ¦                       │ CheckAccess(IIdentity,IEndpointContext):Bool  │            ║
 ║ ¦                       └──────┬──────────┬───────────┬──────────┬──────┘            ║
 ║ ¦                            1 │        1 │         1 │        1 │                   ║
 ║ ¦                 ┌────────────┘          │           │          └─────┐             ║
