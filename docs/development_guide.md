@@ -3854,8 +3854,9 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║         │ IdentityManager:IIdentityManager ├────┐  │   IEnumerable<IIdentity>      │ ║
 ║         │ …                                │    │  │ GetGroups:                    │ ║
 ║         └──────────────────────────────────┘    │  │   IEnumerable<IIdentityGroup> │ ║
-║                                                 │  │ Authenticate(IRequest):       │ ║
-║                         ┌───────────────────┐   │  │   IIdentity                   │ ║
+║                                                 │  │ CreateForbiddenPage(          │ ║
+║                                                 │  │   IRequest,IEndpointContext,  │ ║
+║                         ┌───────────────────┐   │  │   IIdentity):IResponse        │ ║
 ║                         │ <<Interface>>     │   │  │ CreateAuthenticationPrompt(   │ ║
 ║                         │ IComponentManager │   │  │   IRequest,IEndpointContext,  │ ║
 ║                         ├───────────────────┤   │  │   IIdentity):IResponse        │ ║
@@ -3873,8 +3874,8 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦                       │ AddGroup(IIdentityGroup)                      │            ║
 ║ ¦                       │ RemoveIdentity(IIdentity)                     │            ║
 ║ ¦                       │ RemoveGroup(IIdentityGroup)                   │            ║
-║ ¦                       │ Authenticate(IRequest,IApplicationContext):   │            ║
-║ ¦                       │   IIdentity                                   │            ║
+║ ¦                       │ CreateForbiddenPage(IRequest,                 │            ║
+║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
 ║ ¦                       │ CreateAuthenticationPrompt(IRequest,          │            ║
 ║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
 ║ ¦                       │ Login(IRequest,IIdentity):Bool                │            ║
