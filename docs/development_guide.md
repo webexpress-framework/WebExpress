@@ -546,14 +546,15 @@ public sealed class MyApplication : Application
 
 To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining applications:
 
-|Attribute   |Type       |Multiplicity |Optional |Description
-|------------|-----------|-------------|---------|------------
-|Name        |String     |1            |Yes      |The name of the application. This can be a key to internationalization.
-|Description |String     |1            |Yes      |The description of the application. This can be a key to internationalization.
-|Icon        |String     |1            |Yes      |The icon that represents the application graphically.
-|AssetPath   |String     |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
-|DataPath    |String     |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
-|ContextPath |String     |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
+|Attribute   |Type            |Multiplicity |Optional |Description
+|------------|----------------|-------------|---------|------------
+|Name        |String          |1            |Yes      |The name of the application. This can be a key to internationalization.
+|Description |String          |1            |Yes      |The description of the application. This can be a key to internationalization.
+|Icon        |String          |1            |Yes      |The icon that represents the application graphically.
+|IconTheme   |`TypeIconTheme` |1            |Yes      |The theme applied to the icon, defining its visual style (e.g., light).
+|AssetPath   |String          |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
+|DataPath    |String          |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
+|ContextPath |String          |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
 
 The methods implemented from the interface cover the life cycle of the application. When the plugin is loaded, all the applications it contains are instantiated. These remain in place until the plugin is unloaded. Meta information about the application is stored in the `ApplicationContext` and managed by the `ApplicationManager`. To better understand the organization and lifecycle of applications in relation to the `ApplicationManager`, refer to the UML diagram below:
 
@@ -4749,7 +4750,7 @@ namespace Sample
     {
         public void Render(IRenderContext renderContext, VisualTree visualTree)
         {
-            var control = new ControlText(){Text = "Hello World!"};
+            var control = new ControlText(){Text = _ => "Hello World!"};
 
             visualTree.AddContent(control);
         }
