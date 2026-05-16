@@ -20,8 +20,8 @@ This folder is the source of the static landing page that is deployed to GitHub 
 - System fonts only.
 - Responsive, mobile-first, WCAG AA in mind.
 
-The workflow validates that no third-party origins are referenced from any
-HTML file before it deploys to Pages.
+The workflow validates that HTML files do not load third-party resources
+automatically before it deploys to Pages. Outbound links are allowed.
 
 ## Local preview
 

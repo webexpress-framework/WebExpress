@@ -5,9 +5,6 @@ on:
     branches: [main]
     paths:
       - 'site/**'
-      - 'README.md'
-      - 'CONTRIBUTING.md'
-      - 'docs/**'
       - '.github/workflows/generate-docs.yml'
   workflow_dispatch:
 
@@ -44,12 +41,79 @@ jobs:
       - name: Validate (no external resources)
         run: |
           set -euo pipefail
-          # fail the build if any HTML file references third-party origins, which would
-          # break GDPR compliance and the "no external requests" guarantee
-          if grep -RInE 'https?://(cdn\.|fonts\.googleapis\.com|fonts\.gstatic\.com|www\.google-analytics\.com|googletagmanager\.com)' _site --include='*.html'; then
-            echo "ERROR: external resource reference found — landing page must be self-contained." >&2
-            exit 1
-          fi
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          RESOURCE_ATTRIBUTES = {
+              ("script", "src"),
+              ("img", "src"),
+              ("img", "srcset"),
+              ("iframe", "src"),
+              ("audio", "src"),
+              ("video", "src"),
+              ("track", "src"),
+              ("source", "src"),
+              ("source", "srcset"),
+              ("embed", "src"),
+              ("object", "data"),
+          }
+
+          LINK_RESOURCE_RELS = {
+              "stylesheet",
+              "icon",
+              "apple-touch-icon",
+              "manifest",
+              "preload",
+              "modulepreload",
+              "prefetch",
+              "dns-prefetch",
+              "preconnect",
+              "mask-icon",
+              "shortcut icon",
+          }
+
+          def external_values(raw_value: str):
+              for candidate in raw_value.split(","):
+                  value = candidate.strip().split(" ", 1)[0]
+                  if value.startswith(("http://", "https://", "//")):
+                      yield value
+
+          class ResourceParser(HTMLParser):
+              def __init__(self, path: Path):
+                  super().__init__()
+                  self.path = path
+                  self.violations = []
+
+              def handle_starttag(self, tag, attrs):
+                  attr_map = dict(attrs)
+                  rel_tokens = set(attr_map.get("rel", "").lower().split())
+
+                  for name, value in attrs:
+                      if not value:
+                          continue
+
+                      if (tag, name) in RESOURCE_ATTRIBUTES:
+                          for external in external_values(value):
+                              self.violations.append((tag, name, external))
+
+                      if tag == "link" and name == "href":
+                          rel_value = attr_map.get("rel", "").lower().strip()
+                          if rel_tokens & LINK_RESOURCE_RELS or rel_value in LINK_RESOURCE_RELS:
+                              for external in external_values(value):
+                                  self.violations.append((tag, name, external))
+
+          violations = []
+          for path in Path("_site").rglob("*.html"):
+              parser = ResourceParser(path)
+              parser.feed(path.read_text(encoding="utf-8"))
+              violations.extend((path, *violation) for violation in parser.violations)
+
+          if violations:
+              for path, tag, attr, value in violations:
+                  print(f"{path}: external resource via <{tag} {attr}=\"{value}\">", flush=True)
+              raise SystemExit("ERROR: external resource reference found — landing page must be self-contained.")
+          PY
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
