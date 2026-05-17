@@ -1,0 +1,133 @@
+name: Generate Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/generate-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build landing page
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Stage static site
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp -r site/. _site/
+          # disable Jekyll processing so files are served verbatim
+          touch _site/.nojekyll
+          # record build metadata (no personal data)
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > _site/build.txt
+
+      - name: Validate (no external resources)
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          RESOURCE_ATTRIBUTES = {
+              ("script", "src"),
+              ("img", "src"),
+              ("img", "srcset"),
+              ("iframe", "src"),
+              ("audio", "src"),
+              ("video", "src"),
+              ("track", "src"),
+              ("source", "src"),
+              ("source", "srcset"),
+              ("embed", "src"),
+              ("object", "data"),
+          }
+
+          LINK_RESOURCE_RELS = {
+              "stylesheet",
+              "icon",
+              "apple-touch-icon",
+              "manifest",
+              "preload",
+              "modulepreload",
+              "prefetch",
+              "dns-prefetch",
+              "preconnect",
+              "mask-icon",
+              "shortcut icon",
+          }
+
+          def external_values(raw_value: str):
+              for candidate in raw_value.split(","):
+                  value = candidate.strip().split(" ", 1)[0]
+                  if value.startswith(("http://", "https://", "//")):
+                      yield value
+
+          class ResourceParser(HTMLParser):
+              def __init__(self, path: Path):
+                  super().__init__()
+                  self.path = path
+                  self.violations = []
+
+              def handle_starttag(self, tag, attrs):
+                  attr_map = dict(attrs)
+                  rel_tokens = set(attr_map.get("rel", "").lower().split())
+
+                  for name, value in attrs:
+                      if not value:
+                          continue
+
+                      if (tag, name) in RESOURCE_ATTRIBUTES:
+                          for external in external_values(value):
+                              self.violations.append((tag, name, external))
+
+                      if tag == "link" and name == "href":
+                          rel_value = attr_map.get("rel", "").lower().strip()
+                          if rel_tokens & LINK_RESOURCE_RELS or rel_value in LINK_RESOURCE_RELS:
+                              for external in external_values(value):
+                                  self.violations.append((tag, name, external))
+
+          violations = []
+          for path in Path("_site").rglob("*.html"):
+              parser = ResourceParser(path)
+              parser.feed(path.read_text(encoding="utf-8"))
+              violations.extend((path, *violation) for violation in parser.violations)
+
+          if violations:
+              for path, tag, attr, value in violations:
+                  print(f"{path}: external resource via <{tag} {attr}=\"{value}\">", flush=True)
+              raise SystemExit("ERROR: external resource reference found — landing page must be self-contained.")
+          PY
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

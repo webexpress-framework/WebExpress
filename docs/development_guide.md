@@ -546,14 +546,15 @@ public sealed class MyApplication : Application
 
 To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining applications:
 
-|Attribute   |Type       |Multiplicity |Optional |Description
-|------------|-----------|-------------|---------|------------
-|Name        |String     |1            |Yes      |The name of the application. This can be a key to internationalization.
-|Description |String     |1            |Yes      |The description of the application. This can be a key to internationalization.
-|Icon        |String     |1            |Yes      |The icon that represents the application graphically.
-|AssetPath   |String     |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
-|DataPath    |String     |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
-|ContextPath |String     |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
+|Attribute   |Type            |Multiplicity |Optional |Description
+|------------|----------------|-------------|---------|------------
+|Name        |String          |1            |Yes      |The name of the application. This can be a key to internationalization.
+|Description |String          |1            |Yes      |The description of the application. This can be a key to internationalization.
+|Icon        |String          |1            |Yes      |The icon that represents the application graphically.
+|IconTheme   |`TypeIconTheme` |1            |Yes      |The theme applied to the icon, defining its visual style (e.g., light).
+|AssetPath   |String          |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
+|DataPath    |String          |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
+|ContextPath |String          |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
 
 The methods implemented from the interface cover the life cycle of the application. When the plugin is loaded, all the applications it contains are instantiated. These remain in place until the plugin is unloaded. Meta information about the application is stored in the `ApplicationContext` and managed by the `ApplicationManager`. To better understand the organization and lifecycle of applications in relation to the `ApplicationManager`, refer to the UML diagram below:
 
@@ -711,6 +712,7 @@ Endpoints are (web) elements that can be accessed with a URI (Uniform Resource I
 ║  ¦             │ PluginContext:IPluginContext           │           ¦                ║
 ║  ¦             │ ApplicationContext:IApplicationContext │           ¦                ║
 ║  ¦             │ Conditions:IEnumerable<ICondition>     │           ¦                ║
+║  ¦             │ Policies:IEnumerable<IIdentityPolicy>  │           ¦                ║
 ║  ¦             │ Cache:Bool                             │           ¦                ║
 ║  ¦             │ Route:IRoute                           │           ¦                ║
 ║  ¦             └────────────────────────────────────────┘           ¦                ║
@@ -854,6 +856,7 @@ All assets are placed under the "assets" path, which is located within the main 
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
 ║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └──────────────────Δ─────────────────────┘                   ¦   │     ║
@@ -882,8 +885,7 @@ Resources are typically assets that can come in various forms, such as images, v
 
 ```csharp
 [Segment("E")]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<AuthenticatedAccessPolicy>]
 public sealed class MyResource : IResource
 {
 }
@@ -897,7 +899,7 @@ To provide clarity about the metadata specified in the code above, the following
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
+|Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
@@ -1038,6 +1040,7 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
 ║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └──────────────────Δ─────────────────────┘                   ¦   │     ║
@@ -1242,6 +1245,7 @@ The following class diagram illustrates the architecture of the `IncludeManager`
 ║  │            │ PluginContext:IPluginContext           │                   ¦   │     ║
 ║  │            │ ApplicationContext:IApplicationContext │                   ¦   │     ║
 ║  │            │ Conditions:IEnumerable<ICondition>     │                   ¦   │     ║
+║  │            │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦   │     ║
 ║  │            │ Cache:Bool                             │                   ¦   │     ║
 ║  │            │ Route:IRoute                           │                   ¦   │     ║
 ║  │            └───────────────────Δ────────────────────┘                   ¦   │     ║
@@ -1299,8 +1303,7 @@ Pages are a fundamental component of web applications, serving as the primary in
 ```csharp
 [Title("my page")]
 [Scope<ScopeGeneral>]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<AuthenticatedAccessPolicy>]
 public sealed class MyPage : IPage
 {
     public void Process(IRenderContext renderContext, VisualTree visualTree)
@@ -1321,7 +1324,7 @@ To clearly illustrate the metadata described in the code above, the table below 
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
 |Scope           |`IScope`          |n            |Yes      |The scope of the page.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
+|Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Domain          |`IDomain`         |n            |Yes      |Associates the page with one or more logical domains. Domains represent functional areas, modules or workspaces and can be used for routing, filtering or contextual grouping.
@@ -1389,6 +1392,7 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║   │            │ PluginContext:IPluginContext           │             ¦         │    ║
 ║   │            │ ApplicationContext:IApplicationContext │             ¦         │    ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │             ¦         │    ║
+║   │            │ Policies:IEnumerable<IIdentityPolicy>  │             ¦         │    ║
 ║   │            │ Cache:Bool                             │             ¦         │    ║
 ║   │            │ Route:IRoute                           │             ¦         │    ║
 ║   │            └────────────────────Δ───────────────────┘             ¦         │    ║
@@ -1616,6 +1620,7 @@ Setting page templates are utilized to manage and configure web applications. Ea
 ║   │       │ PluginContext:IPluginContext           │                │    │      ¦    ║
 ║   │       │ ApplicationContext:IApplicationContext │                │    │      ¦    ║
 ║   │       │ Conditions:IEnumerable<ICondition>     │                │    │      ¦    ║
+║   │       │ Policies:IEnumerable<IIdentityPolicy>  │                │    │      ¦    ║
 ║   │       │ Cache:Bool                             │                │    │      ¦    ║
 ║   │       │ Route:IRoute                           │                │    │      ¦    ║
 ║   │       └───────────────────Δ────────────────────┘                │    │      ¦    ║
@@ -1824,8 +1829,7 @@ The following code selection contains an example class called `MyRestApi` that i
 
 ```csharp
 [Version(1)]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<SystemAccessPolicy>]
 public sealed class MyRestApi : IRestApiCrud
 {
     [Method(RequestMethod.POST)]
@@ -1850,7 +1854,7 @@ This class uses various attributes to define the CRUD operations. Below are the 
 |SegmentInt      |Parameter, String |1            |Yes      |A variable path segment of type `Int`.
 |SegmentGuid     |Parameter, String |1            |Yes      |A variable path segment of type `Guid`.
 |IncludeSubPaths |Bool              |1            |Yes      |Determines whether all resources below the specified path (including segment) are processed.
-|Authorization   |Int, String       |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model).
+|Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 
@@ -1918,6 +1922,7 @@ The following diagram outlines how the class structure and interactions for the 
 ║   │            │ PluginContext:IPluginContext           │                 ¦    │     ║
 ║   │            │ ApplicationContext:IApplicationContext │                 ¦    │     ║
 ║   │            │ Conditions:IEnumerable<ICondition>     │                 ¦    │     ║
+║   │            │ Policies:IEnumerable<IIdentityPolicy>  │                 ¦    │     ║
 ║   │            │ Cache:Bool                             │                 ¦    │     ║
 ║   │            │ Route:IRoute                           │                 ¦    │     ║
 ║   │            └───────────────────Δ────────────────────┘                 ¦    │     ║
@@ -2111,7 +2116,7 @@ An established WebSocket connection is represented at runtime by a dedicated soc
 
 |Attribute      |Type                   |Multiplicity |Optional |Description
 |---------------|-----------------------|-------------|---------|------------- 
-|Authorization  |Int, String            |n            |Yes      |Grants authority to a policy (specifying the id) (see section notification model). 
+|Policy         |`IIdentityPolicy`      |n            |Yes      |Grants authority to a policy.
 |Condition      |`ICondition`           |n            |Yes      |Condition that must be met for the resource to be available. 
 |MessageType    |`MessageTypeAttribute` |1            |Yes      |Defines the message type and optionally the maximum allowed message size. 
 |SubProtocol    |String                 |1            |Yes      |Specifies the sub‑protocol that the socket must use. 
@@ -2123,8 +2128,7 @@ The example implements the `ISocket` interface in the `MySocket` class, demonstr
 [MessageType(MaxMessageSize.Text)]
 [SubProtocol("chat")]
 [MaxMessageSize(1024)]
-[Authorization(Permission.RWX, IdentityPolicyDefault.SystemAccess)]
-[Authorization(Permission.R, IdentityPolicyDefault.PublicAccess)]
+[Policy<PublicAccessPolicy>]
 public sealed class MySocket : ISocket
 {
     /// <summary>
@@ -2202,6 +2206,7 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║   │             │ PluginContext:IPluginContext           │                ¦    │     ║
 ║   │             │ ApplicationContext:IApplicationContext │                ¦    │     ║
 ║   │             │ Conditions:IEnumerable<ICondition>     │                ¦    │     ║
+║   │             │ Policies:IEnumerable<IIdentityPolicy>  │                ¦    │     ║
 ║   │             │ Cache:Bool                             │                ¦    │     ║
 ║   │             │ Route:IRoute                           │                ¦    │     ║
 ║   │             └───────────────────Δ────────────────────┘                ¦    │     ║
@@ -2512,6 +2517,7 @@ Fragments are components that can be integrated into pages to extend functionali
 ║               │ PluginContext:IPluginContext           │                   ¦         ║
 ║               │ ApplicationContext:IApplicationContext │                   ¦         ║
 ║               │ Conditions:IEnumerable<ICondition>     │                   ¦         ║
+║               │ Policies:IEnumerable<IIdentityPolicy>  │                   ¦         ║
 ║               │ Cache:Bool                             │                   ¦         ║
 ║               └────────────────────────────────────────┘                   ¦         ║
 ║                                                                            ¦         ║
@@ -3840,38 +3846,52 @@ Identities and groups must be loaded from a persistent data source, which may be
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║         ┌──────────────────────────────────┐                                         ║
-║         │ <<Interface>>                    │                                         ║
-║         │ IComponentHub                    │                                         ║
-║         ├──────────────────────────────────┤ 1                                       ║
-║         │ IdentityManager:IIdentityManager ├───────────────┐                         ║
-║         │ …                                │               │                         ║
-║         └──────────────────────────────────┘               │                         ║
-║                                                            │                         ║
-║                         ┌───────────────────┐              │                         ║
-║                         │ <<Interface>>     │              │                         ║
-║                         │ IComponentManager │              │                         ║
-║                         ├───────────────────┤              │                         ║
-║                         └────────Δ──────────┘              │                         ║
-║                                  ¦                         │                         ║
-║                                  ¦                       1 │                         ║
-║                          ┌───────┴─────────────────────────▼───────────┐             ║
-║                          │ <<Interface>>                               │             ║
-║ ┌------------------------┤ IIdentityManager                            │             ║
-║ ¦                        ├─────────────────────────────────────────────┤             ║
-║ ¦                        │ Identities:IEnumerable<IIdentity>           │             ║
-║ ¦                        │ Groups:IEnumerable<IIdentityGroup>          │             ║
-║ ¦                        │ Policies:IEnumerable<IIdentityPolicy>       │             ║
-║ ¦                        │ Permission:IEnumerable<IIdentityPermission> │             ║
-║ ¦                        ├─────────────────────────────────────────────┤             ║
-║ ¦                        │ AddIdentity(IIdentity)                      │             ║
-║ ¦                        │ AddGroup(IIdentityGroup)                    │             ║
-║ ¦                        │ RemoveIdentity(IIdentity)                   │             ║
-║ ¦                        │ RemoveGroup(IIdentityGroup)                 │             ║
-║ ¦                        │ Login(IApplicationContext,Login,Password)   │             ║
-║ ¦                        │ Logout(IApplicationContext)                 │             ║
-║ ¦                        │ ComputeHash(SecureString):String            │             ║
-║ ¦                        └─────┬──────────┬───────────┬──────────┬─────┘             ║
+║                                                    ┌───────────────────────────────┐ ║
+║                                                    │ <<Interface>>                 │ ║
+║         ┌──────────────────────────────────┐       │ IIdentityProvider             │ ║
+║         │ <<Interface>>                    │       ├───────────────────────────────┤ ║
+║         │ IComponentHub                    │       ├───────────────────────────────┤ ║
+║         ├──────────────────────────────────┤ 1     │ GetIdentities:                │ ║
+║         │ IdentityManager:IIdentityManager ├────┐  │   IEnumerable<IIdentity>      │ ║
+║         │ …                                │    │  │ GetGroups:                    │ ║
+║         └──────────────────────────────────┘    │  │   IEnumerable<IIdentityGroup> │ ║
+║                                                 │  │ CreateForbiddenPage(          │ ║
+║                                                 │  │   IRequest,IEndpointContext,  │ ║
+║                         ┌───────────────────┐   │  │   IIdentity):IResponse        │ ║
+║                         │ <<Interface>>     │   │  │ CreateAuthenticationPrompt(   │ ║
+║                         │ IComponentManager │   │  │   IRequest,IEndpointContext,  │ ║
+║                         ├───────────────────┤   │  │   IIdentity):IResponse        │ ║
+║                         └────────Δ──────────┘   │  └─────────────────────────▲─────┘ ║
+║                                  ¦              │                          * │       ║
+║                                  ¦            1 │                            │       ║
+║                         ┌────────┴──────────────▼───────────────────────┐ 1  │       ║
+║                         │ <<Interface>>                                 ├────┘       ║
+║ ┌-----------------------┤ IIdentityManager                              │            ║
+║ ¦                       ├───────────────────────────────────────────────┤            ║
+║ ¦                       │ Policies:IEnumerable<IIdentityPolicy>         │            ║
+║ ¦                       │ Permission:IEnumerable<IIdentityPermission>   │            ║
+║ ¦                       ├───────────────────────────────────────────────┤            ║
+║ ¦                       │ AddIdentity(IIdentity)                        │            ║
+║ ¦                       │ AddGroup(IIdentityGroup)                      │            ║
+║ ¦                       │ RemoveIdentity(IIdentity)                     │            ║
+║ ¦                       │ RemoveGroup(IIdentityGroup)                   │            ║
+║ ¦                       │ CreateForbiddenPage(IRequest,                 │            ║
+║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
+║ ¦                       │ CreateAuthenticationPrompt(IRequest,          │            ║
+║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
+║ ¦                       │ Login(IRequest,IIdentity):Bool                │            ║
+║ ¦                       │ Logout(IRequest)                              │            ║
+║ ¦                       │ ComputeHash(SecureString):String              │            ║
+║ ¦                       │ RegisterIdentityProvider(IIdentityProvider,   │            ║
+║ ¦                       │   IApplicationContext)                        │            ║
+║ ¦                       │ UnregisterIdentityProvider(IIdentityProvider, │            ║
+║ ¦                       │   IApplicationContext)                        │            ║
+║ ¦                       │ GetIdentities(IApplicationContext):           │            ║
+║ ¦                       │   IEnumerable<IIdentity>                      │            ║
+║ ¦                       │ GetGroups(IApplicationContext):               │            ║
+║ ¦                       │   IEnumerable<IIdentityGroup>                 │            ║
+║ ¦                       │ CheckAccess(IIdentity,IEndpointContext):Bool  │            ║
+║ ¦                       └──────┬──────────┬───────────┬──────────┬──────┘            ║
 ║ ¦                            1 │        1 │         1 │        1 │                   ║
 ║ ¦                 ┌────────────┘          │           │          └─────┐             ║
 ║ ¦                 │                    ┌──┘           │                │             ║
@@ -3883,7 +3903,7 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦  │ Id:Guid                       │   │                 │             │             ║
 ║ ¦  │ Name:String                   │   │                 │             │             ║
 ║ ¦  │ EMail:String                  │   │                 │             │             ║
-║ ¦  │ State:AccountState            │   │                 │             │             ║
+║ ¦  │ State:IdentityState           │   │                 │             │             ║
 ║ ¦  │ Groups:                       │   │                 │             │             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   │                 │             │             ║
 ║ ¦  ├───────────────────────────────┤   │                 │             │             ║
@@ -3936,7 +3956,7 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦  │ Id:Guid                       │   ¦                     ¦         ¦             ║
 ║ ¦  │ Name:String                   │   ¦                     ¦         ¦             ║
 ║ ¦  │ EMail:String                  │   ¦                     ¦         ¦             ║
-║ ¦  │ State:AccountState            │1  ¦                     ¦         ¦             ║
+║ ¦  │ State:IdentityState           │1  ¦                     ¦         ¦             ║
 ║ ¦  │ Groups:                       ├───¦─────┐               ¦         ¦             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │               ¦         ¦             ║
 ║ ¦  ├───────────────────────────────┤   ¦     │               ¦         ¦             ║
@@ -4730,7 +4750,7 @@ namespace Sample
     {
         public void Render(IRenderContext renderContext, VisualTree visualTree)
         {
-            var control = new ControlText(){Text = "Hello World!"};
+            var control = new ControlText(){Text = _ => "Hello World!"};
 
             visualTree.AddContent(control);
         }

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#1e40af">
+    <title>WebExpress — A lightweight web framework for structured UI, REST and clean architecture</title>
+    <meta name="description" content="WebExpress is a lightweight, modern web framework for .NET — built for structured UI, REST integration and clean architecture. Optimized for low-power environments such as the Raspberry Pi.">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://webexpress-framework.github.io/WebExpress/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="WebExpress Framework">
+    <meta property="og:description" content="A lightweight, modern web framework for structured UI, REST integration and clean architecture.">
+    <meta property="og:url" content="https://webexpress-framework.github.io/WebExpress/">
+    <meta property="og:locale" content="en">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header" role="banner">
+        <div class="container site-header__inner">
+            <a class="brand" href="./" aria-label="WebExpress home">
+                <img class="brand__logo" src="assets/img/logo.svg" alt="" width="32" height="32" loading="eager" decoding="async">
+                <span class="brand__name">WebExpress-Framework</span>
+            </a>
+            <nav class="site-nav" aria-label="Primary">
+                <button class="site-nav__toggle" type="button" aria-expanded="false" aria-controls="primary-menu">
+                    <span class="visually-hidden">Toggle menu</span>
+                    <span class="site-nav__icon" aria-hidden="true"></span>
+                </button>
+                <ul id="primary-menu" class="site-nav__list">
+                    <li><a href="#get-started">Get Started</a></li>
+                    <li><a href="#contribute">Contribute</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="https://github.com/webexpress-framework/WebExpress" rel="noopener external">GitHub</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main">
+        <!-- Hero -->
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero__bg" aria-hidden="true">
+                <svg class="hero__svg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid slice" focusable="false">
+                    <defs>
+                        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#1e40af" stop-opacity="0.15"></stop>
+                            <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.05"></stop>
+                        </linearGradient>
+                    </defs>
+                    <rect width="800" height="400" fill="url(#g1)"></rect>
+                    <g stroke="#1e40af" stroke-opacity="0.08" stroke-width="1" fill="none">
+                        <path d="M 0 320 Q 200 220 400 280 T 800 240"></path>
+                        <path d="M 0 360 Q 200 260 400 320 T 800 280"></path>
+                        <path d="M 0 380 Q 200 300 400 360 T 800 320"></path>
+                    </g>
+                </svg>
+            </div>
+            <div class="container hero__inner">
+                <p class="eyebrow">.NET web framework</p>
+                <h1 id="hero-title" class="hero__title">A lightweight, modern web framework for structured UI, REST integration and clean architecture.</h1>
+                <p class="hero__lead">WebExpress is a small-footprint web server with a powerful plugin system and a comprehensive API — built so that web applications can be integrated quickly and cleanly into any .NET language, even on low-performance hardware such as the Raspberry Pi.</p>
+                <div class="hero__actions">
+                    <a class="btn btn--primary" href="#get-started">Get Started</a>
+                    <a class="btn btn--ghost" href="https://github.com/webexpress-framework/WebExpress" rel="noopener external">View on GitHub</a>
+                </div>
+                <ul class="hero__highlights" role="list">
+                    <li><span aria-hidden="true">⚙</span> Lightweight &amp; efficient</li>
+                    <li><span aria-hidden="true">🧩</span> Plugin-first architecture</li>
+                    <li><span aria-hidden="true">🔐</span> HTTPS &amp; HTTP/2 ready</li>
+                    <li><span aria-hidden="true">🪶</span> Runs on Raspberry Pi</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Introduction / Getting Started -->
+        <section id="get-started" class="section" aria-labelledby="get-started-title">
+            <div class="container">
+                <header class="section__header">
+                    <p class="eyebrow">Introduction</p>
+                    <h2 id="get-started-title">Getting Started with WebExpress</h2>
+                    <p class="section__lead">WebExpress is based on Kestrel and follows a modular, plugin-driven design. Every application is a composition of well-scoped plugins, controls and fragments — the framework keeps the surface small, the runtime fast and the architecture explicit.</p>
+                </header>
+
+                <div class="cards">
+                    <article class="card">
+                        <h3 class="card__title">Installation</h3>
+                        <p>Install the .NET SDK, download the latest WebExpress release and unpack it to your target directory. The installation guide covers Raspberry Pi end-to-end, including HTTPS certificates and systemd integration.</p>
+                        <ul class="link-list">
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/blob/main/docs/installation_guide.md" rel="noopener external">Installation guide</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/releases" rel="noopener external">Latest releases</a></li>
+                        </ul>
+                    </article>
+
+                    <article class="card">
+                        <h3 class="card__title">First Steps</h3>
+                        <p>Spin up a minimal app, drop a plugin into the <code>packages</code> directory and start the service. The Hello World tutorial walks you through the smallest possible WebExpress application.</p>
+                        <ul class="link-list">
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.Tutorial.HelloWorld#readme" rel="noopener external">HelloWorld tutorial</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.Tutorial.WebUI#readme" rel="noopener external">WebUI tutorial</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.Tutorial.WebApp#readme" rel="noopener external">WebApp tutorial</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.Tutorial.WebIndex#readme" rel="noopener external">WebIndex tutorial</a></li>
+                        </ul>
+                    </article>
+
+                    <article class="card">
+                        <h3 class="card__title">Core Concepts</h3>
+                        <p>The framework family is split along clear architectural seams: a core runtime, a reusable UI layer, a business-app template and a reverse-index engine.</p>
+                        <ul class="link-list">
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.WebCore#readme" rel="noopener external">WebExpress.WebCore — runtime</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.WebUI#readme" rel="noopener external">WebExpress.WebUI — controls</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.WebApp#readme" rel="noopener external">WebExpress.WebApp — app template</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress.WebIndex#readme" rel="noopener external">WebExpress.WebIndex — index</a></li>
+                        </ul>
+                    </article>
+                </div>
+
+                <div class="snippet">
+                    <p class="snippet__caption">Minimal configuration (<code>webexpress.config.xml</code>)</p>
+                    <pre><code>&lt;configuration&gt;
+    &lt;endpoint uri="http://*/" /&gt;
+    &lt;endpoint uri="https://*:443/" pfx="./ssl/wx.pfx" password="hello" /&gt;
+    &lt;culture&gt;en-US&lt;/culture&gt;
+    &lt;assets&gt;./&lt;/assets&gt;
+    &lt;packages&gt;./packages&lt;/packages&gt;
+&lt;/configuration&gt;</code></pre>
+                </div>
+
+                <p class="section__footnote">
+                    For the full API documentation see the
+                    <a href="https://webexpress-framework.github.io/WebExpress.WebCore/" rel="noopener external">WebCore API docs</a>
+                    and the
+                    <a href="https://webexpress-framework.github.io/WebExpress.WebUI/" rel="noopener external">WebUI API docs</a>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Contribute -->
+        <section id="contribute" class="section section--alt" aria-labelledby="contribute-title">
+            <div class="container">
+                <header class="section__header">
+                    <p class="eyebrow">Community</p>
+                    <h2 id="contribute-title">Contribute to WebExpress</h2>
+                    <p class="section__lead">WebExpress is open source under the MIT license. Bug reports, feature ideas, documentation and translations are all valuable contributions — please open an issue before you start working on larger changes so we can align on scope.</p>
+                </header>
+
+                <div class="cards cards--two">
+                    <article class="card">
+                        <h3 class="card__title">Ways to contribute</h3>
+                        <ul class="bullet-list">
+                            <li>Report bugs through the GitHub issue tracker.</li>
+                            <li>Suggest features and discuss them in an issue first.</li>
+                            <li>Submit pull requests with tests and documentation.</li>
+                            <li>Improve documentation, tutorials and examples.</li>
+                            <li>Translate the framework into more languages.</li>
+                        </ul>
+                        <ul class="link-list">
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/blob/main/CONTRIBUTING.md" rel="noopener external">Contribution guide</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/issues" rel="noopener external">Issue tracker</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/discussions" rel="noopener external">Discussions</a></li>
+                        </ul>
+                    </article>
+
+                    <article class="card">
+                        <h3 class="card__title">Guidelines</h3>
+                        <ul class="bullet-list">
+                            <li><strong>Coding style</strong> — follow the conventions used across the framework family.</li>
+                            <li><strong>Architecture</strong> — keep responsibilities cleanly scoped to Core, UI, App or Index.</li>
+                            <li><strong>Tests</strong> — bug fixes ship with a regression test; features ship with coverage.</li>
+                            <li><strong>Documentation</strong> — update READMEs, guides or tutorials together with the change.</li>
+                        </ul>
+                        <ul class="link-list">
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/blob/main/CODE_OF_CONDUCT.md" rel="noopener external">Code of conduct</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22" rel="noopener external">Good first issues</a></li>
+                        </ul>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="section" aria-labelledby="contact-title">
+            <div class="container">
+                <header class="section__header">
+                    <p class="eyebrow">Reach out</p>
+                    <h2 id="contact-title">Contact</h2>
+                    <p class="section__lead">We do not run any external form services or trackers on this site. The fastest way to reach the project is GitHub — for private matters, use the email address below.</p>
+                </header>
+
+                <div class="cards cards--two">
+                    <article class="card">
+                        <h3 class="card__title">Project communication</h3>
+                        <p>Open an issue for bugs and feature requests, or start a discussion for questions and ideas. This keeps the conversation public and searchable for everyone. For release notes, articles and background on the project, follow the project blog.</p>
+                        <ul class="link-list">
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/issues/new/choose" rel="noopener external">Open a new issue</a></li>
+                            <li><a href="https://github.com/webexpress-framework/WebExpress/discussions" rel="noopener external">Start a discussion</a></li>
+                            <li><a href="https://github.com/webexpress-framework" rel="noopener external">GitHub organisation</a></li>
+                            <li><a href="https://webexpress-framework.blogspot.com/" rel="noopener external">WebExpress blog</a></li>
+                        </ul>
+                        <p class="muted small">The blog is hosted externally on Blogger. Visiting it leaves this site; see the <a href="privacy.html">privacy notice</a>.</p>
+                    </article>
+
+                    <article class="card">
+                        <h3 class="card__title">Direct contact</h3>
+                        <p>Reach the maintainer by email. No personal data is stored on this site — your message is sent through your own mail client.</p>
+                        <p class="contact-mail">
+                            <a href="mailto:webexpress-framework@outlook.com">webexpress-framework@outlook.com</a>
+                        </p>
+                        <p class="muted small">By writing to us you only share the data your own mail client transmits. We process it solely to answer your request.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- Legal -->
+        <section id="legal" class="section section--alt" aria-labelledby="legal-title">
+            <div class="container">
+                <header class="section__header">
+                    <p class="eyebrow">Privacy first</p>
+                    <h2 id="legal-title">Legal &amp; Privacy</h2>
+                    <p class="section__lead">This site is intentionally minimal. It is hosted on GitHub Pages, ships only static HTML and CSS, and does not embed any third-party fonts, analytics or content delivery networks.</p>
+                </header>
+
+                <div class="legal-grid">
+                    <div class="legal-box">
+                        <h3>No cookies, no trackers</h3>
+                        <p>This site does not set any cookies and does not use any external analytics or tracking services.</p>
+                    </div>
+                    <div class="legal-box">
+                        <h3>No external resources</h3>
+                        <p>All fonts, images and styles are served from this domain. There are no CDN requests and no third-party JavaScript.</p>
+                    </div>
+                    <div class="legal-box">
+                        <h3>GDPR compliant</h3>
+                        <p>Read the full <a href="privacy.html">privacy notice</a> and the <a href="imprint.html">imprint</a> for details on data handling and responsibility.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+        <div class="container site-footer__inner">
+            <div class="site-footer__col">
+                <a class="brand brand--footer" href="./">
+                    <img class="brand__logo" src="assets/img/logo.svg" alt="" width="28" height="28" loading="lazy" decoding="async">
+                    <span class="brand__name">WebExpress</span>
+                </a>
+                <p class="muted small">A lightweight .NET web framework. MIT licensed.</p>
+            </div>
+            <nav class="site-footer__col" aria-label="Footer">
+                <h4>Project</h4>
+                <ul>
+                    <li><a href="https://github.com/webexpress-framework/WebExpress" rel="noopener external">Source code</a></li>
+                    <li><a href="https://github.com/webexpress-framework/WebExpress/releases" rel="noopener external">Releases</a></li>
+                    <li><a href="https://webexpress-framework.blogspot.com/" rel="noopener external">Blog</a></li>
+                    <li><a href="https://github.com/webexpress-framework/WebExpress/blob/main/LICENSE" rel="noopener external">License</a></li>
+                </ul>
+            </nav>
+            <nav class="site-footer__col" aria-label="Documentation">
+                <h4>Documentation</h4>
+                <ul>
+                    <li><a href="https://github.com/webexpress-framework/WebExpress/blob/main/docs/installation_guide.md" rel="noopener external">Installation</a></li>
+                    <li><a href="https://github.com/webexpress-framework/WebExpress/blob/main/docs/development_guide.md" rel="noopener external">Development</a></li>
+                    <li><a href="https://webexpress-framework.github.io/WebExpress.WebCore/" rel="noopener external">WebCore API</a></li>
+                    <li><a href="https://webexpress-framework.github.io/WebExpress.WebUI/" rel="noopener external">WebUI API</a></li>
+	            <li><a href="https://webexpress-framework.github.io/WebExpress.WebIndex/" rel="noopener external">WebIndex API</a></li>
+                    <li><a href="https://webexpress-framework.github.io/WebExpress.WebApp/" rel="noopener external">WebApp API</a></li>
+                </ul>
+            </nav>
+            <nav class="site-footer__col" aria-label="Legal">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="imprint.html">Imprint</a></li>
+                    <li><a href="privacy.html">Privacy</a></li>
+                </ul>
+            </nav>
+        </div>
+        <div class="container site-footer__meta">
+            <small>&copy; <span data-current-year>2026</span> WebExpress contributors. No cookies, no external trackers, no third-party resources.</small>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js" defer></script>
+</body>
+</html>
