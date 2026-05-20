@@ -9,6 +9,7 @@
 	<limit>
 		<connectionlimit>300</connectionlimit>
 		<uploadlimit>3000000000</uploadlimit>
+		<maxrequestheaderstotalsize>65536</maxrequestheaderstotalsize>
 	</limit>
 
 	<culture>en-US</culture>

@@ -551,10 +551,21 @@ To provide clarity about the metadata specified in the code above, the following
 |Name        |String          |1            |Yes      |The name of the application. This can be a key to internationalization.
 |Description |String          |1            |Yes      |The description of the application. This can be a key to internationalization.
 |Icon        |String          |1            |Yes      |The icon that represents the application graphically.
-|IconTheme   |`TypeIconTheme` |1            |Yes      |The theme applied to the icon, defining its visual style (e.g., light).
 |AssetPath   |String          |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
 |DataPath    |String          |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String          |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
+|Theme       |`ITheme`        |1            |Yes      |Generic attribute `[Theme<TTheme>]` declaring the application's default theme. Surfaced through `IApplicationContext.DefaultTheme` (resolved lazily via the active `ThemeManager`). The visual tree picks this theme first, falls back to the first registered theme when no `[Theme<>]` is declared, and can be overridden per request via `VisualTreeControl.UseTheme<TTheme>()`.
+
+> **Note**: the icon theme is no longer set on the application. Apply
+> `[IconTheme(...)]` to the **theme** class instead - see the *Theme model*
+> section below. The active theme's icon theme propagates to the visual tree
+> and is emitted on `<html data-icon-theme="...">` automatically.
+
+```csharp
+[Name("MyApplication")]
+[Theme<MyTheme>] // declares the default theme
+public sealed class MyApplication : IApplication { … }
+```
 
 The methods implemented from the interface cover the life cycle of the application. When the plugin is loaded, all the applications it contains are instantiated. These remain in place until the plugin is unloaded. Meta information about the application is stored in the `ApplicationContext` and managed by the `ApplicationManager`. To better understand the organization and lifecycle of applications in relation to the `ApplicationManager`, refer to the UML diagram below:
 
@@ -4714,13 +4725,92 @@ public sealed class MyTheme : IThemeWebApp
 
 To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details:
 
-|Attribute   |Type      |Multiplicity |Optional |Description
-|------------|----------|-------------|---------|---------------------
-|Name        |String    |1            |Yes      |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
-|Description |String    |1            |Yes      |The description of the topic. This can be a key to internationalization.
-|Image       |String    |1            |Yes      |Link to an image that visually represents the topic.
-|ThemeMode   |ThemeMode |1            |Yes      |Indicates the theme mode (e.g., Light or Dark).
-|ThemeStyle  |String    |1            |Yes      |Link to an theme css style (e.g., material, flat, or skeuomorphic).
+|Attribute   |Type            |Multiplicity |Optional |Description
+|------------|----------------|-------------|---------|---------------------
+|Name        |String          |1            |Yes      |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
+|Description |String          |1            |Yes      |The description of the topic. This can be a key to internationalization.
+|Image       |String          |1            |Yes      |Link to an image that visually represents the topic.
+|ThemeMode   |ThemeMode       |1            |Yes      |Indicates the theme mode (e.g., Light or Dark).
+|ThemeStyle  |String          |1            |Yes      |Link to an theme css style (e.g., material, flat, or skeuomorphic).
+|IconTheme   |`TypeIconTheme` |1            |Yes      |The icon theme to apply when this theme is active. `Default` (FontAwesome glyphs) or `Light` (lightweight SVG variants).
+
+### Picking a default per application and overriding it
+
+Each application can declare which theme it ships with via the generic
+`[Theme<TTheme>]` attribute on the application class. The application
+context surfaces the resolved theme through `IApplicationContext.DefaultTheme`
+(lazy lookup against the `ThemeManager`). `VisualTreeControl` picks that
+theme automatically; subclasses (e.g. `VisualTreeWebApp`) can override it
+on a per-request basis using the generic `UseTheme<TTheme>()` API.
+
+```csharp
+// Declare the default
+[Theme<MyTheme>]
+public sealed class MyApplication : IApplication { … }
+
+// Switch to a user-supplied theme on a specific page
+public class MyPage : Page<VisualTreeWebApp>
+{
+    public override void Process(IRenderContext renderContext, VisualTreeWebApp visualTree)
+    {
+        // user preference, A/B test, tenant skin, …
+        if (preferDark)
+        {
+            visualTree.UseTheme<MyDarkTheme>();
+        }
+    }
+}
+```
+
+The visual tree's theme-selection priority is:
+
+1. The theme passed via `UseTheme<TTheme>()` (typically called from the
+   page's `Process` override based on whatever the application stored).
+2. The application's declared default (`[Theme<TTheme>]`).
+3. The first theme registered for the application (legacy fallback).
+4. `null` (no active theme; `IconTheme` falls back to `TypeIconTheme.Default`).
+
+The framework does NOT consult cookies, sessions, or identities - persistence
+is owned by the application.
+
+### Letting users pick a theme at runtime
+
+Drop a `ControlRestSelectionTheme` onto any page, derive
+`RestApiTheme` to plug into the application's own storage, and call
+`UseTheme<>()` from the page's `Process` override:
+
+```csharp
+// 1. derive RestApiTheme and route its persistence hooks to your store:
+[Title("Theme Selector")]
+public sealed class ThemeApi : RestApiTheme
+{
+    protected override string GetActiveThemeId(IQueryContext c, IRequest r)
+        => MyStore.Get(r);
+
+    protected override void PersistSelection(string v, IQueryContext c, IRequest r)
+        => MyStore.Set(r, v);
+}
+
+// 2. wire the selector to it - the control is a standalone dropdown
+//    (derives from ControlDropdown), no surrounding form is required:
+new ControlRestSelectionTheme("themeSelector")
+{
+    RestUri = _ => sitemapManager.GetUri<ThemeApi>(applicationContext)
+};
+
+// 3. tell the visual tree which theme to use - the framework does not
+//    consult your store on its own:
+public override void Process(IRenderContext ctx, VisualTreeWebApp visualTree)
+{
+    if (MyStore.Get(ctx.Request) == typeof(LightIconTheme).FullName?.ToLower())
+        visualTree.UseTheme<LightIconTheme>();
+    base.Process(ctx, visualTree);
+}
+```
+
+The control is a thin C# wrapper around `webexpress.webapp.DropdownTheme`
+(itself an extension of `webexpress.webui.DropdownCtrl`); see the
+JavaScript guide for the REST data contract.
 
 # Example
 

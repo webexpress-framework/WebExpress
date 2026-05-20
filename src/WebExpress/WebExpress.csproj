@@ -15,7 +15,7 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(Configuration)' != 'DebugLocal'">
-		<PackageReference Include="WebExpress.WebApp" Version="0.0.11-alpha" />
+		<PackageReference Include="WebExpress.WebApp" Version="2.0.0-alpha" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'DebugLocal'">
