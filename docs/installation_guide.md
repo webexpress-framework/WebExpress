@@ -2,9 +2,9 @@
 
 # General
 WebExpress is a lightweight web server that has been optimized for use in low-performance environments. Even on 
-small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a 
+small systems, such as the Raspberry Pi, web applications can be operated efficiently. This is achieved through a 
 small footprint with a low resource burden. Furthermore, WebExpress has a powerful and optimized plugin system, with a 
-comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a . Net language 
+comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .NET language 
 (e.g. C#). WebExpress is based on Kestrel, a cross-platform web server for ASP.NET core. With this, WebExpress also supports:
 
 - https
@@ -46,7 +46,7 @@ SOFTWARE.
 ```
 
 # Installation
-The installation is described using the Raspberry PI. However, the general procedure can also be applied to 
+The installation is described using the Raspberry Pi. However, the general procedure can also be applied to 
 other operating systems.
 
 ## Installing the operating system
@@ -63,7 +63,7 @@ with the following data:
 
 ```
 User: pi 
-Passwort: raspberry
+Password: raspberry
 ```
 
 After successful login, the ```raspi-config``` utility is called, with the help of which the basic configuration of the 
@@ -100,7 +100,7 @@ The Linux Arm32 archive for the .NET SDK is downloaded to the Raspberry using wg
 pi@wx:~ $ wget https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.100/dotnet-sdk-10.0.100-linux-arm.tar.gz 
 ```
 
-In preparation for the installation of .NET Core, a directory must be created at ```/usr/share/dotnet-sdk``` by then unpacking the .NET archive.
+In preparation for the installation of .NET, a directory must be created at ```/usr/share/dotnet-sdk``` by then unpacking the .NET archive.
 
 ``` bash
 pi@wx:~ $ sudo mkdir /usr/share/dotnet-sdk 
@@ -149,7 +149,7 @@ free of charge.
 The binaries of WebExpress can be obtained from GitHub via wget.
 
 ``` bash
-pi@wx:~ $ wget https://github.com/webexpress-framework/WebExpress/releases/download/1.4.4.0/WebExpress_1.4.4.0_LiLinuxA32.zip
+pi@wx:~ $ wget https://github.com/webexpress-framework/WebExpress/releases/download/2.0.0.0/WebExpress_2.0.0.0_LinuxArm32.zip
 ```
 
 In preparation for the installation of WebExpress, a directory must be created under ```/opt/wx``` by unpacking the binaries.
@@ -161,7 +161,7 @@ pi@wx:~ $ sudo mkdir /opt/wx
 The archive must then be unpacked.
 
 ``` bash
-pi@wx:~ $ sudo unzip WebExpress_1.4.4.0_LinuxArm32.zip -d /opt/wx 
+pi@wx:~ $ sudo unzip WebExpress_2.0.0.0_LinuxArm32.zip -d /opt/wx 
 ```
 
 After WebExpress has been successfully unpacked, the execution rights must be granted.
@@ -191,7 +191,7 @@ The configuration file ```/opt/wx/config/webexpress.config.xml``` stores the gen
 |Property         |Description                                                                                      |Example
 |-----------------|-------------------------------------------------------------------------------------------------|---
 |Endpoint         |Creates an endpoint on which WebExpress listens and processes incoming connections. Any number of endpoints can be configured. -uri: The Uri with the scheme, a hostname, and a port. The hostname * represents all available endpoints. If no port is specified, the default port is used (e.g. 443 for Https). -pfx: The keystore in the form of a pfx file -password: The password of the pfx file. |```<endpoint uri=http://*/ /><endpoint uri="https://*:443/" pfx="./Cert/wx.pfx" password="hello" />```
-|Limit            |Sets limits of the web server. connectionlimit: Number of concurrently active connections. Upload limit: The maximum number of bytes that may be transferred to the web server in the body. |```<limit><connectionlimit>300</connectionlimit><uploadlimit>30000000</uploadlimit></limit>```
+|Kestrel          |Configures the underlying Kestrel server and all request limits. maxconcurrentconnections: Number of concurrently active connections. maxrequestbodysize: The maximum number of bytes that may be transferred to the web server in the body. |```<kestrel><maxconcurrentconnections>300</maxconcurrentconnections><maxrequestbodysize>30000000</maxrequestbodysize></kestrel>```
 |Culture          |Specifies the language, calendar used, and formatting for dates and numbers for expenses.        |```<culture>de-DE</culture>```
 |Assets directory |Contains static files that are to be served by the web server.                                   |```<assets>./</assets>```
 |Context path     |The context path is the prefix path of a Uri (e.g. http://localhost/contextpath/pathToResource). |```<contextpath>wx</contextpath>```
@@ -310,7 +310,7 @@ For the first start-up or after a change in the configuration, WebExpress must b
 pi@wx:~ $ sudo systemctl restart webexpress
 ```
 
-WebExpress will start automatically after each restart of the Rasperry Pi.
+WebExpress will start automatically after each restart of the Raspberry Pi.
 
 # Installing Certificates in Windows
 If https is used with self-generated certificates, the certificates should be stored in the client. The .pfx file must be placed in the 

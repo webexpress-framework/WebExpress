@@ -2,7 +2,7 @@
 
 # WebExpress
 
-**WebExpress** is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, **WebExpress** has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .Net language (e.g. C#).
+**WebExpress** is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry Pi, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, **WebExpress** has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .NET language (e.g. C#).
 
 # License
 
@@ -3798,7 +3798,7 @@ Name ~ "WebExpress" and Create < now(-3d) orderby Create desc take 5
 
 The example returns the first five elements of the dataset that contain the value **WebExpress** in the Name attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in descending order by creation date.
 
-For detailed information about `WebIndex`, see [concept](https://github.com/webexpress-framework/WebExpress.WebIndex/blob/main/doc/concept.md).
+For detailed information about `WebIndex`, see [concept](https://github.com/webexpress-framework/WebExpress.WebIndex/blob/main/docs/concept.md).
 
 ## Identity model
 
@@ -4775,7 +4775,7 @@ is owned by the application.
 
 ### Letting users pick a theme at runtime
 
-Drop a `ControlRestSelectionTheme` onto any page, derive
+Drop a `ControlDataSelectionTheme` onto any page, derive
 `RestApiTheme` to plug into the application's own storage, and call
 `UseTheme<>()` from the page's `Process` override:
 
@@ -4793,7 +4793,7 @@ public sealed class ThemeApi : RestApiTheme
 
 // 2. wire the selector to it - the control is a standalone dropdown
 //    (derives from ControlDropdown), no surrounding form is required:
-new ControlRestSelectionTheme("themeSelector")
+new ControlDataSelectionTheme("themeSelector")
 {
     RestUri = _ => sitemapManager.GetUri<ThemeApi>(applicationContext)
 };
