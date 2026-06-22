@@ -187,6 +187,33 @@ fine; raise them if your applications need to accept large uploads.
 </kestrel>
 ```
 
+### Choosing HTTP protocol versions – `<protocols>`
+
+WebExpress speaks **HTTP/2** as well as HTTP/1.1. Over **HTTPS** the version is negotiated
+automatically for each connection (via TLS ALPN): modern browsers and clients use HTTP/2, older ones
+fall back to HTTP/1.1 – you do not have to configure anything. Over plain **HTTP**, connections use
+HTTP/1.1.
+
+The optional `<protocols>` element lets you pin which versions an endpoint offers. Leave it out to
+keep the default, which is the recommended setting for almost everyone.
+
+| Value           | What it means |
+|-----------------|---------------|
+| `Http1`         | HTTP/1.1 only. |
+| `Http2`         | HTTP/2 only. On a plain (non-TLS) endpoint this enables cleartext HTTP/2 (h2c). |
+| `Http1AndHttp2` | Both, with HTTP/2 preferred when the client supports it. **(default)** |
+
+> **Note:** Cleartext HTTP/2 (h2c) has no automatic upgrade from HTTP/1.1, and browsers will not use
+> it over plain HTTP. Setting `Http2` on a non-TLS endpoint therefore only makes sense for clients
+> that speak h2c with prior knowledge (e.g. a reverse proxy or service-to-service calls). For normal
+> websites, serve HTTP/2 over HTTPS and leave `<protocols>` unset.
+
+```xml
+<kestrel>
+    <protocols>Http1AndHttp2</protocols>
+</kestrel>
+```
+
 ---
 
 ## A complete example
