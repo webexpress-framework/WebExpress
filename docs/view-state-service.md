@@ -24,7 +24,7 @@ Out of scope are a third-party reactive framework, a change to the routing model
 
 The target architecture is a small unidirectional loop layered on top of the existing WebExpress primitives.
 
-The State layer is an observable store that holds the data and the user interface flags of a component. It exposes four operations: reading the current state, applying a shallow patch, subscribing to changes and selecting a derived slice. A patch notifies subscribers in a single batched step, so that multiple updates in one turn trigger exactly one render. Stores are local to a component by default and can be promoted to named shared stores for cross-component coordination.
+The State layer is an observable store that holds the data and the user interface flags of a component. It exposes four operations: reading the current state, applying a shallow patch, subscribing to changes and selecting a derived slice. A patch notifies subscribers in a single batched step, so that multiple updates in one turn trigger exactly one render. State is local to a component by default and is shared through a scope ViewState when several controls coordinate on the same data.
 
 The View layer is a pure function of state. A component implements a render method that receives the current state and produces a lightweight virtual node tree. A small keyed reconciler patches that tree into the real DOM, preserves focus and preserves nested control instances through stable keys and a keep flag. The View never calls a service and never mutates state directly.
 
@@ -34,7 +34,7 @@ The second form uses the keyed reconciler.
 The third form expresses the view as a registered template that can be authored from C#.
 Each form implements the same state and service contract and therefore belongs to the same concept.
 
-The Service layer encapsulates all network access behind named services. Each service is configured by a declarative descriptor that defines the base address, the operations, the mapping of parameters into the query, the mapping of the response into state and the policies for headers, retry and cancellation. A service exposes asynchronous operations such as load, query, create, update and emove, and every operation returns a normalized result that reports success, data, error and status. Service descriptors are authored in C#.
+The Service layer encapsulates all network access behind named services. Each service is configured by a declarative descriptor that defines the base address, the operations, the mapping of parameters into the query, the mapping of the response into state and the policies for headers, retry and cancellation. A service exposes asynchronous operations such as load, query, create, update and remove, and every operation returns a normalized result that reports success, data, error and status. Service descriptors are authored in C#.
 
 The single direction of data is the binding contract between the layers.
 The C# layer seeds the initial state and the service descriptors.
@@ -78,15 +78,15 @@ An externally triggered refresh is made visible. Once the fresh data has been re
 
 ## 3. New Artifacts and Responsibilities
 
-The following artifact overview enumerates every architectural artifact, on both the JavaScript side and the C# side, and assigns each a single clear responsibility. The artifacts follow the egister, get and unregister shape that the Actions and Binds registries already use, so that the surface stays uniform and open to plugins.
+The following artifact overview enumerates every architectural artifact, on both the JavaScript side and the C# side, and assigns each a single clear responsibility. The artifacts follow the register, get and unregister shape that the Actions and Binds registries already use, so that the surface stays uniform and open to plugins.
 
 ### 3.1 JavaScript artifacts
 
 The introduction to this part is that all core artifacts live in the webexpress.webapp namespace, because the dynamic concept belongs to WebExpress.WebApp; WebExpress.WebUI stays a static control library and is intentionally untouched by it. The core engine is intentionally small and free of framework dependencies.
 
-The Store class is an observable state container. Its responsibility is to hold one component state object, to apply shallow patches, to batch notifications on a microtask and to expose selection with shallow equality so that subscribers only react to relevant changes. The StoreRegistry singleton holds named shared stores and reference counts them, so that a shared store is created when the first consumer asks for it and disposed when the last consumer unmounts.
+The ViewState class is the observable state container. Its responsibility is to hold one state object, to apply shallow patches, to batch notifications on a microtask and to expose selection with shallow equality so that subscribers only react to relevant changes. There is no separate Store type: a scope ViewState adds the scope wiring (islands, resources, live updates) on top of the container, and the Data base creates a standalone ViewState for a control that owns its state locally. The ViewStateRegistry singleton indexes the scope ViewStates by their scope id and by the resources they declare, so a control resolves its scope by resource binding, by explicit id or by DOM ancestry; a scope's lifetime is bound to its host element, so no reference counting is needed.
 
-The Service base class defines the operation interface and the normalized result shape. The RestService default implementation reproduces the current behavior of the list and table controls, including the query parameters for search, structured query, filter, page, length and order, the use of an abort controller and the parsing of a JSON body. The ServiceRegistry singleton holds named services and resolves a descriptor into a configured service. Its island parser reads the hidden wx-service child elements of a host into configured services so that the JavaScript carries no hard-coded endpoint knowledge; the islands are consumed on the first read.
+The Service base class defines the operation interface and the normalized result shape. The RestService default implementation reproduces the current behavior of the list and table controls, including the query parameters for search, structured query, filter, page, page size and order, the use of an abort controller and the parsing of a JSON body. The ServiceRegistry singleton registers service kinds and resolves a descriptor into a configured service instance; the named instances themselves live at the host or scope that declared them. Its island parser reads the hidden wx-service child elements of a host into configured services so that the JavaScript carries no hard-coded endpoint knowledge; the islands are consumed on the first read.
 
 The Renderer module provides a node factory and a keyed patch function. Its responsibility is to diff a virtual node tree against a container and to apply the minimal set of DOM mutations, while preserving focus and preserving nested controls that are marked to be kept. The Intents registry maps intent names to a reducer and an effect. The reducer is a pure state transition, and the effect is an asynchronous routine that calls a service and dispatches a follow-up intent with the result. The Intents registry is the bridge that connects actions and binds to services and state.
 
@@ -96,9 +96,9 @@ The Data class extends Ctrl and ties these pieces together. Its responsibility i
 
 The introduction to this part is that the C# artifacts exist so that an author declares the entire client behavior in typed C# and never writes JavaScript. They render their declarations into hidden island elements at the start of the host element that the JavaScript engine consumes.
 
-The DataState C# type provides a fluent way (Create and Set) to declare the initial state object of a control. It collects keys and values, where the values come from the existing C# lambdas, and renders them into a wx-state island element whose wx-prop children carry the values with type markers. The DataServiceDescriptor C# type declares the REST contract as a typed object, including the endpoints resolved through the sitemap, the methods, the query parameter names and the response mapping, and renders one wx-service island element per service, with the scalar parts as attributes and the mappings as child elements. A control exposes both through the IDataIsland interface, namely its State and DataService properties. Because the endpoints are resolved through the sitemap manager, routing stays authoritative in C#.
+The DataState C# type provides a fluent way (Create and Set, plus typed helpers such as Page and PageSize) to declare the initial state object of a control. It collects keys and values, where the values come from the existing C# lambdas, and renders them into a wx-state island element whose wx-prop children carry the values with type markers. The DataServiceDescriptor C# type declares the REST contract as a typed object, including the endpoints resolved through the sitemap, the methods, the query parameter names and the response mapping, and renders one wx-service island element per service, with the scalar parts as attributes and the mappings as child elements. A control exposes both through the IDataIsland interface, namely its StateFactory and its ServiceFactories (with ServiceFactory as the single-service convenience). Because the endpoints are resolved through the sitemap manager, routing stays authoritative in C#.
 
-The IDataIsland C# interface, together with the DataIslandExtensions.EmitDataIslands extension, lets a control emit the state island and the service islands beside its existing marker class, optional template identifier, actions and binds. A control opts in by implementing IDataIsland, namely its State and DataService properties, and calling EmitDataIslands during render, so it gains the new capabilities without losing its current surface or changing its base class, which keeps WebExpress.WebUI untouched. The IControlView abstraction and an optional server-rendered template element let a view be authored in C# with the existing HtmlElement builders and reused on the client through the Templates registry. Stable identifiers derived from the control id let actions and binds target a specific store or service, so the markup contract is generated by C# rather than written by hand.
+The IDataIsland C# interface, together with the DataIslandExtensions.EmitDataIslands extension, lets a control emit the state island and the service islands beside its existing marker class, optional template identifier, actions and binds. A control opts in by implementing IDataIsland, namely its StateFactory, ServiceFactories and TemplateFactory members, and calling EmitDataIslands during render, so it gains the new capabilities without losing its current surface or changing its base class, which keeps WebExpress.WebUI untouched. The IControlView abstraction and an optional server-rendered template element let a view be authored in C# with the existing HtmlElement builders and reused on the client through the Templates registry. Stable identifiers derived from the control id let actions and binds target a specific store or service, so the markup contract is generated by C# rather than written by hand.
 
 ## 4. Lifecycle Concept
 
@@ -106,7 +106,7 @@ The lifecycle definition below explains when components, stores and services are
 
 The controller continues to own instantiation through the MutationObserver. When an element that matches a registered selector enters the document, the controller constructs the component, which creates or resolves its store, resolves its services and performs the first render. After the first render the component runs onMount, which is the place to subscribe to shared stores, to start timers and to trigger an initial service load when the server did not seed the data. After every later render the component runs onUpdate, which is the place to reconcile imperative concerns that the renderer does not own.
 
-Teardown is made deterministic by a small addition to the controller. The MutationObserver already reports removed nodes, and the controller calls destroy on the component of a removed element and then drops it from the instance map. The component destroy runs onUnmount, unsubscribes from stores, aborts in-flight service requests and releases shared stores through the reference-counted registries. Shared stores and shared services outlive any single component and are disposed only when their last consumer unmounts. This model prevents the leaks that ad hoc event listeners can cause today and gives every subscription a clear owner.
+Teardown is made deterministic by a small addition to the controller. The MutationObserver already reports removed nodes, and the controller calls destroy on the component of a removed element and then drops it from the instance map. The component destroy runs onUnmount, unsubscribes from the ViewState it observes and aborts in-flight service requests. Shared state lives in scope ViewStates whose lifetime is the lifetime of their host element: when the scope host is removed, the ViewState unsubscribes its listeners, aborts its services and unregisters itself, so no reference counting is needed. This model prevents the leaks that ad hoc event listeners can cause today and gives every subscription a clear owner.
 
 ## 5. Data Flow
 
@@ -162,7 +162,7 @@ The following explanation shows how the existing declarative bindings and impera
 
 Bindings become state-oriented. The current binds, which are search, paging, filter, show, hide, disable and darkmode, keep their markup. Their default implementations are reframed so that a source event dispatches an intent that updates a store, rather than calling a method on the bound control directly. Two additional binds complete the picture. A state bind subscribes an element or a control to a store path and reflects it as text, as a value, as visibility or as a class, which is the read direction of a controlled component. A model bind provides two-way binding for inputs, where an input event updates a store path and a store change updates the input, which is the controlled input pattern expressed declaratively.
 
-Actions become intent dispatchers. The Actions registry stays, and the imperative actions such as modal, rame, split and ullscreen remain available because they are genuine commands. A new dispatch action sends a named intent with a payload to the store of a target control. An action may both run an imperative command and dispatch an intent, which lets command-oriented behavior coexist with the unidirectional state flow. Intents are registered with an optional reducer and an optional effect, so that a gesture either changes state directly or triggers a service and then changes state with the result. The net effect is that data-wx-bind and data-wx-primary-action remain the public surface authored in C#, while underneath both feed the same loop.
+Actions become intent dispatchers. The Actions registry stays, and the imperative actions such as modal, frame, split and fullscreen remain available because they are genuine commands. A new dispatch action sends a named intent with a payload to the store of a target control. An action may both run an imperative command and dispatch an intent, which lets command-oriented behavior coexist with the unidirectional state flow. Intents are registered with an optional reducer and an optional effect, so that a gesture either changes state directly or triggers a service and then changes state with the result. The net effect is that data-wx-bind and data-wx-primary-action remain the public surface authored in C#, while underneath both feed the same loop.
 
 ## 8. C# Side Control of State and Services
 
@@ -176,9 +176,9 @@ Service definition is declared with a descriptor on the control. The author name
 
 The following service view describes how the concept manifests in the established control families of WebExpress.WebApp. It exists to make the architecture concrete across lists, tables, forms, wizard flows, tabs and other controls that already rely on remote data.
 
-Controls that load or persist data do not access etch directly from the view or from event handlers. Instead, each control family works with one or more named services that represent its domain responsibilities. A list or table typically uses a data service with query semantics. A form uses a load service and a submit service. A wizard uses step-oriented services for validation, persistence and server-driven progression. A tab control uses services for load, create, reorder and remove. The names and operations follow the role of the control rather than the structure of an endpoint URL.
+Controls that load or persist data do not access fetch directly from the view or from event handlers. Instead, each control family works with one or more named services that represent its domain responsibilities. A list or table typically uses a data service with query semantics. A form uses a load service and a submit service. A wizard uses step-oriented services for validation, persistence and server-driven progression. A tab control uses services for load, create, reorder and remove. The names and operations follow the role of the control rather than the structure of an endpoint URL.
 
-The default RestService realizes the common REST interaction model of WebExpress.WebApp. It supports query parameters such as search, structured query, filter, page, length and order, uses an abort controller for concurrency control and normalizes the JSON response into a stable result object. This gives all controls a shared behavioral contract for loading, cancellation, success and failure.
+The default RestService realizes the common REST interaction model of WebExpress.WebApp. It supports query parameters such as search, structured query, filter, page, page size and order, uses an abort controller for concurrency control and normalizes the JSON response into a stable result object. This gives all controls a shared behavioral contract for loading, cancellation, success and failure.
 
 Service descriptors remain the source of truth for endpoint knowledge. The descriptor carries the route resolved through the sitemap, the HTTP method, the parameter mapping, the response mapping and the policies for headers, retry and cancellation. The JavaScript layer consumes that descriptor and performs the call, but it does not define routes or parameter conventions on its own. This keeps transport concerns declarative and keeps routing authoritative in C#.
 
@@ -186,8 +186,7 @@ Service descriptors remain the source of truth for endpoint knowledge. The descr
 
 The error model defined here is single and predictable, because consistent failures are part of a good user interface and part of a testable system. Errors are normalized in the service, surfaced through state and presented by the view.
 
-Every service operation normalizes a failure into a result that reports the kind of error, the status, a message and whether the error is retriable. The kinds are 
-etwork, http, parse, bort and alidation, and an abort is never surfaced to the user because it is an expected consequence of a newer request replacing an older one. The store carries a loading flag and an error value, and the view renders an error affordance from that state, which reuses the existing alert and the validation summary that the modal form already presents. Intents decide retry and user messaging, so the policy lives in one place rather than being scattered across handlers.
+Every service operation normalizes a failure into a result that reports the kind of error, the status, a message and whether the error is retriable. The kinds are network, http, parse, abort and validation, and an abort is never surfaced to the user because it is an expected consequence of a newer request replacing an older one. The store carries a loading flag and an error value, and the view renders an error affordance from that state, which reuses the existing alert and the validation summary that the modal form already presents. Intents decide retry and user messaging, so the policy lives in one place rather than being scattered across handlers.
 
 A global error channel reports uncaught service errors through an event and an optional toast that reuses the existing popup notification component, so that an unexpected failure is visible without crashing a component. The C# service descriptor can declare a mapping from status codes to message keys, so that the messages stay server-authored and localizable through the existing internationalization layer. The outcome is that a failure has exactly one path, from the service to the store to the view, and that path is the same for every component.
 
@@ -195,15 +194,15 @@ A global error channel reports uncaught service errors through an event and an o
 
 The naming and module conventions below fix the vocabulary and shapes, because a uniform terminology is what makes the architecture extensible and approachable. The conventions extend the patterns that already exist rather than inventing new ones.
 
-A component module stays cohesive, and the three internal roles of state, view and service are explicit objects inside that module rather than three separate files, while genuinely shared services and shared stores live in their own modules. Class names that end in Ctrl remain for compatibility, and a new component uses the Data base internally while it registers the same selector, so the markup is unchanged. Stores are named by the control id, services are named by their role such as data, orm or 	ab, and intents use a domain and verb name such as list search or 	ab add. The island element names keep the wx prefix, so the structured surface is the wx-state and wx-service elements, and the attribute surface is data-wx-template, data-wx-model, data-wx-bind and the existing action attributes.
+A component module stays cohesive, and the three internal roles of state, view and service are explicit objects inside that module rather than three separate files, while genuinely shared services and scope state live in their own modules. Class names that end in Ctrl remain for compatibility, and a new component uses the Data base internally while it registers the same selector, so the markup is unchanged. Scopes are named by their scope id, services are named by their role such as data, form or tab, and intents use a domain and verb name such as list search or tab add. The island element names keep the wx prefix, so the structured surface is the wx-state, wx-service and wx-resource elements, and the attribute surface is data-wx-template, data-wx-model, data-wx-bind and the existing action attributes.
 
-The registries for stores, services, intents, templates, actions and binds all follow the same egister, get and unregister shape that the Actions and Binds registries already expose, so a plugin author learns one pattern and applies it everywhere. Reuse is encouraged through shared services for endpoints that several components consume, through shared stores for state that several components observe, and through registered templates for views that repeat across controls. The naming table in the appendix records the full vocabulary so that reviews can check a change against a single reference.
+The registries for scopes, services, intents, templates, actions and binds all follow the same register, get and unregister shape that the Actions and Binds registries already expose, so a plugin author learns one pattern and applies it everywhere. Reuse is encouraged through shared services for endpoints that several components consume, through scope ViewStates for state that several controls observe, and through registered templates for views that repeat across controls. The naming table in the appendix records the full vocabulary so that reviews can check a change against a single reference.
 
 ## 12. Build Pipeline
 
 The build pipeline described here explains how the modules reach the page, because the load order is significant in a world without a mandatory bundler. The pipeline reuses the embedded resource and Asset attribute mechanism that the framework already relies on.
 
-The JavaScript modules are embedded resources, and they are registered through Asset attributes on the include classes, with a strict order. The core engine, which is the store, the service, the renderer, the intents registry and the Data base, is included immediately after webexpress.webapp.js. The default registries follow, which are the existing action, bind and template defaults together with the new intent and service defaults. The controls follow last, so that every control can rely on the engine and the registries being present. The WebApp include mirrors this order for the application-specific modules.
+The JavaScript modules are embedded resources, and they are registered through Asset attributes on the include classes, with a strict order. The core engine, which is the service, the renderer, the template registry, the intents registry, the Data base and the ViewState, is included immediately after webexpress.webapp.js. The service, intent and bind defaults follow, because controls consume them at construction time. The controls follow, and the action defaults, the internationalization dictionaries, the panels and the template defaults come after the controls, which is safe because they are consumed at event or render time rather than at class definition time.
 
 The architecture does not require a bundler. Each module may stay a separate include. Where deployment scenarios benefit from concatenation or minification, that optimization can be added without changing the architectural contract, because the source of truth for ordering remains the Asset declarations. A formatting and linting gate for the JavaScript core and a small unit harness are recommended so that the engine is protected by automated checks.
 
@@ -216,13 +215,22 @@ The following examples ground the concept in four concrete modules, because a pa
 The introduction to this example is that the list exercises search, filter, paging and selection in one place. The state shape holds the search term, the structured query, the filter, the page, the page size, the items, the total, a loading flag and an error value. A data service of the RestService kind performs the query. The search, paging and filter binds dispatch the intents named list search, list page and list filter, each of which sets the relevant state and triggers a load.
 
 ```csharp
-// C# authoring sketch
+// C# authoring sketch: the family preset carries the canonical service
+// shape, so the endpoint type is the only thing the page contributes
+new ControlDataList("orders")
+    .State(s => s
+        .Page(0)
+        .PageSize(50))
+    .DataService<OrderRestApi>();
+
+// the generic builder stays available for fully bespoke contracts;
+// the endpoint is resolved through the sitemap at render time
 new ControlDataList("orders")
     .State(s => s
         .Set("page", 0)
         .Set("pageSize", 50))
     .Service("data", svc => svc
-        .Endpoint<OrderRestApi>(pageContext)
+        .Endpoint<OrderRestApi>()
         .Method(HttpMethod.Get)
         .Query(q => q
             .Map("search", "q")
@@ -237,14 +245,13 @@ The client behavior is that the component seeds its store from the state island,
 
 ### 13.2 Form
 
-The introduction to this example is that a form needs a model, validation errors and a submitting flag, which maps cleanly onto state. A form service loads the initial model and submits it. Inputs use the model bind for two-way binding, and a submit action dispatches a orm submit intent whose effect calls the service and reduces validation errors into state.
+The introduction to this example is that a form needs a model, validation errors and a submitting flag, which maps cleanly onto state. A form service loads the initial model and submits it. Inputs use the model bind for two-way binding, and a submit action dispatches a form submit intent whose effect calls the service and reduces validation errors into state.
 
-The state shape holds the model object, a map of field errors, a submitting flag and a general error value. The submit intent sets submitting to 	rue, calls the service, and on a validation failure reduces the field errors into state so that the view renders them next to the inputs, which reuses the presentation that the modal form already provides. On success the intent clears the errors and dispatches a follow-up intent that closes the host modal when the form lives inside one. The author declares the endpoints and the field mapping in C#, so the client form carries no endpoint knowledge.
+The state shape holds the model object, a map of field errors, a submitting flag and a general error value. The submit intent sets submitting to true, calls the service, and on a validation failure reduces the field errors into state so that the view renders them next to the inputs, which reuses the presentation that the modal form already provides. On success the intent clears the errors and dispatches a follow-up intent that closes the host modal when the form lives inside one. The author declares the endpoints and the field mapping in C#, so the client form carries no endpoint knowledge.
 
 ### 13.3 Wizard Steps
 
-The introduction to this example is that a wizard is a small state machine, which the store expresses naturally and which becomes resumable once the state is explicit. The state shape holds the current step index, a per-step model, a map of completed flags and a loading flag. Navigation actions named 
-ext, previous and go to are intents with guard reducers that refuse to advance past an invalid step. A wizard service persists the data of a step and loads the next step when the steps are server-driven.
+The introduction to this example is that a wizard is a small state machine, which the store expresses naturally and which becomes resumable once the state is explicit. The state shape holds the current step index, a per-step model, a map of completed flags and a loading flag. Navigation actions named next, previous and go to are intents with guard reducers that refuse to advance past an invalid step. A wizard service persists the data of a step and loads the next step when the steps are server-driven.
 
 The view renders only the active step from state, which keeps the DOM small and the transitions predictable. Because the progress lives in state, a wizard can be serialized and restored, which enables a resume feature without any change to the view. The author declares the steps, the validation and the persistence endpoints in C#, and the client engine runs the machine.
 
@@ -252,7 +259,7 @@ The view renders only the active step from state, which keeps the DOM small and 
 
 The introduction to this example is that the tab control demonstrates optimistic updates and rollback, which are where a reactive store pays off most clearly. The state shape holds the tabs, the active tab id, the available templates and a loading flag. A tab service loads the tabs, creates a tab with a create operation, reorders tabs with an update operation and closes a tab with a remove operation. Add and close are intents, and a drag reorder updates the state optimistically, then calls the service, and rolls back to the previous order when the service reports an error.
 
-The client behavior is that a reorder feels immediate because the view renders the new order from the optimistic state before the network confirms it, and a failure restores the previous order from the state snapshot that the intent kept. The 	ab added and 	ab closed events are still dispatched, so existing integrations continue to work. The author declares the tab endpoints and the templates in C#, and the optimistic policy lives in the intent rather than in the view.
+The client behavior is that a reorder feels immediate because the view renders the new order from the optimistic state before the network confirms it, and a failure restores the previous order from the state snapshot that the intent kept. The tab added and tab closed events are still dispatched, so existing integrations continue to work. The author declares the tab endpoints and the templates in C#, and the optimistic policy lives in the intent rather than in the view.
 
 ## 14. Architectural Qualities, Constraints and Verification
 
@@ -291,15 +298,15 @@ The introduction to this table is that it lists the island elements and the data
 
 ### 16.2 Registry shapes
 
-The introduction to this table is that every registry shares the same shape, so that one mental model covers all of them. The shape is a egister method, a get method and an unregister method, with a stable key.
+The introduction to this table is that every registry shares the same shape, so that one mental model covers all of them. The shape is a register method, a get method and an unregister method, with a stable key.
 
 |Registry  |Key          |Value
 |----------|-------------|-----------------------------------------------------------
 |Actions   |action name  |An object with an execute and an optional init.
-|Binds     |bind name    |An object with a ind hook.
+|Binds     |bind name    |An object with a bind hook.
 |Intents   |intent name  |An object with an optional reducer and an optional effect.
-|Services  |service name |A configured service instance from a descriptor.
-|ViewState |scope id     |The observable state container of a scope, resolved by id or by ancestry.
+|Services  |service kind |A factory that creates a configured service from a descriptor; the named instances live at the host or scope that declared them.
+|ViewStateRegistry |scope id |The scope ViewState, indexed by its scope id and by the resources it declares, resolved by resource binding, by id or by ancestry.
 |Templates |template id  |A render function that returns a DOM node or a node tree.
 
 ### 16.3 Naming vocabulary

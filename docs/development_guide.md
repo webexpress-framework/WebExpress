@@ -3862,11 +3862,11 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║         │ IdentityManager:IIdentityManager ├────┐  │   IEnumerable<IIdentity>      │ ║
 ║         │ …                                │    │  │ GetGroups:                    │ ║
 ║         └──────────────────────────────────┘    │  │   IEnumerable<IIdentityGroup> │ ║
-║                                                 │  │ CreateForbiddenPage(          │ ║
-║                                                 │  │   IRequest,IEndpointContext,  │ ║
+║                                                 │  │ CreateForbiddenResponse(      │ ║
+║                                                 │  │   IRequest,IPageContext,      │ ║
 ║                         ┌───────────────────┐   │  │   IIdentity):IResponse        │ ║
 ║                         │ <<Interface>>     │   │  │ CreateAuthenticationPrompt(   │ ║
-║                         │ IComponentManager │   │  │   IRequest,IEndpointContext,  │ ║
+║                         │ IComponentManager │   │  │   IRequest,IPageContext,      │ ║
 ║                         ├───────────────────┤   │  │   IIdentity):IResponse        │ ║
 ║                         └────────Δ──────────┘   │  └─────────────────────────▲─────┘ ║
 ║                                  ¦              │                          * │       ║
@@ -3880,9 +3880,9 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦                       │   IEnumerable<IIdentityPermissionContext>     │            ║
 ║ ¦                       ├───────────────────────────────────────────────┤            ║
 ║ ¦                       │ CreateForbiddenResponse(IRequest,             │            ║
-║ ¦                       │   IEndpointContext,IIdentity):IResponse       │            ║
+║ ¦                       │   IPageContext,IIdentity):IResponse           │            ║
 ║ ¦                       │ CreateAuthenticationPrompt(IRequest,          │            ║
-║ ¦                       │   IEndpointContext,IIdentity):IResponse       │            ║
+║ ¦                       │   IPageContext,IIdentity):IResponse           │            ║
 ║ ¦                       │ Login(IIdentity,IRequest):Session             │            ║
 ║ ¦                       │ Logout(IRequest)                              │            ║
 ║ ¦                       │ GetCurrentIdentity(IRequest):IIdentity        │            ║
