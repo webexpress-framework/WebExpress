@@ -74,7 +74,7 @@ The development of a web application without the need to use HTML, CSS, or JavaS
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-**WebExpress** consists of several program libraries, which serve as the basis for **WebExpress** projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` program library represents the application that takes control of the individual functions and components. The `WebExpress.exe` program library is generic and can be replaced by its own program library.
+**WebExpress** consists of several program libraries, which serve as the basis for **WebExpress** projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions such as logging. The `WebExpress.WebUI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` executable represents the application that takes control of the individual functions and components. The `WebExpress.exe` executable is generic and can be replaced by its own host application.
 
 ```
 ╔WebExpress.exe════════════════════════════════════════════════════════════════════════╗
@@ -133,7 +133,8 @@ The components of **WebExpress** and its applications are centrally managed in t
 |Component                   |Description
 |----------------------------|---------------------
 |ApplicationManager          |An application is the logical combination of functionalities into an application system. 
-|AssetManager                |Assets like static java script files are delivered by **WebExpress**.
+|AssetManager                |Assets like static JavaScript files are delivered by **WebExpress**.
+|EndpointManager             |Manages all endpoints (pages, resources, REST APIs, assets) that can be addressed with a URI.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
 |IdentityManager             |Users or technical objects that are used for identity and access management.
@@ -141,10 +142,13 @@ The components of **WebExpress** and its applications are centrally managed in t
 |InternationalizationManager |Provides language packs for the internationalization of applications.
 |JobManager                  |Jobs can be used for cyclic processing of tasks.
 |LogManager                  |Allows to create, view, and delete logs used for troubleshooting and monitoring system performance.
-|MessageQueueManager         |Handles the registration of message receivers and manages the distribution of messages via a bidirectional WebSocket connection. Enables real-time features such as notifications, status updates, and cross-system commands.
+|MessageQueueManager         |Handles the registration of message receivers and manages the distribution of messages via a bidirectional WebSocket connection. Enables real-time features such as notifications, status updates, and cross-system commands. Provided by `WebExpress.WebApp`.
+|NotificationManager         |Manages notifications that are displayed to users as pop-up windows. Provided by `WebExpress.WebUI`.
 |PackageManager              |Management of packages that extend the functionality of **WebExpress**.
+|PageManager                 |Manages the pages of the applications.
 |PluginManager               |Management of extension addons that extend the functionality of **WebExpress**.
 |ResourceManager             |Resources are contents that are delivered by **WebExpress**. These include, for example, websites that consist of HTML source code, arbitrary files (e.g. css, JavaScript, images) and REST interfaces, which are mainly used for communication via HTTP(S) with (other) systems.
+|RestApiManager              |Manages the REST API endpoints of the applications.
 |SessionManager              |Responsible for storing session data generated during the user session.
 |SettingPageManager          |Manages the settings of the application.
 |SitemapManager              |Manages the structure of the website, including navigation between different pages.
@@ -173,7 +177,7 @@ In addition, you can create your own components and register them in the `Compon
 ║     │ ApplicationManager:IApplicationManager                     │     │             ║
 ║     │ EventManager:IEventManager                                 │     │             ║
 ║     │ JobManager:IJobManager                                     │     │             ║
-║     │ ResponseManager:IResponseManager                           │     │             ║
+║     │ EndpointManager:IEndpointManager                           │     │             ║
 ║     │ ResourceManager:IResourceManager                           │     │             ║
 ║     │ ThemeManager:IThemeManager                                 │     │             ║
 ║     │ FragmentManager:IFragmentManager                           │     │             ║
@@ -181,6 +185,7 @@ In addition, you can create your own components and register them in the `Compon
 ║     │ InternationalizationManager:IInternationalizationManager   │     │             ║
 ║     │ SessionManager:ISessionManager                             │     │             ║
 ║     │ TaskManager:ITaskManager                                   │     │             ║
+║     │ …                                                          │     │             ║
 ║     ├────────────────────────────────────────────────────────────┤     │             ║
 ║     │ GetComponentManager(id):IComponentManager                  │     │             ║
 ║     │ GetComponentManager<TComponentManager>():TComponentManager │     │             ║
@@ -323,9 +328,7 @@ The plugin system can be used to extend both **WebExpress** and application func
 [Application<MyApplication>()]
 public sealed class MyPlugin : IPlugin
 {
-    public Initialization(IPluginContext) {}
-    public Run() {}
-    public Dispose() {}
+    public void Run() {}
 }
 ```
 
@@ -337,7 +340,7 @@ To provide clarity about the metadata specified in the code above, the following
 |Description |String         |1            |Yes      |The description of the plugin. This can be a key to internationalization.
 |Icon        |String         |1            |Yes      |The icon that represents the plugin graphically.
 |Dependency  |String         |n            |Yes      |Defines a dependency on another plugin and is specified via the PluginId.
-|Applcation  |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
+|Application |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
 
 The implemented methods from the interface cover the life cycle of the plugin. Meta information about the plugin is stored in the `PluginContext` and is available globally via the `PluginManager`. Below is a UML diagram that highlights the structure and connections between the `PluginManager` and plugins.
 
@@ -485,7 +488,7 @@ To add a new language, a new language file must be created in the Internationali
 </ItemGroup>
 ```
 
-The name of the language translation file must match the country code from ISO 3166 ALPHA-2. Each language translation file is structured as follows:
+The name of the language translation file must match the two-letter language code from ISO 639-1 (e.g. `de`, `en`). Each language translation file is structured as follows:
 
 ```csharp
 # Comment
@@ -506,27 +509,27 @@ When creating language files, it is important to pay attention to cultural diffe
 The translation of a text is done with the help of the `InternationalizationManager`, which provides the `I18N` function. The term i18n is a numeronym for "internationalization", where the number 18 stands for the 18 letters between the first "i" and the last "n" in the word. The following examples demonstrate how to use the `I18N` function for translating text:
 
 ```csharp
-// Language, PluginId, Key
-var text = I18N.Translate("de", "<PlginId>", "logout.button"); 
+// Culture, PluginId, Key
+var text = I18N.Translate(culture, "<PluginId>", "logout.button"); 
 
 // Culture, PluginId:key
-var text = I18N.Translate(culture, "<PlginId>:logout.button"); 
+var text = I18N.Translate(culture, "<PluginId>:logout.button"); 
 
-// Language, PluginId, Key, Placeholders for dynamic content in texts
+// Request, PluginId:key, placeholders for dynamic content in texts
 var user = "Max";
-var text = I18N.Translate("de", "<PlginId>:welcome.message", user); 
+var text = I18N.Translate(request, "<PluginId>:welcome.message", user); 
 ```
 
 The `I18N` function works as follows:
-- Language: Specifies the language code (e.g. "de" for German) or a CulturInfo object of the language.
-- PluginId: Identifies the plugin for which the translation is registered.
+- Culture: Specifies the culture of the language (a `CultureInfo` object). Overloads that take an `IRequest` or `IRenderContext` derive the culture from the request.
+- PluginId: Identifies the plugin for which the translation is registered. It is either passed as a separate argument or as a prefix of the key (`PluginId:key`).
 - Key: The key that corresponds to the text fragment to be translated.
 
-If a key is not found, the I18N function returns the key itself by default. This can be replaced with a custom error message:
+If a key is not found, the `I18N` function returns the key itself, so a missing translation never breaks the page. A custom fallback therefore compares the result against the key:
 
 ```csharp
-var text = I18N.Translate("en", "<PluginId>", "non.existent.key") ??
-    "Translation not found";
+var text = I18N.Translate(culture, "<PluginId>:non.existent.key");
+text = text == "non.existent.key" ? "Translation not found" : text;
 ```
 
 ## Application model
@@ -671,7 +674,7 @@ Endpoints are (web) elements that can be accessed with a URI (Uniform Resource I
 ║  ¦      ¦      │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────────┐   ║
 ║  ¦      ¦      │     ├───────────────────────────────────────────────┤           │   ║
 ║  ¦      ¦      │     │ Refresh()                                     ◄------┐    │   ║
-║  ¦      ¦      │     │ SearchResource(Uri,SearchContex):SearchResult │      ¦    │   ║
+║  ¦      ¦      │     │ SearchResource(Uri,SearchContext):SearchResult │      ¦    │   ║
 ║  ¦      ¦      │     └───────────────────────────────────────────────┘      ¦    │   ║
 ║  ¦      ¦      │                                                            ¦    │   ║
 ║  ¦      ¦      │                                                            ¦    │   ║
@@ -754,8 +757,8 @@ Parameters can be transferred to the endpoint to be executed in a URI or through
 
 |Origin       |Scope     |Description
 |-------------|----------|-------------------------
-|GET, DELETE  |Parameter |Parameter from the URI. Example: http://www.example.com?id=d9869404-6628-464b-8286-9685d4c4ff8b
-|POST, PATCH  |Parameter |Parameter from the content part of the request. 
+|Query string |Parameter |Parameter from the URI, regardless of the HTTP method. Example: http://www.example.com?id=d9869404-6628-464b-8286-9685d4c4ff8b
+|Request body |Parameter |Parameter from the content part of the request (e.g. POST, PUT, PATCH), parsed for form content types (url-encoded, multipart, text/plain).
 |Path segment |URI       |Parameters that are part of the URI path. Example: http://www.example.com/d9869404-6628-464b-8286-9685d4c4ff8b/edit
 |Session      |Session   |Parameters, which are stored in the session. 
 
@@ -773,7 +776,7 @@ To include additional resources such as CSS files in the project, they can be em
 </ItemGroup>
 ```
 
-Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/asset/<plugin>/x/y/z)` to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/asset/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
+Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/asset/<plugin>/x/y/z`) to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/asset/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
 
 The following asset types are supported by the **WebExpress** system: 
 
@@ -790,7 +793,7 @@ The following asset types are supported by the **WebExpress** system:
 | .ico  | Icon file
 | .jpeg | JPEG image
 | .jpg  | JPEG image
-| .js   | Java script file
+| .js   | JavaScript file
 | .json | JSON file
 | .mp3  | MP3 audio
 | .mp4  | MP4 video
@@ -801,7 +804,8 @@ The following asset types are supported by the **WebExpress** system:
 | .txt  | Text file
 | .wav  | WAV audio
 | .xls  | Microsoft Excel
-| .xlx  | Microsoft Excel
+| .xlsx | Microsoft Excel
+| .xlx  | Microsoft Excel (legacy alias)
 | .xml  | XML file
 | .zip  | ZIP archive
 
@@ -825,7 +829,7 @@ All assets are placed under the "assets" path, which is located within the main 
 ║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
 ║        ¦             │     ├───────────────────────────────────────────────┤   │     ║
 ║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
 ║        ¦             │     └───────────────────────────────────────────────┘   │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │                                                         │     ║
@@ -899,6 +903,10 @@ Resources are typically assets that can come in various forms, such as images, v
 [Policy<AuthenticatedAccessPolicy>]
 public sealed class MyResource : IResource
 {
+    public IResponse Process(IRequest request)
+    {
+        …
+    }
 }
 ```
 
@@ -913,7 +921,6 @@ To provide clarity about the metadata specified in the code above, the following
 |Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
-|Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
 
 A cached resource is created on the first call and persists until the associated plugin is unloaded. The `Initialize` method is called once at instantiation, while the `Process` method is called each time the resource is requested. For non-cached resources, a new instance is created each time they are called.
 
@@ -924,7 +931,7 @@ A cached resource is created on the first call and persists until the associated
 └────┬───┘ └────┬───┘ └────┬────┘ └────┬────┘              │ MyPlugin │
      ¦          ¦          ¦           ¦                   │          │
     ┌┴┐        ┌┴┐        ┌┴┐ Register┌┴┐                  └────┬─────┘
-    │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ ├─────────────────────>┌┴┐
     │ │        │ │        │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │        Initialization│ │
@@ -937,7 +944,7 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │        │ │         │ │     └────┬────┘               │ MyApp │
     │ │        │ │        │ │         │ │          ¦                    │       │
     │ │        │ │        │ │         │ │AddPlugin┌┴┐                   └───┬───┘
-    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ │         │ ├─────────────────────>┌┴┐
     │ │        │ │        │ │         │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │         │ │        Initialization│ │
@@ -976,7 +983,7 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │<------------------------------------------┤ │      │ │ │ MyResource │
     │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │            │
     │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
-    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
+    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instance 
     │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌┴┐
     │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
     │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
@@ -1009,7 +1016,7 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
 ║        ¦             │     ├───────────────────────────────────────────────┤   │     ║
 ║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
 ║        ¦             │     └───────────────────────────────────────────────┘   │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │                                                         │     ║
@@ -1033,7 +1040,7 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║   1 ├──────────────────────────────────────────────────────────────┤       ¦   │     ║
 ║  ┌──┤ Resources:IEnumerable<IResourceContext>                      │       ¦   │     ║
 ║  │  ├──────────────────────────────────────────────────────────────┤       ¦   │     ║
-║  │  │ GetResorces(IApplicationContext,ResourceId):IResourceContext │       ¦   │     ║
+║  │  │ GetResources(IApplicationContext,ResourceId):IResourceContext│       ¦   │     ║
 ║  │  └──────────────────────────────────────────────────────────────┘       ¦   │     ║
 ║  │                                                                         ¦   │     ║
 ║  │                        ┌────────────────┐                               ¦   │     ║
@@ -1098,12 +1105,12 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### Include-Modell
+### Include model
 
 The include model describes the dynamic integration of client-side resources, such as JavaScript and CSS, into the HTML header. In contrast to the `AssetManager`, which provides static content directly, the `IncludeManager` manages references to scripts and stylesheets. It ensures the correct loading order, considers operating modes (debug and release), and handles the consistent registration and deregistration of resources when plugins are loaded or unloaded. In debug mode, JavaScript and CSS files are still delivered individually via the `AssetManager` to provide transparency and traceability during development. In release mode, however, the `IncludeManager` combines the resources for each plugin and provides two additional endpoints through which the minimized and bundled JavaScript and CSS files are delivered. This means it is responsible for efficient delivery, while the technical file serving relies on the existing infrastructure. The following example shows how to implement a JavaScript and a style sheet  include:
 
 ```csharp
-[Scope<ScopeGeneral>]
+[Scope<IScopeGeneral>]
 [Asset("myscript.js")]
 [Asset("mycss.css")]
 public sealed class MyInclude : IInclude
@@ -1128,7 +1135,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
 └────┬───┘ └────┬───┘ └────┬────┘ └────┬────┘              │ MyPlugin │
      ¦          ¦          ¦           ¦                   │          │
     ┌─┐        ┌─┐        ┌─┐ Register┌─┐                  └────┬─────┘
-    │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ ├─────────────────────>┌─┐
     │ │        │ │        │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │        Initialization│ │
@@ -1141,7 +1148,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
     │ │        │ │        │ │         │ │     └────┬────┘               │ MyApp │
     │ │        │ │        │ │         │ │          ¦                    │       │
     │ │        │ │        │ │         │ │AddPlugin┌─┐                   └───┬───┘
-    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
     │ │        │ │        │ │         │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │         │ │        Initialization│ │
@@ -1158,7 +1165,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
     │ │        │ │        │ │         │ │         ┌─┐                 ┌─┐    │ My      │
     │ │        │ │        │ │         │ │         │ │                 │ │    │ Include │
     │ │        │ │        │ │         │ │         │ │                 │ │    └────┬────┘
-    │ │        │ │        │ │         │ │         │ │            Create Instacnce ¦
+    │ │        │ │        │ │         │ │         │ │            Create Instance  ¦
     │ │        │ │        │ │         │ │         │ │                 │ ├───────>┌─┐
     │ │        │ │        │ │         │ │         │ │Register         │ │<-------└─┘
     │ │        │ │        │ │         │ │         │ │<────────────────┤ │
@@ -1182,7 +1189,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
     │ │        │ │<------------------------------------------┤ │      │ │ │ Include    │
     │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │ Endpoint   │
     │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
-    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
+    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instance 
     │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌─┐
     │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
     │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
@@ -1214,7 +1221,7 @@ The following class diagram illustrates the architecture of the `IncludeManager`
 ║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
 ║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
 ║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
 ║        ¦             │     └───────────────────────────────────────────────┘   │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │   ┌──────────────────────────────────┐                  │     ║
@@ -1313,7 +1320,7 @@ Pages are a fundamental component of web applications, serving as the primary in
 
 ```csharp
 [Title("my page")]
-[Scope<ScopeGeneral>]
+[Scope<IScopeGeneral>]
 [Policy<AuthenticatedAccessPolicy>]
 public sealed class MyPage : IPage
 {
@@ -1340,7 +1347,7 @@ To clearly illustrate the metadata described in the code above, the table below 
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Domain          |`IDomain`         |n            |Yes      |Associates the page with one or more logical domains. Domains represent functional areas, modules or workspaces and can be used for routing, filtering or contextual grouping.
 
-Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, which is available in the `RenderContext`, is responsible for the display of the page. The following UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
+Web pages are resources that are rendered in an HTML tree before delivery. The `VisualTree` class, which is available in the `RenderContext`, is responsible for the display of the page. The following UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1360,7 +1367,7 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║         ¦         │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────┐    ║
 ║         ¦         │     ├───────────────────────────────────────────────┤       │    ║
 ║         ¦         │     │ Refresh()                                     │       │    ║
-║         ¦         │     │ SearchResource(Uri,SearchContex):SearchResult │       │    ║
+║         ¦         │     │ SearchResource(Uri,SearchContext):SearchResult │       │    ║
 ║         ¦         │     └───────────────────────────────────────────────┘       │    ║
 ║         ¦         │                                                             │    ║
 ║         ¦         └───────────────┐                                             │    ║
@@ -1383,9 +1390,9 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║      │ AddPage:Event                                        │         ¦         │    ║
 ║      │ RemovePage:Event                                     │         ¦         │    ║
 ║    1 ├──────────────────────────────────────────────────────┤         ¦         │    ║
-║   ┌──┤ Resources:IEnumerable<IPageContext>                  │         ¦         │    ║
+║   ┌──┤ Pages:IEnumerable<IPageContext>                      │         ¦         │    ║
 ║   │  ├──────────────────────────────────────────────────────┤         ¦         │    ║
-║   │  │ GetResorces(IApplicationContext,PageId):IPageContext │         ¦         │    ║
+║   │  │ GetPage(IApplicationContext,PageId):IPageContext     │         ¦         │    ║
 ║   │  └──────────────────────────────────────────────────────┘         ¦         │    ║
 ║   │                                                                   ¦         │    ║
 ║   │                        ┌────────────────┐                         ¦         │    ║
@@ -1563,7 +1570,7 @@ By leveraging dependency injection, all required dependencies are automatically 
 
 ### Setting page model
 
-Setting page templates are utilized to manage and configure web applications. Each settings page is required to implement the `IPageSetting` interface. The following UML diagram illustrates the relationships and structures:
+Setting page templates are utilized to manage and configure web applications. Each settings page is required to implement the `ISettingPage` interface. The following UML diagram illustrates the relationships and structures:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1838,8 +1845,9 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 
 The following code selection contains an example class called `MyRestApi` that implements a REST API in **WebExpress**:
 
+The version of a REST API is not declared through an attribute; it is derived from the namespace of the endpoint class. A namespace segment of the form `_1_` (e.g. `MyPlugin.WWW.Api._1_`) yields version `1` and surfaces as the `v1` segment of the route; without such a segment, version `1` is assumed.
+
 ```csharp
-[Version(1)]
 [Policy<SystemAccessPolicy>]
 public sealed class MyRestApi : IRestApiCrud
 {
@@ -1889,7 +1897,7 @@ The following diagram outlines how the class structure and interactions for the 
 ║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
 ║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
 ║         ¦            │     │ Refresh()                                     │   │     ║
-║         ¦            │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
 ║         ¦            │     └───────────────────────────────────────────────┘   │     ║
 ║         ¦            │                                                         │     ║
 ║         ¦            └───────────────┐                                         │     ║
@@ -1914,8 +1922,8 @@ The following diagram outlines how the class structure and interactions for the 
 ║            1 ├─────────────────────────────────────────────┤              ¦    │     ║
 ║   ┌──────────┤ RestApis:IEnumerable<IRestApiContext>       │              ¦    │     ║
 ║   │          ├─────────────────────────────────────────────┤              ¦    │     ║
-║   │          │ GetResorces(IApplicationContext,RestApiId): │              ¦    │     ║
-║   │          │   :IResourceContext                         │              ¦    │     ║
+║   │          │ GetRestApi(IApplicationContext,RestApiId):  │              ¦    │     ║
+║   │          │   IRestApiContext                           │              ¦    │     ║
 ║   │          └─────────────────────────────────────────────┘              ¦    │     ║
 ║   │                                                                       ¦    │     ║
 ║   │                        ┌────────────────┐                             ¦    │     ║
@@ -1943,16 +1951,16 @@ The following diagram outlines how the class structure and interactions for the 
 ║   └───────────────► <<Interface>>                      │ *                ¦    │     ║
 ║                   │ IRestApiContext                    ◄───────────────────────┘     ║
 ║                   ├────────────────────────────────────┤                  ¦          ║
-║                   │ Version:String                     │ 1                ¦          ║
-║                   │ Methode:CrudMethode                ├─────┐            ¦          ║
+║                   │ Methods:                           │ 1                ¦          ║
+║                   │   IEnumerable<RequestMethod>       ├─────┐            ¦          ║
 ║                   │ Version:UInt                       │     │            ¦          ║
 ║                   └────────────────────────────────────┘     │            ¦          ║
 ║                                                              │            ¦          ║
 ║                            ┌───────────────┐                 │            ¦          ║
-║                            │ <<Interface>> │               1 │            ¦          ║
+║                            │ <<Interface>> │               * │            ¦          ║
 ║                            │ IComponent    │        ┌────────▼─────────┐  ¦          ║
 ║                            ├───────────────┤        │ <<Enumeration>>  │  ¦          ║
-║                            └───────Δ───────┘        │ CrudMethod       │  ¦          ║
+║                            └───────Δ───────┘        │ RequestMethod    │  ¦          ║
 ║                                    ¦                ├──────────────────┤  ¦          ║
 ║                                    ¦                │ POST             │  ¦          ║
 ║                            ┌───────┴───────┐        │ GET              │  ¦          ║
@@ -2129,14 +2137,14 @@ An established WebSocket connection is represented at runtime by a dedicated soc
 |---------------|-----------------------|-------------|---------|------------- 
 |Policy         |`IIdentityPolicy`      |n            |Yes      |Grants authority to a policy.
 |Condition      |`ICondition`           |n            |Yes      |Condition that must be met for the resource to be available. 
-|MessageType    |`MessageTypeAttribute` |1            |Yes      |Defines the message type and optionally the maximum allowed message size. 
+|MessageType    |`SocketMessageType`    |1            |Yes      |Defines the message type (`Text` or `Binary`). 
 |SubProtocol    |String                 |1            |Yes      |Specifies the sub‑protocol that the socket must use. 
 |MaxMessageSize |ULong                  |1            |Yes      |Sets the maximum allowed message size for incoming messages.
 
 The example implements the `ISocket` interface in the `MySocket` class, demonstrating how to accept a WebSocket connection, receive and send messages, and handle connection closure and errors:
 
-```
-[MessageType(MaxMessageSize.Text)]
+```csharp
+[MessageType(SocketMessageType.Text)]
 [SubProtocol("chat")]
 [MaxMessageSize(1024)]
 [Policy<PublicAccessPolicy>]
@@ -2172,7 +2180,7 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
 ║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
 ║         ¦            │     │ Refresh()                                     │   │     ║
-║         ¦            │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
 ║         ¦            │     └───────────────────────────────────────────────┘   │     ║
 ║         ¦            │                                                         │     ║
 ║         ¦            └───────────────┐                                         │     ║
@@ -2252,8 +2260,8 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║                  │ <<Interface>>                   │                           ¦     ║
 ║                  │ ISocket                         │                           ¦     ║
 ║                  ├─────────────────────────────────┤                           ¦     ║
-║                  │ OnConnected(ISocketConnection): │                           ¦     ║
-║                  │   Task                          │                           ¦     ║
+║                  │ OnConnectedAsync(               │                           ¦     ║
+║                  │   ISocketConnection):Task       │                           ¦     ║
 ║                  └─────────────────Δ───────────────┘                           ¦     ║
 ║                                    ¦                                           ¦     ║
 ╚════════════════════════════════════¦═══════════════════════════════════════════¦═════╝
@@ -2263,8 +2271,8 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║                  ┌─────────────────┴───────────────┐                    create ¦     ║
 ║                  │ MySocket                        ◄---------------------------┘     ║
 ║                  ├─────────────────────────────────┤                                 ║
-║                  │ OnConnected(ISocketConnection): │                                 ║
-║                  │   Task                          │                                 ║
+║                  │ OnConnectedAsync(               │                                 ║
+║                  │   ISocketConnection):Task       │                                 ║
 ║                  └─────────────────────────────────┘                                 ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -2276,9 +2284,9 @@ Because WebSocket connections are long-lived and stateful, the number of concurr
 
 In a sitemap, all endpoints are listed with their route path. When a web client calls a resource, the associated endpoint is determined from the sitemap and returned to the caller.
 
-The basic concept of the sitemap is based on mapping the physical file structure of the assembly directly as a routing hierarchy. Each folder corresponds to a segment of the route path, with the entire directory structure being converted into a namespace hierarchy during compilation. For example, a path such as `WWWW/Blog/Post` becomes the namespace `WWWW.Blog.Post`, which serves as the foundation for deriving the route path. Within these namespaces, the contained classes (such as `Index.cs`, `Add.cs`, or `Edit.cs`) define the specific endpoints of the corresponding segment. In this process, `Index.cs` functions as the default endpoint, meaning that this filename is not explicitly included in the URI. Thus, a class like `WWWW.Blog.Post.Index.cs` results in the route `/blog/post`.
+The basic concept of the sitemap is based on mapping the physical file structure of the assembly directly as a routing hierarchy. Each folder corresponds to a segment of the route path, with the entire directory structure being converted into a namespace hierarchy during compilation. For example, a path such as `WWW/Blog/Post` becomes the namespace `WWW.Blog.Post`, which serves as the foundation for deriving the route path. Within these namespaces, the contained classes (such as `Index.cs`, `Add.cs`, or `Edit.cs`) define the specific endpoints of the corresponding segment. In this process, `Index.cs` functions as the default endpoint, meaning that this filename is not explicitly included in the URI. Thus, a class like `WWW.Blog.Post.Index.cs` results in the route `/blog/post`.
 
-It is important to note that the algorithm removes certain prefixes from the route to ensure a simplified path structure. To help you understand the prefixes that are eliminated by the algorithm, the following table shows the prefixes and their conversion:
+It is important to note that the algorithm removes a leading namespace segment that matches one of the well-known web-root prefixes (case-insensitive), so the route starts at the content hierarchy. The following table shows the recognized prefixes and their conversion:
 
 |Prefix   |Full Class Name                 |Resulting Route
 |---------|--------------------------------|------------------
@@ -2286,16 +2294,14 @@ It is important to note that the algorithm removes certain prefixes from the rou
 |Web      |`Web.Products.List`             |`/products/list`
 |WebPage  |`WebPage.About`                 |`/about`
 |WebPages |`WebPages.Contact`              |`/contact`
-|Root     |`Root.Homepage.Index`           |`/homepage`
-|WebRoot  |`WebRoot.Products.Index`        |`/products`
-|WWWRoot  |`WWWRoot.Blog.Post.PostId.Edit` |`/blog/post/{postId}/edit`
-|Default  |`Default.Blog.Post`             |`/blog/post`
+|Page     |`Page.Homepage.Index`           |`/homepage`
+|Pages    |`Pages.Products.Index`          |`/products`
+|Website  |`Website.Blog.Post.Index`       |`/blog/post`
 
-In addition, the algorithm eliminates certain class name suffixes from the route to generate standardized route paths. If a class name contains one of these suffixes, only the essential part is used to form the path. The following is a summary table that lists the suffix identifiers and the corresponding transformation:
+In addition, the algorithm eliminates the class name suffix `Page` from the route to generate standardized route paths. If a class name ends with this suffix, only the essential part is used to form the path:
 
 |Suffix     |Full Class Name                 |Resulting Route
 |-----------|--------------------------------|------------------
-|Controller |`WWW.Blog.Post.IndexController` |`/blog/post`
 |Page       |`WWW.Products.ListPage`         |`/products/list`
 
 When converting endpoints into routes, the system checks whether an endpoint originates from the plugin that hosts the current application. If so, the plugin’s subdirectory is omitted, resulting in a simplified route (e.g., `/server/app/x/y/z`). In contrast, endpoints from external plugins retain the plugin’s name in the route (e.g., `/server/app/<plugin>/x/y/z`) to clearly indicate their source.
@@ -2312,7 +2318,7 @@ The `Index` classes in **WebExpress** can be equipped with type-defining attribu
 public class BlogPostParameter : Parameter
 {
     public BlogPostParameter(int value)
-        :base("postid", value, ParameterScope.Url)
+        : base("postid", value, ParameterScope.Url)
     {
     }
 }
@@ -2336,14 +2342,14 @@ The following table describes the attributes used in the `Index`:
 |Description     |String     |1            |Yes      |The description of the path segment. This can be a key to internationalization.
 |Icon            |IIcon      |1            |Yes      |The icon that represents the path segment graphically.
 
-This class is further decorated with a custom attribute (`SegmentAttribute`) that defines the name of the placeholder (`postId`). During routing, a reflection-based mechanism examines the namespace hierarchy and the set attributes to determine where a dynamic value is expected. The mechanism then extracts the corresponding value from the URL and passes it on to the appropriate endpoint.
+The `Index` class is decorated with the `SegmentInt<BlogPostParameter>` attribute; the parameter class defines the name of the placeholder (`postid`). During routing, a reflection-based mechanism examines the namespace hierarchy and the set attributes to determine where a dynamic value is expected. The mechanism then extracts the corresponding value from the URL and passes it on to the appropriate endpoint.
 
 When the application starts, the sitemap uses reflection to traverse all relevant classes that represent endpoints (all those that implement the `IEndpoint` interface) and automatically builds a routing tree from them. Below is an example of a typical website structure implemented with **WebExpress**:
 
 ```
    <> MyPlugin.csproj
    ├─...
-   └─📁 WWWW                 (web root)
+   └─📁 WWW                  (web root)
      ├─📁 Blog               (blog section)
      │ ├─📄 Index.cs         (blog overview)
      │ └─📁 Post             (blog post section)
@@ -2373,9 +2379,12 @@ Web queries can be answered with different status responses (see RFC 2616). If s
 Status pages are primarily used from the plugin in which the associated application is implemented. Status pages implement the `IStatusPage` interface. The example below demonstrates how to create a custom status page:
 
 ```csharp
-[WebExStatusCode(500)]
-public sealed class MyStatusPage : IStatusPage<RenderContext>
+[StatusCode(500)]
+public sealed class MyStatusPage : IStatusPage<VisualTree>
 {
+    public void Process(IRenderContext renderContext, VisualTree visualTree)
+    {
+    }
 }
 ```
 
@@ -2570,7 +2579,7 @@ Fragments are modular components that derive from the `IFragment` interface and 
 ```csharp
 [Order(0)]
 [Section("mysection")]
-[Scope<ScopeGeneral>]
+[Scope<IScopeGeneral>]
 [Permission<MyIdentityPermission>()]
 public sealed class MyFragment : IFragment<IRenderContext>
 {
@@ -2633,7 +2642,7 @@ Controls are units of the web page that are translated into HTML source code by 
 ║                                          ¦                                           ║
 ╚══════════════════════════════════════════¦═══════════════════════════════════════════╝
                                            ¦
-╔WebExpress.UI═════════════════════════════¦═══════════════════════════════════════════╗
+╔WebExpress.WebUI══════════════════════════¦═══════════════════════════════════════════╗
 ║                                          ¦                                           ║
 ║            ┌─────────────────────────────┴──────────────────────────────┐            ║
 ║            │ <<Interface>>                                              │            ║
@@ -2705,7 +2714,7 @@ A control provides the following properties:
 A form in HTML is an interactive element that allows users to enter data and send it to the **WebExpress** server. Forms consist of various input elements such as text boxes, checkboxes, radio buttons, drop-down menus, and buttons. These form elements are organized into tabs and groups for better structure and usability. By grouping related elements together and using tabs to separate different sections, users can navigate and complete the form more efficiently. The following UML diagram illustrates the relationships and internal structure, serving as a schema for form designs:
 
 ```
-╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
 ║                                      ┌──────────┐                                    ║
 ║                                      │ IControl │                                    ║
@@ -3185,10 +3194,10 @@ Events are notifications from the **WebExpress** API or web applications that ca
 An event handler is created by defining a class that implements the `IEventHandler` interface. This allows the system to respond to specific events and execute custom logic when those events are triggered. The example below demonstrates how to create a simple event handler:
 
 ```csharp
-[Event<Event>] 
+[Event<MyEvent>] 
 public sealed class MyEventHandler : IEventHandler
 {
-    public void Process(object sender)
+    public void Process(object sender, IEventArgument eventArgument)
     {
     }
 }
@@ -3294,14 +3303,9 @@ A job is created by a class that inherits from `Job`. The example below demonstr
 [Job("30", "0", "1", "*", "*")] 
 public sealed class MyJob : Job
 {
-    public override void Initialization(JobContext context)
-    {
-        base. Initialization(context);
-    }
-
     public override void Process()
     {
-        base Process();
+        base.Process();
     }
 }
 ```
@@ -3336,7 +3340,7 @@ Tasks are another form of concurrent code execution. In contrast to jobs, tasks 
 ║                       ¦                                 1 │                          ║
 ║              ┌────────┴───────────────────────────────────▼───────┐                  ║
 ║              │ <<Interface>>                                      │                  ║
-║              │ TaskManager                                        │                  ║
+║              │ ITaskManager                                       │                  ║
 ║              ├────────────────────────────────────────────────────┤                  ║
 ║              │ AddTask:Event                                      │                  ║
 ║              │ RemoveTask:Event                                   │                  ║
@@ -3402,11 +3406,11 @@ Tasks are another form of concurrent code execution. In contrast to jobs, tasks 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Tasks are created dynamically by instantiating a class derived from `Task` and starting it from the `TaskManager`. The tasks can take the following states:
+Tasks are created dynamically through the `TaskManager` (`CreateTask`), which instantiates and starts them. The tasks can take the following states:
 
 ```
 ╔══════════╗           ╔═══════════╗
-║ Created  ║           ║ Cancelled ║
+║ Created  ║           ║ Canceled  ║
 ╚══════════╝           ╚═════▲═════╝
      │                       │
      │                       │
@@ -3427,7 +3431,7 @@ Tasks are created dynamically by instantiating a class derived from `Task` and s
 Notifications are messages that are displayed to users as pop-up windows. The notifications are globally (visible to all), linked to a session (visible to current users) or to specific roles (visible to selected users). The notifications are displayed in the upper right corner and are retained when a page is changed. Notifications are closed by the user or at the end of the display period. Notifications that are visible to multiple users are removed by closing a user. To better understand the relationships and structure, refer to the UML diagram below:
 
 ```
-╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
 ║  ┌──────────────────────────────────────────┐                                        ║
 ║  │ <<Interface>>                            │                                        ║
@@ -3504,28 +3508,23 @@ The `NotificationManager` is the central class for notifications. The `AddNotifi
 |Durability |Yes      |The display time in milliseconds. If the number is less than 0, the notification remains active until it is closed by the user.
 |Progress   |Yes      |Instead of the display duration, a progress value from 0 to 100 can be specified. A value less than zero means that no progress is calculated.
 |Icon       |Yes      |A URI that contains an icon.
-|Type       |Yes      |Is the notification type. The following values are supported: Primary, Secondary, Success, Info, Warning, Danger, Dark, Light, White
+|Type       |Yes      |Is the notification type. The following values are supported: Default, Primary, Secondary, Success, Info, Warning, Danger, Dark, Light, White, Transparent
 
 Here is an example to illustrate how the `NotificationManager` functions. Notifications can be added with specific properties such as heading, message, icon, and duration. The following snippet demonstrates how to create a simple welcome notification:
 
 ```csharp
 // Welcome notification
-NotificationManager.AddNotification
+notificationManager.AddNotification
 (
-    heading: I18N("inventoryexpress:app.notification.welcome.label"),
-    message: I18N("inventoryexpress:app.notification.welcome.description"),
-    icon: Context.Icon,
+    applicationContext,
+    message: I18N.Translate("inventoryexpress:app.notification.welcome.description"),
+    heading: I18N.Translate("inventoryexpress:app.notification.welcome.label"),
+    icon: applicationContext.Icon?.ToString(),
     durability: 30000
 );
 ```
 
-The functions of the `NotificationManager` can also be accessed via the REST API interface `{base path}/wxapp/api/v1/popupnotifications` can be accessed. The following methods are available:
-
-|Method |Parameter             |Description
-|-------|----------------------|----------------
-|Get    |None                  |Detects all notifications for the current user.
-|Post   |A notification object |Stores a notification.
-|Delete |The id                |Deletes an existing notification.
+Popup notifications are delivered to the clients over the message queue (see the *MessageQueue model* below): the `PopupNotificationHandler` of the `MessageQueueManager` pushes new notifications through the WebSocket connection and replays the still-open ones when a client reconnects, for example after a page change.
 
 
 ## MessageQueue model
@@ -3567,15 +3566,11 @@ public sealed class UriAddress : IAddress
 ```
 
 This structure allows the creation of additional address types such as tenant‑based routing, user‑based routing or combined conditions. The addressing model remains consistent and predictable across all implementations and ensures that server‑side messages reach exactly the clients that match the defined criteria.
-Type‑Safe Message Dispatch
 
 Based on the addressing model, the `MessageQueueManager` provides a type‑safe method for sending messages from the server to selected clients:
 
 ```csharp
-public async Task SendAsync(IEnvelope envelope, IAddress address, CancellationToken cancellationToken = default)
-{
-    // Serialization, selection of matching sessions and dispatch
-}
+Task<IMessageQueueManager> SendAsync(IAddress address, IMessage message, CancellationToken cancellationToken = default);
 ```
 
 The following overview illustrates how these components interact within the **WebExpress** architecture and how the `MessageQueueManager` integrates into the overall system structure.
@@ -3593,20 +3588,20 @@ The following overview illustrates how these components interact within the **We
                              ¦
 ╔WebExpress.WebApp═══════════¦═════════════════════════════════════════════════════════╗
 ║                            ¦                                                         ║
-║         ┌──────────────────┴────────────────────┐    ┌────────────────────┐          ║
-║         │ <<Interface>>                         │    │ <<Interface>>      │          ║
-║         │ IMessageQueueManager                  │    │ IEnvelope          │          ║
-║         ├───────────────────────────────────────┤    ├────────────────────┤          ║
-║         │ Register(Guid,IMessageQueueSocket)    │    │ Version:Int        │          ║
-║         │   IMessageQueueManager                │    │ Channel:String     │          ║
-║         │ Register(String,Action<IEnvelope>)    │    │ Type:String        │          ║
-║         │   IMessageQueueManager                │    │ MessageId:String   │          ║
-║         │ Unregister(Guid):                     │    │ ConnectionId:Guid  │          ║
-║         │   IMessageQueueManager                │    │ Sender:String      │          ║
-║         │ Unregister(String,Action<IEnvelope>): │    │ Timestamp:DateTime │          ║
-║         │   IMessageQueueManager                │    │ Payload:Object     │          ║
-║         │ SendAsync(IAddress,IEnvelope,         │    └────────────────────┘          ║
-║         │   CancellationToken):                 │                                    ║
+║         ┌──────────────────┴────────────────────┐    ┌─────────────────────────┐     ║
+║         │ <<Interface>>                         │    │ <<Interface>>           │     ║
+║         │ IMessageQueueManager                  │    │ IMessage                │     ║
+║         ├───────────────────────────────────────┤    ├─────────────────────────┤     ║
+║         │ Register(Guid,IMessageQueueSocket)    │    │ Type:String             │     ║
+║         │   IMessageQueueManager                │    │ MessageId:String        │     ║
+║         │ Register(String,Action<IMessage>)     │    │ ApplicationId:String    │     ║
+║         │   IMessageQueueManager                │    │ SocketId:String         │     ║
+║         │ Unregister(Guid):                     │    │ ConnectionId:String     │     ║
+║         │   IMessageQueueManager                │    │ Sender:String           │     ║
+║         │ Unregister(String,Action<IMessage>):  │    │ Timestamp:DateTime      │     ║
+║         │   IMessageQueueManager                │    │ Meta:IDictionary<String,│     ║
+║         │ SendAsync(IAddress,IMessage,          │    │   String>               │     ║
+║         │   CancellationToken):                 │    └─────────────────────────┘     ║
 ║         │   Task<IMessageQueueManager>          │                                    ║
 ║         └───────────────────────────────────────┘                                    ║
 ║                                                                                      ║
@@ -3627,29 +3622,25 @@ The following overview illustrates how these components interact within the **We
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### Message Envelope Structure
+### Message structure
 
-The envelope is the standardized message container used by **WebExpress** to transport all real‑time communication through the `MessageQueueManager`. It defines a uniform structure for every message exchanged between client and server, independent of its purpose or origin. By encapsulating metadata and payload in a consistent format, the envelope enables reliable routing, type‑safe processing and predictable behavior across all WebSocket‑based features.
+The `IMessage` interface is the standardized message container used by **WebExpress** to transport all real‑time communication through the `MessageQueueManager`. It defines a uniform structure for every message exchanged between client and server, independent of its purpose or origin. By carrying consistent metadata, the message enables reliable routing, type‑safe processing and predictable behavior across all WebSocket‑based features.
 
-Each envelope consists of two parts: a metadata header and a payload section. The metadata describes how the message should be interpreted and routed. It contains the protocol version, the logical communication channel, the semantic message type, a unique message identifier, a timestamp and the sender information. These fields allow the `MessageQueueManager` to classify the message, apply the appropriate addressing rules and forward it to the correct recipients. The payload contains the domain‑specific data of the message. Its structure depends on the channel and the message type, for example notification content, progress updates, chat messages or WebRTC signaling information.
+Each message consists of shared metadata and message-specific data. The metadata describes how the message should be interpreted and routed: the semantic message type, a unique message identifier, the addressed application, socket and connection, the sender, a timestamp and an extensible metadata dictionary. These fields allow the `MessageQueueManager` to classify the message, apply the appropriate addressing rules and forward it to the correct recipients. The message-specific data is contributed by the concrete message class (e.g. `DataChangedMessage`, notification, progress or chat messages), whose additional properties are serialized alongside the metadata as camelCase JSON.
 
-A typical envelope has the following structure:
+A typical message (a data change notification) has the following wire structure:
 
 ```json
 {
-  "version": 1,
-  "channel": "notification",
-  "type": "event",
-  "messageId": "notif-42",
+  "type": "webexpress.webapp.data.changed",
+  "messageId": "9f2c4a1e5b6d4d0f8a7b3c2d1e0f9a8b",
+  "applicationId": "myapp",
+  "sender": "DataChangedNotifier",
   "timestamp": "2026-01-16T07:00:00Z",
-  "sender": "NotificationManager",
-  "payload": {
-    "title": "Import running",
-    "message": "The import process is currently at 35 percent.",
-    "severity": "info",
-    "notificationId": "import-2026",
-    "state": "open"
-  }
+  "meta": {},
+  "domain": "myplugin.model.incident",
+  "operation": "updated",
+  "itemId": "42"
 }
 ```
 
@@ -3657,7 +3648,7 @@ A typical envelope has the following structure:
 
 A client establishes a persistent connection to the WebExpress server through a WebSocket endpoint. After the handshake is completed, the session is recorded in the internal registry of the `MessageQueueManager`. This session contains the active WebSocket instance as well as metadata such as the current route, the user context, or other application‑specific values.
 
-When the server creates a notification, for example a status message or an indication of a running operation, the message is passed to the `MessageQueueManager` as a structured envelope object. The addressing process is performed using an appropriate address object that defines which sessions should receive the message. Since the client is actively connected and matches the selection criteria, the message is delivered to the client through the existing WebSocket connection.
+When the server creates a notification, for example a status message or an indication of a running operation, the message is passed to the `MessageQueueManager` as a structured message object. The addressing process is performed using an appropriate address object that defines which sessions should receive the message. Since the client is actively connected and matches the selection criteria, the message is delivered to the client through the existing WebSocket connection.
 
 On the client side, the message is displayed in the notification area of the user interface. The notification remains visible until the user closes it manually or until the server sends a completion message, for example when a task reaches 100 percent. As long as neither of these conditions occurs, the notification is considered open.
 
@@ -3705,6 +3696,11 @@ The client displays the notification again, regardless of the fact that the prev
     └─┘                      └─┘                      └─┘                      └─┘
 ```
 
+### Data change notifications
+
+The message queue also carries the live data update channel of the View, State and Service architecture (see `view-state-service.md`, section 2.2). When server side data of a logical domain changes — through the CRUD REST endpoints or through application code that calls `DataChangedNotifier` — the server sends a `webexpress.webapp.data.changed` message to every session that subscribed the domain. The message names the domain (the lower case full name of the changed `IDomain` type), the operation (`created`, `updated` or `deleted`) and optionally the id of the changed item; it deliberately carries no data, because the clients re-query through their declared services, which keeps the REST endpoint the single source of the data and its authorization.
+
+A session acquires its domains from two sources. The connect url carries the domains the page declared at render time through the `[Domain<TDomain>]` page attribute. In addition, a client extends its session at runtime with an inbound `webexpress.webapp.data.subscribe` message listing further domains — this is how a scope ViewState subscribes the domains its services derive from their endpoints after the page has rendered. The socket merges both sets, and the `AddressDomain` address selects the matching sessions when a change is announced. On the client, the scope ViewState re-queries the resources of the changed domain, so all subscribing controls re-render with the fresh data, including changes made by other users. The refreshed controls briefly play the `wx-data-changed` flash animation, so the user sees that the content changed because of an outside action.
 
 ## Index model
 
@@ -3766,10 +3762,11 @@ public class DataType : IIndexItem
     public string Text { get; set;}
 } 
 
-WebEx.ComponentHub.GetComponent<IndexManager>().Register<DataType>();
+var indexManager = WebEx.ComponentHub.GetComponentManager<IIndexManager>();
+indexManager.Create<DataType>(CultureInfo.GetCultureInfo("en"));
 ```
 
-The reverse index is built by using the `ReBuild` method for all objects or `Add` for an object. The following example demonstrates how to use the `ReIndex` method to rebuild the index for a collection of records:
+The reverse index is built by using the `ReIndex` method for all objects or `Insert` for a single object. The following example demonstrates how to use the `ReIndex` method to rebuild the index for a collection of records:
 
 ```csharp
 var records = new []
@@ -3778,14 +3775,13 @@ var records = new []
     new DataType(){ Id=1, Text="lorem scelerisque ornare" } 
 };
 
-WebEx.ComponentHub.GetComponent<IndexManager>().ReIndex(records);
+indexManager.ReIndex(records);
 ```
 
 To access the reverse index, WQL (see below) is used. The example below demonstrates how to execute a WQL query via the `IndexManager` to find entries matching specific criteria:
 
 ```csharp
-var wql = WebEx.ComponentHub.GetComponent<IndexManager>().ExecuteWql("Text ~ \"lorem\"");
-var res = wql?.Apply();
+var res = indexManager.Retrieve<DataType>("Text ~ \"lorem\"");
 ```
 
 ### WQL
@@ -3879,20 +3875,17 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║                         │ <<Interface>>                                 ├────┘       ║
 ║ ┌-----------------------┤ IIdentityManager                              │            ║
 ║ ¦                       ├───────────────────────────────────────────────┤            ║
-║ ¦                       │ Policies:IEnumerable<IIdentityPolicy>         │            ║
-║ ¦                       │ Permission:IEnumerable<IIdentityPermission>   │            ║
+║ ¦                       │ Policies:IEnumerable<IIdentityPolicyContext>  │            ║
+║ ¦                       │ Permissions:                                  │            ║
+║ ¦                       │   IEnumerable<IIdentityPermissionContext>     │            ║
 ║ ¦                       ├───────────────────────────────────────────────┤            ║
-║ ¦                       │ AddIdentity(IIdentity)                        │            ║
-║ ¦                       │ AddGroup(IIdentityGroup)                      │            ║
-║ ¦                       │ RemoveIdentity(IIdentity)                     │            ║
-║ ¦                       │ RemoveGroup(IIdentityGroup)                   │            ║
-║ ¦                       │ CreateForbiddenPage(IRequest,                 │            ║
-║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
+║ ¦                       │ CreateForbiddenResponse(IRequest,             │            ║
+║ ¦                       │   IEndpointContext,IIdentity):IResponse       │            ║
 ║ ¦                       │ CreateAuthenticationPrompt(IRequest,          │            ║
-║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
-║ ¦                       │ Login(IRequest,IIdentity):Bool                │            ║
+║ ¦                       │   IEndpointContext,IIdentity):IResponse       │            ║
+║ ¦                       │ Login(IIdentity,IRequest):Session             │            ║
 ║ ¦                       │ Logout(IRequest)                              │            ║
-║ ¦                       │ ComputeHash(SecureString):String              │            ║
+║ ¦                       │ GetCurrentIdentity(IRequest):IIdentity        │            ║
 ║ ¦                       │ RegisterIdentityProvider(IIdentityProvider,   │            ║
 ║ ¦                       │   IApplicationContext)                        │            ║
 ║ ¦                       │ UnregisterIdentityProvider(IIdentityProvider, │            ║
@@ -3902,6 +3895,9 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦                       │ GetGroups(IApplicationContext):               │            ║
 ║ ¦                       │   IEnumerable<IIdentityGroup>                 │            ║
 ║ ¦                       │ CheckAccess(IIdentity,IEndpointContext):Bool  │            ║
+║ ¦                       │ CheckAccess(IIdentity,IIdentityPolicy):Bool   │            ║
+║ ¦                       │ CheckAccess<TPolicy,TPermission>(             │            ║
+║ ¦                       │   IApplicationContext):Bool                   │            ║
 ║ ¦                       └──────┬──────────┬───────────┬──────────┬──────┘            ║
 ║ ¦                            1 │        1 │         1 │        1 │                   ║
 ║ ¦                 ┌────────────┘          │           │          └─────┐             ║
@@ -3913,13 +3909,13 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦  ├───────────────────────────────┤   │                 │             │             ║
 ║ ¦  │ Id:Guid                       │   │                 │             │             ║
 ║ ¦  │ Name:String                   │   │                 │             │             ║
-║ ¦  │ EMail:String                  │   │                 │             │             ║
-║ ¦  │ State:IdentityState           │   │                 │             │             ║
+║ ¦  │ Email:String                  │   │                 │             │             ║
+║ ¦  │ PasswordHash:String           │   │                 │             │             ║
 ║ ¦  │ Groups:                       │   │                 │             │             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   │                 │             │             ║
 ║ ¦  ├───────────────────────────────┤   │                 │             │             ║
-║ ¦  │ Login()                       │   │                 │             │             ║
-║ ¦  │ Logout()                      │   │                 │             │             ║
+║ ¦  │                               │   │                 │             │             ║
+║ ¦  │                               │   │                 │             │             ║
 ║ ¦  └───────────────────────────────┘   │                 │             │             ║
 ║ ¦              Δ                       │                 │             │             ║
 ║ ¦              ¦                     * │                 │             │             ║
@@ -3966,13 +3962,13 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦  ├───────────────────────────────┤   ¦        └------------┐         ¦             ║
 ║ ¦  │ Id:Guid                       │   ¦                     ¦         ¦             ║
 ║ ¦  │ Name:String                   │   ¦                     ¦         ¦             ║
-║ ¦  │ EMail:String                  │   ¦                     ¦         ¦             ║
-║ ¦  │ State:IdentityState           │1  ¦                     ¦         ¦             ║
+║ ¦  │ Email:String                  │   ¦                     ¦         ¦             ║
+║ ¦  │ PasswordHash:String           │1  ¦                     ¦         ¦             ║
 ║ ¦  │ Groups:                       ├───¦─────┐               ¦         ¦             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │               ¦         ¦             ║
 ║ ¦  ├───────────────────────────────┤   ¦     │               ¦         ¦             ║
-║ ¦  │ Login()                       │   ¦     │               ¦         ¦             ║
-║ ¦  │ Logout()                      │   ¦     │               ¦         ¦             ║
+║ ¦  │                               │   ¦     │               ¦         ¦             ║
+║ ¦  │                               │   ¦     │               ¦         ¦             ║
 ║ ¦  └───────────────────────────────┘   ¦     │               ¦         ¦             ║
 ║ ¦                                      ¦     │               ¦         ¦             ║
 ║ ¦                                    * ¦   * │               ¦         ¦             ║
@@ -4011,6 +4007,8 @@ Identities and groups must be loaded from a persistent data source, which may be
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+`IIdentityPolicy` and `IIdentityPermission` are marker interfaces: the id, name, description and the policy-permission relations shown in the diagram are declared through the `[Name]`, `[Description]`, `[Permission<>]` and `[Policy<>]` attributes on the definition classes and are surfaced at runtime through `IIdentityPolicyContext` and `IIdentityPermissionContext`.
+
 **WebExpress** provides the following default groups:
 
 |Group |Description
@@ -4019,11 +4017,11 @@ Identities and groups must be loaded from a persistent data source, which may be
 
 **WebExpress** provides the following policies:
 
-|Policy              |Description
-|--------------------|----------------------
-|PublicAccess        |Grants access to public resources without authentication.
-|AuthenticatedAccess |Grants general access to authenticated users.
-|SystemAccess        |Allows system-level operations like installing, updating, and maintaining the application.
+|Policy                    |Description
+|--------------------------|----------------------
+|PublicAccessPolicy        |Grants access to public resources without authentication.
+|AuthenticatedAccessPolicy |Grants general access to authenticated users.
+|SystemAccessPolicy        |Allows system-level operations like installing, updating, and maintaining the application.
 
 In addition to the predefined standard policies, custom policies can also be created by defining them in dedicated classes. The example below demonstrates how to define a custom policy using the `IIdentityPolicy` interface and associate it with a specific permission:
 
@@ -4061,7 +4059,7 @@ To provide clarity about the metadata specified in the code above, the following
 |Description |String            |1            |Yes      |The description of the permission. This can be a key to internationalization.
 |Policy      |`IIdentityPolicy` |n            |Yes      |Inherits the characteristics of the specified policy.
 
-In the case of an authorization check (can an identity be accessed by an identity resource (e.g. page)), it must be checked whether there is at least one transition (identity -> group -> policy -> permission). This is done by the function `CheckAccess: (Identity, Permission) > Bool ` of the `IdentityManager`. A return value of `true` means that access can be made.
+In the case of an authorization check (can an endpoint (e.g. a page) be accessed by an identity), it must be checked whether there is at least one transition (identity -> group -> policy -> permission). This is done by the function `CheckAccess(IIdentity, IEndpointContext): Bool` of the `IdentityManager`. A return value of `true` means that access can be made.
 
 ```
 ╔═══════════════════════════════════════════╗
@@ -4335,7 +4333,7 @@ The properties pane is used to display metadata and properties of the displayed 
 ╚═══════════════════╝
 ```
 
-### Notfications
+### Notifications
 
 There are three ways to display notifications in web applications. The first way is to display notifications in the `Notification` section of the header. Above all, personalized notifications are displayed here (e.g. new comments on subscribed content). The second way is to display notifications in an area below the header. This is intended for application-wide notifications (e.g. scheduled maintenance windows).
 
@@ -4710,7 +4708,7 @@ The example below demonstrates how a theme can define not only color properties 
 [Description("example")]
 [Image("/assets/img/mytheme.png")]
 [ThemeMode(ThemeMode.Dark)]
-[ThemeStyle("/assets/css/mytheme.css")]]
+[ThemeStyle("/assets/css/mytheme.css")]
 public sealed class MyTheme : IThemeWebApp
 {
     public static PropertyColorBackground HeaderBackground => 
@@ -4794,9 +4792,7 @@ public sealed class ThemeApi : RestApiTheme
 // 2. wire the selector to it - the control is a standalone dropdown
 //    (derives from ControlDropdown), no surrounding form is required:
 new ControlDataSelectionTheme("themeSelector")
-{
-    RestUri = _ => sitemapManager.GetUri<ThemeApi>(applicationContext)
-};
+    .DataService<ThemeApi>();
 
 // 3. tell the visual tree which theme to use - the framework does not
 //    consult your store on its own:
@@ -4808,7 +4804,7 @@ public override void Process(IRenderContext ctx, VisualTreeWebApp visualTree)
 }
 ```
 
-The control is a thin C# wrapper around `webexpress.webapp.DropdownTheme`
+The control is a thin C# wrapper around `webexpress.webapp.DropdownThemeCtrl`
 (itself an extension of `webexpress.webui.DropdownCtrl`); see the
 JavaScript guide for the REST data contract.
 
@@ -4817,11 +4813,12 @@ JavaScript guide for the REST data contract.
 The classic 'Hello World' application serves as a fundamental starting point for understanding how the essential instructions and components come together to form a complete and functional application. The example below demonstrates the minimal setup required to implement an application using plugins, pages, and controls:
 
 ```csharp
-using WebExpress.Core.WebAttribute;
-using WebExpress.Core.WebApplication;
-using WebExpress.Core.WebPlugin;
-using WebExpress.Core.WebPage;
+using WebExpress.WebCore.WebAttribute;
+using WebExpress.WebCore.WebApplication;
+using WebExpress.WebCore.WebPlugin;
+using WebExpress.WebCore.WebPage;
 using WebExpress.WebUI.WebControl;
+using WebExpress.WebUI.WebPage;
 
 namespace Sample
 {
@@ -4836,9 +4833,9 @@ namespace Sample
         public void Run() {}
     }
 
-    public sealed class Index : IPage<VisualTree>
+    public sealed class Index : IPage<VisualTreeControl>
     {
-        public void Render(IRenderContext renderContext, VisualTree visualTree)
+        public void Process(IRenderContext renderContext, VisualTreeControl visualTree)
         {
             var control = new ControlText(){Text = _ => "Hello World!"};
 

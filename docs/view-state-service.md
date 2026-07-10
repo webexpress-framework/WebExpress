@@ -46,6 +46,36 @@ The store notifies, and the view renders again.
 
 Side effects exist only in services and in the effect part of intents, never in the view and never in a reducer.
 
+## 2.1 Scope ViewState and Central Resources
+
+The scope ViewState is the concrete, page-near realization of the loop above. Instead of every data control owning a private store and loading itself, a region of the page is wrapped in a single ViewState that owns the state, the services and the resources of that region. The page is simply the outermost scope; scopes nest, and a control resolves the nearest enclosing scope, or an explicit one by id. The motivation is direct: resources are loaded once and centrally, every control in the scope re-renders when the shared state changes, and any control can trigger a re-query without knowing how the data is fetched.
+
+The ViewState is the observable state container of WebExpress.WebApp. It is not a wrapper around a separate store; it is the store. It applies a shallow patch, batches notifications on a microtask and lets a subscriber watch a derived slice with shallow equality, and it adds the scope wiring on top: it seeds its state from the wx-state island, resolves its services from the wx-service islands and parses its resources from the wx-resource islands, all emitted by the C# `ControlViewState` host. A control therefore never owns a store of its own; it subscribes to the scope it belongs to.
+
+A resource is a named, centrally loaded query. It names the scope service that loads it, the state key its result is reduced into, and the parameters that flow between the state and the query. On mount the ViewState loads every automatic resource, and it reduces the outcome into `state[target] = { items, total, loading, error }`. A control subscribes to that slice and renders it; a stale response that a newer query supersedes arrives as an abort and is ignored. A control re-queries a resource by dispatching the scope intent `view/query`, whose reducer merges a patch (for example a new search term and a reset page) and whose effect re-queries the named resource, so one control changes the shared state and every subscribing control re-renders from the result.
+
+Parameter binding is bidirectional. Each resource parameter binds a scope state key to a query parameter. Outbound, the state value feeds the request; inbound, the value the response echoes flows back into the state, which is how a server that clamps a page index keeps the scope state authoritative. The direction is declared as `out`, `in` or `inout`, defaulting to `inout`. Combined with the two-way `data-wx-model` input bind, this closes the loop from the input to the state to the query to the response and back to the input. A response that echoes an unchanged value never loops back into a fresh query, because a patch that changes nothing notifies no one and a load runs only when a resource is loaded on mount or re-queried explicitly.
+
+Scope resolution and lifetime are deterministic. The `ControlViewState` renders a `wx-webapp-viewstate` host that carries a `data-wx-scope` id. A control resolves its scope by the resource it binds to: the registry indexes each scope by the resources it declares, so a control with a `data-wx-resource` binding finds the scope that owns that resource without the host needing to wrap it. An explicit `data-wx-scope` id and DOM ancestry remain as fallbacks. Because the controller instantiates children before their host, a control that resolves its scope before the host exists is queued and resolved when the scope registers, independent of event timing. A scope's lifetime is its host element's lifetime, which the controller already tears down on removal, so the ViewState unsubscribes its listeners, aborts its in-flight services and unregisters itself with no reference counting of its own.
+
+Authoring is type-safe. The scope is `ControlViewState<TState>`, where the state model `TState` configures the initial state through typed properties rather than string keys. A service is declared with `Service<TService>()` and a resource with `Resource<TResource>()`, both identified by their type; a control is created separately and bound to a resource with `Resource<TResource>()`. The wire names the islands carry are derived from the types, so no resource or service name is ever written as a string at the call site, and the scope holds only services, resources and state — never the controls themselves. A control's data and mutations use the service its bound resource declares (`serviceForResource`), and a control that also needs the scope's users service binds it with `UsersService<TEndpoint>()`.
+
+The asymmetry between `Resource<TResource>()` and `UsersService<TEndpoint>()` is deliberate, because a resource and a service are two different kinds of scope member. A resource is a central, reactive query that the scope loads once and reduces into a slice of the scope state; a control binds the resource it renders and re-renders when the scope re-queries it. A service is an endpoint a control calls directly, for a mutation or an on-demand lookup such as the assignee picker, and its result is not reduced into a reactive slice. The primary data service is therefore implicit, declared by the resource and reached through `serviceForResource`, while only an additional, role-specific service such as the users lookup is bound explicitly. The rule is: a control binds a resource for the shared data it renders, and a service for an endpoint it calls directly. A small, preloaded set of candidate users could be modelled as a resource instead, but an on-demand, parameterized lookup is a service.
+
+## 2.2 Live Data Updates over the Message Queue
+
+A resource that was loaded once is stale the moment another user changes the data behind it. The live update channel closes this gap: when server side data of a logical domain changes, the server pushes a small change notification over the existing message queue WebSocket, and every scope ViewState whose services serve that domain re-queries the affected resources, so all subscribing controls re-render from the fresh result. The unidirectional loop stays intact, because the notification does not carry data; it merely triggers the same central re-query that a user interaction would, so the REST endpoint remains the single source of the data, its authorization and its projection.
+
+The producing side is the domain concept the framework already carries. A domain (`IDomain` in WebCore) names a logical data area, and its wire name is the lower case full type name, derived once by `DataChangedNotifier.DomainName` and shared by the addressing, the messages and the service islands. When an index item implements `IDomain`, the CRUD REST endpoints announce every create, update and delete through `DataChangedNotifier`, which sends a `webexpress.webapp.data.changed` message carrying the domain, the operation (`created`, `updated`, `deleted`) and the item id to every session that subscribed the domain (`AddressDomain`). Application code calls the same notifier for changes that happen outside a request, for example in a background job or an import, so every change reaches the clients through one channel regardless of its origin.
+
+The declaring side is the service island. A `wx-service` island may carry a `domains` attribute with the wire names of the domains its endpoint serves. The author usually never writes them: `Endpoint<TEndpoint>()` derives the domains from the endpoint type, because the CRUD REST bases carry their item type as a generic argument, and every generic argument along the inheritance chain that implements `IDomain` names a change source of the endpoint. An endpoint whose item type cannot be derived declares its domain explicitly with `Domain<TDomain>()` on the service builder. A service without domains keeps its scope entirely detached from the message queue, so the channel is strictly opt-in by data model.
+
+The subscribing side is the scope ViewState. On mount it indexes its resources by the domains their services declare; when at least one domain exists, it registers a listener on the message queue and subscribes the domains through an inbound `webexpress.webapp.data.subscribe` message. The server merges the subscribed domains into the connection's session, so the scope is addressed like a page that declared the domain up front, and the client re-announces the subscription after every reconnect. The static page-level declaration through the `[Domain<TDomain>]` page attribute keeps working and seeds the connect url, but a scope no longer depends on it, because the scope learns its domains from its own services.
+
+The reacting side is a coalesced re-query. An incoming change message whose domain matches marks the resources of that domain and re-queries them once after a short coalescing window, so a burst of changes (for example a bulk operation by another user) triggers one re-query per resource instead of one per message. The re-query is the ordinary central load: the outbound parameters are read from the current scope state, the result is reduced into the target slice and every subscribing control re-renders. The originator of a change receives the notification too and re-queries like everyone else, which keeps its slices on the canonical server state; the coalescing window and the service's abort of superseded queries absorb the overlap with its own post-mutation reload. On teardown the scope unregisters its listener; the domain subscription stays with the connection, because an unmatched change message is simply ignored.
+
+An externally triggered refresh is made visible. Once the fresh data has been reduced, every control bound to the re-queried resource (found by its `data-wx-resource` binding) briefly plays the change flash: the engine puts the `wx-data-changed` class on the control host for the duration of its css animation, so the user sees that the content changed because of an outside action rather than an own one. A standalone data control (a list, table, tile panel, tab, kanban board, dashboard, backlog or gantt that owns its islands) reloads through its own service and flashes its host the same way, wired through the shared `DataChangeSubscription.attachReload`. The flash respects `prefers-reduced-motion`, and no control has to opt in individually, because in scope mode the binding attribute that resolves the scope is also what locates the flash targets.
+
 ## 3. New Artifacts and Responsibilities
 
 The following artifact overview enumerates every architectural artifact, on both the JavaScript side and the C# side, and assigns each a single clear responsibility. The artifacts follow the egister, get and unregister shape that the Actions and Binds registries already use, so that the surface stays uniform and open to plugins.
@@ -250,8 +280,10 @@ The introduction to this table is that it lists the island elements and the data
 
 |Surface                |Producer         |Consumer         |Purpose
 |-----------------------|-----------------|-----------------|-----------------------------------------------------------
-|wx-state element       |IDataIsland      |Data, Store      |Seeds the initial component state through typed wx-prop children.
-|wx-service element     |IDataIsland      |ServiceRegistry  |Declares a named service descriptor, with the mappings as wx-query, wx-response, wx-header and wx-error children.
+|wx-state element       |IDataIsland      |ViewState        |Seeds the initial scope state through typed wx-prop children.
+|wx-service element     |IDataIsland      |ServiceRegistry  |Declares a named service descriptor, with the mappings as wx-query, wx-response, wx-header and wx-error children and the served domains as the domains attribute.
+|wx-resource element    |IViewState       |ViewState        |Declares a named central resource, with the bidirectional parameter bindings as wx-param children (name, state, dir).
+|data-wx-scope          |ControlViewState |ViewState        |Identifies a scope host, so a control resolves its scope by id or by ancestry.
 |data-wx-template       |IDataIsland      |Templates        |References a registered or server rendered view template.
 |data-wx-model          |Control authors  |model bind       |Two way binding between an input and a store path.
 |data-wx-bind           |Control authors  |Binds            |Existing declarative bindings, now state oriented.
@@ -267,7 +299,7 @@ The introduction to this table is that every registry shares the same shape, so 
 |Binds     |bind name    |An object with a ind hook.
 |Intents   |intent name  |An object with an optional reducer and an optional effect.
 |Services  |service name |A configured service instance from a descriptor.
-|Stores    |store id     |A shared observable store with reference counting.
+|ViewState |scope id     |The observable state container of a scope, resolved by id or by ancestry.
 |Templates |template id  |A render function that returns a DOM node or a node tree.
 
 ### 16.3 Naming vocabulary
@@ -278,7 +310,16 @@ The introduction to this table is that it fixes the names used across the codeba
 |---------------|----------------------------|------------------------------
 |Control class  |name ends in Ctrl           |webexpress.webapp.ListCtrl
 |Data base      |the base class Data         |webexpress.webapp.Data
-|Store id       |derived from the control id |orders
+|Scope host     |the ViewState container     |webexpress.webapp.ViewState
+|Scope id       |the data-wx-scope id        |orders, scope
 |Service role   |a short noun                |data, form, tab
+|Resource name  |a short noun                |orders, summary
+|Resource target|the reduced state slice     |state.orders = { items, total, loading, error }
+|Param direction|the binding direction       |out, in, inout
+|Scope intent   |the central re-query        |view/query, view/reload
 |Intent name    |domain and verb             |list search, tab add
-|Data island    |wx element prefix           |wx-state, wx-service
+|Data island    |wx element prefix           |wx-state, wx-service, wx-resource
+|Domain name    |lower case full type name   |myapp.model.order
+|Change message |the outbound data change    |webexpress.webapp.data.changed
+|Subscribe message|the inbound subscription  |webexpress.webapp.data.subscribe
+|Change flash   |the wx-data-changed class   |played on re-queried controls
