@@ -3700,7 +3700,7 @@ The client displays the notification again, regardless of the fact that the prev
 
 The message queue also carries the live data update channel of the View, State and Service architecture (see `view-state-service.md`, section 2.2). When server side data of a logical domain changes — through the CRUD REST endpoints or through application code that calls `DataChangedNotifier` — the server sends a `webexpress.webapp.data.changed` message to every session that subscribed the domain. The message names the domain (the lower case full name of the changed `IDomain` type), the operation (`created`, `updated` or `deleted`) and optionally the id of the changed item; it deliberately carries no data, because the clients re-query through their declared services, which keeps the REST endpoint the single source of the data and its authorization.
 
-A session acquires its domains from two sources. The connect url carries the domains the page declared at render time through the `[Domain<TDomain>]` page attribute. In addition, a client extends its session at runtime with an inbound `webexpress.webapp.data.subscribe` message listing further domains — this is how a scope ViewState subscribes the domains its services derive from their endpoints after the page has rendered. The socket merges both sets, and the `AddressDomain` address selects the matching sessions when a change is announced. On the client, the scope ViewState re-queries the resources of the changed domain, so all subscribing controls re-render with the fresh data, including changes made by other users. The refreshed controls briefly play the `wx-data-changed` flash animation, so the user sees that the content changed because of an outside action.
+A session acquires its domains from two sources. The connect url carries the domains the page declared at render time through the `[Domain<TDomain>]` page attribute. In addition, a client extends its session at runtime with an inbound `webexpress.webapp.data.subscribe` message listing further domains — this is how a ViewState subscribes the domains its services derive from their endpoints after the page has rendered. The socket merges both sets, and the `AddressDomain` address selects the matching sessions when a change is announced. On the client, the scope ViewState re-queries the resources of the changed domain, so all subscribing controls re-render with the fresh data, including changes made by other users. The refreshed controls briefly play the `wx-data-changed` flash animation, so the user sees that the content changed because of an outside action.
 
 ## Index model
 
@@ -4844,3 +4844,7 @@ namespace Sample
     }
 }
 ```
+
+---
+
+**Last updated**: 2026-07-11
