@@ -140,7 +140,7 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 
 **Section** *(WebCore)*: A section is a named slot on a page that fragments can be placed into with `[Section<T>]`. WebUI and WebApp define the concrete slots of their own page layouts, such as the primary app navigation.
 
-**Service** *(WebApp)*: A service is the piece that talks to the network on a control's behalf. It is described declaratively (its address, its operations, how inputs and outputs map, and its retry and error handling) and set up from a `wx-service` island by the service registry. A control uses a service directly to save changes or look something up, while shared data it displays comes through a data resource instead.
+**Service** *(WebApp)*: A service is the piece that talks to the network on a control's behalf. It is described declaratively (its address, its operations, how inputs and outputs map, and its retry and error handling) and set up from a `wx-service` island by the service registry. A control uses a service directly to save changes or look something up, while shared data it displays comes through a data resource instead. When the service address is keyed by a route parameter, such as the class a table of fields belongs to, the server fills that part in from the current request before it writes the island, so the browser always receives a complete address; an author can also supply that part by hand when the request does not carry it.
 
 **Session** *(WebCore)*: A session is the per visitor memory that a connection is tied to. Session parameters and the visitor's live message subscriptions are kept here.
 
@@ -189,6 +189,8 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 **Wizard** *(WebApp)*: A wizard is the step by step variant of the form family. It keeps a model for each step, guards moving between steps, and saves progress step by step.
 
 **WQL (WebExpress Query Language)** *(WebIndex)*: WQL is the query language for searching indexed items. A parser turns a WQL text into a plan that filters, sorts and groups the results. WQL text shows up in the browser, for example in search boxes, and is understood and run on the server.
+
+**Writing surface** *(WebApp)*: A writing surface is a control that changes what a ViewState shows rather than only displaying it: a quickfilter, a search or WQL prompt, a form or a comment composer. Bound with `Resource<TResource>()` and `Model(...)`, it writes a value into the shared state and re-queries the resource, so every control that renders that resource re-renders. It is the write counterpart to a ViewState binding, and it is why the `BindSearch` and `BindFilter` control-to-control wires are needed only for a standalone surface. A writing surface keeps its own service islands, because it still loads its own data (filter definitions, suggestions) or submits through its own service.
 
 ---
 
