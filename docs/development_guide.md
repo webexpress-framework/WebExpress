@@ -292,26 +292,51 @@ The `PackageManager` is responsible for provisioning the packages. This has the 
 
 New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning service cyclically scans the directory for new packets and loads them. If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). In addition package, the directory of the deactivated package is deleted and all contents (components) are removed from the running **WebExpress**. When **WebExpress** boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and loading the package into the package directory. When a package is deleted, it is removed from the package directory and from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime via the following classes:
 
+### Packages and statically deployed plugins
+
+Not every plugin arrives as a package. A plugin that is referenced by the host project is deployed next to the host assembly and is loaded by the `PluginManager` from the application directory, without ever passing through the `PackageManager`. In a plain `dotnet build` deployment this is the normal case: every plugin is static, no `wxp` file exists, and `catalog.xml` is `<catalog />`.
+
+The catalog therefore describes installed packages only, and reading `Catalog.Packages` answers a narrower question than "which plugins does this server run". The union of both is formed by `IPackageManager.GetPackages()`, which reports the catalog entries plus one synthesized entry per registered plugin that no catalog entry accounts for. A management surface has to read that method; going to the catalog directly leaves out every statically deployed plugin.
+
+|Property             |Installed package                   |Statically deployed plugin
+|---------------------|------------------------------------|---------------------------------------
+|`BuiltIn`            |`false`                             |`true`
+|`File`               |The `wxp` file name.                |Empty - there is no package behind it.
+|`State`              |`Available`, `Active` or `Disable`. |Always `Active`.
+|`Metadata`           |Read from the `spec` file.          |Read from the `IPluginContext`.
+|Written to catalog   |Yes.                                |Never.
+|Lifecycle operations |Apply.                              |Refused with a defined failure.
+
+The synthesized entries exist in the read path only. They are never added to `PackageCatalog.Packages`, because a persisted built-in entry would be read back as an installed package on the next start, would resolve to an empty package file name, and would be dropped again by the next directory scan as "no longer present". For the same reason `ActivatePackage`, `DeactivatePackage`, `UpdatePackage` and `UninstallPackage` refuse a built-in entry up front rather than running half of their steps: an assembly sitting in the application directory, loaded into the default assembly load context, cannot be replaced or removed while the process runs. Deduplication is by id - a plugin that is present both statically and as an installed package is reported once, as the package, which is the entry the operations can act on.
+
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║         ┌───────────────────┐                                                        ║
-║         │ <<Interface>>     │                                                        ║
-║         │ IComponentManager │                                                        ║
-║         ├───────────────────┤                                                        ║
-║         └────────Δ──────────┘                                                        ║
-║                  ¦                        ┌────────────────────────────────┐         ║
-║                  ¦                        │ <<Interface>>                  │         ║
-║      ┌───────────┴────────────┐           │ IComponentHub                  │         ║
-║      │ <<Interface>>          │ 1       1 ├────────────────────────────────┤         ║
-║      │ IPackageManager        ◄───────────┤ PackageManager:IPackageManager │         ║
-║      ├────────────────────────┤           │ …                              │         ║
-║      │ AddPackage:Event       │           └────────────────────────────────┘         ║
-║      │ RemovePackage:Event    │                                                      ║
-║      ├────────────────────────┤                                                      ║
-║      │ Catalog:PackageCatalog │                                                      ║
-║      ├────────────────────────┤                                                      ║
-║      └────────────────────────┘                                                      ║
+║         ┌───────────────────┐             ┌────────────────────────────────┐         ║
+║         │ <<Interface>>     │             │ <<Interface>>                  │         ║
+║         │ IComponentManager │             │ IComponentHub                  │         ║
+║         ├───────────────────┤             ├────────────────────────────────┤         ║
+║         └────────Δ──────────┘             │ PackageManager:IPackageManager │         ║
+║                  ¦                        │ …                              │         ║
+║                  ¦                        └───────────────┬────────────────┘         ║
+║                  ¦                                      1 │                          ║
+║      ┌───────────┴────────────────────┐                   │                          ║
+║      │ <<Interface>>                  │ 1                 │                          ║
+║      │ IPackageManager                ◄───────────────────┘                          ║
+║      ├────────────────────────────────┤                                              ║
+║      │ AddPackage:Event               │                                              ║
+║      │ RemovePackage:Event            │                                              ║
+║      ├────────────────────────────────┤                                              ║
+║      │ Catalog:PackageCatalog         │── installed packages only                    ║
+║      ├────────────────────────────────┤                                              ║
+║      │ GetPackages()                  │── installed packages + built-in plugins      ║
+║      │ GetPackage(id)                 │                                              ║
+║      │ InstallPackage(…)              │                                              ║
+║      │ ActivatePackage(id)            │──┐                                           ║
+║      │ DeactivatePackage(id)          │──┤                                           ║
+║      │ UpdatePackage(id, …)           │──┼─ refuse a built-in entry                  ║
+║      │ UninstallPackage(id)           │──┘                                           ║
+║      └────────────────────────────────┘                                              ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
