@@ -363,7 +363,7 @@ To provide clarity about the metadata specified in the code above, the following
 |------------|---------------|-------------|---------|--------------
 |Name        |String         |1            |Yes      |The name of the plugin. This can be a key to internationalization.
 |Description |String         |1            |Yes      |The description of the plugin. This can be a key to internationalization.
-|Icon        |String         |1            |Yes      |The icon that represents the plugin graphically.
+|Icon        |String         |1            |Yes      |The icon that represents the plugin graphically. The path refers to an embedded asset of the plugin. Without the attribute `IPluginContext.Icon` stays `null`, which is how a caller tells a plugin without an icon from one with it.
 |Dependency  |String         |n            |Yes      |Defines a dependency on another plugin and is specified via the PluginId.
 |Application |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
 
@@ -564,7 +564,7 @@ Each plugin can provide one or more applications. To define an application, a cl
 ```csharp
 [Name("Application")]
 [Description("example")]
-[Icon("/app.svg")]
+[Icon("/assets/img/app.svg")]
 [ContextPath("/app")]
 [AssetPath("/app")]
 public sealed class MyApplication : Application
@@ -578,7 +578,7 @@ To provide clarity about the metadata specified in the code above, the following
 |------------|----------------|-------------|---------|------------
 |Name        |String          |1            |Yes      |The name of the application. This can be a key to internationalization.
 |Description |String          |1            |Yes      |The description of the application. This can be a key to internationalization.
-|Icon        |String          |1            |Yes      |The icon that represents the application graphically.
+|Icon        |String          |1            |Yes      |The icon that represents the application graphically. The path refers to an embedded asset; see the *Asset model* section on how the served route is resolved.
 |AssetPath   |String          |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
 |DataPath    |String          |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String          |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
@@ -801,7 +801,12 @@ To include additional resources such as CSS files in the project, they can be em
 </ItemGroup>
 ```
 
-Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/asset/<plugin>/x/y/z`) to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/asset/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
+Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/assets/<plugin>/x/y/z`) to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/assets/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
+
+An asset is registered once per application the plugin belongs to, so its route always begins with an application route - never with the server route alone. Two consequences are easy to overlook:
+
+* The `Icon` of a plugin, an application or a theme records the path as it was declared, prefixed by the route the declaring manager knows at registration time. That value identifies the asset, but it is not necessarily the url the asset is served under. To obtain a reachable uri, look the asset up in the `AssetManager` instead of assembling the route a second time.
+* The last part of an asset route depends on how the project embeds its resources. A `LogicalName` that keeps the directory separator yields `assets/img/logo.svg`, the default naming yields `assets/img.logo.svg`. The `EndpointId` of the asset flattens both to the same dotted form and is therefore the stable key for a lookup.
 
 The following asset types are supported by the **WebExpress** system: 
 
@@ -3279,7 +3284,9 @@ Jobs are tasks that are executed in a time-controlled and repetitive manner. Whe
 ║         │       ├────────────────────────────────────────┤                       ¦   ║
 ║         │       │ PluginContext:IPluginContext           │                       ¦   ║
 ║         │       │ ApplicationContext:IApplicationContext │                       ¦   ║
-║         │     1 │ JobId:String                           │                       ¦   ║
+║         │       │ JobId:String                           │                       ¦   ║
+║         │       │ JobName:String                         │                       ¦   ║
+║         │     1 │ Description:String                     │                       ¦   ║
 ║         │    ┌──┤ Cron:Cron                              │                       ¦   ║
 ║         │    │  └────────────────────────────────────────┘                       ¦   ║
 ║         │    │                                                                   ¦   ║
@@ -3326,6 +3333,8 @@ A job is created by a class that inherits from `Job`. The example below demonstr
 
 ```csharp
 [Job("30", "0", "1", "*", "*")] 
+[Name("myplugin:job.myjob.name")]
+[Description("myplugin:job.myjob.description")]
 public sealed class MyJob : Job
 {
     public override void Process()
@@ -3337,9 +3346,13 @@ public sealed class MyJob : Job
 
 To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining jobs:
 
-|Attribute |Type      |Multiplicity |Optional |Description
-|----------|----------|-------------|---------|------------
-|Job       |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
+|Attribute   |Type      |Multiplicity |Optional |Description
+|------------|----------|-------------|---------|------------
+|Job         |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
+|Name        |String    |1            |Yes      |The name of the job. This can be a key to internationalization.
+|Description |String    |1            |Yes      |The description of the job, stating what it does. This can be a key to internationalization.
+
+A job runs unattended, so the only trace it leaves is what it writes to the log. `Name` and `Description` are what a surface that lists the schedules can show instead of the class name; without them only `JobId` identifies the job.
 
 ## Task model
 
