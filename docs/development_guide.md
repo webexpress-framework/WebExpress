@@ -11,7 +11,6 @@ The software is freely available as open source (MIT). The software sources can 
 - https://github.com/dotnet/core (MIT)
 - https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
-- https://fontawesome.com/ (CC BY 4.0 and MIT)
 - https://popper.js.org/ (MIT)
 
 ```
@@ -583,11 +582,6 @@ To provide clarity about the metadata specified in the code above, the following
 |DataPath    |String          |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String          |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
 |Theme       |`ITheme`        |1            |Yes      |Generic attribute `[Theme<TTheme>]` declaring the application's default theme. Surfaced through `IApplicationContext.DefaultTheme` (resolved lazily via the active `ThemeManager`). The visual tree picks this theme first, falls back to the first registered theme when no `[Theme<>]` is declared, and can be overridden per request via `VisualTreeControl.UseTheme<TTheme>()`.
-
-> **Note**: the icon theme is no longer set on the application. Apply
-> `[IconTheme(...)]` to the **theme** class instead - see the *Theme model*
-> section below. The active theme's icon theme propagates to the visual tree
-> and is emitted on `<html data-icon-theme="...">` automatically.
 
 ```csharp
 [Name("MyApplication")]
@@ -2629,28 +2623,84 @@ To provide clarity about the metadata specified in the code above, the following
 
 ## Web icons
 
-Unlike components, web icons are not managed through a centralized manager like the `AssetManager`. Instead, each web icon is derived from the `IIcon` interface and used directly within the application. This approach provides a lightweight and flexible system for incorporating icons into the user interface without the need for additional management layers. To define a specific web icon, a class is created that inherits from a base Icon class or implements the `IIcon` interface. Below is an example of a class representing an information circle icon:
+The framework ships its own icon set. Every icon is a stroke drawing on a 21×21 grid, stored as an individual SVG file and applied to an `<i>` element as a CSS mask, so it takes the surrounding text colour through `currentColor` and scales with the font size. No third-party icon font is involved.
+
+There is deliberately no `IconManager` component. An icon is not a registered resource that has to be looked up at runtime — it is a name, and the mapping from that name to a drawing is expressed in three places that have to agree:
+
+|Part           |Location                                |Example
+|---------------|----------------------------------------|-------------------------------------------------------
+|The drawing    |`Assets/icons/<name>.svg`               |`Assets/icons/anchor.svg`
+|The mask rule  |`Assets/css/webexpress.webui.icon.css`  |`.wx-icon-light-anchor { mask-image: url("../icons/anchor.svg") }`
+|The C# class   |`WebIcon/Icon<Name>.cs`                 |`public class IconAnchor : Icon { public override string Symbol => "anchor"; }`
+
+That shared name is the **symbolic name**: the file name of the drawing without its extension, lowercase and hyphen-separated (`anchor`, `calendar-day`, `user-pen`).
+
+### The icon class
+
+An icon class contributes nothing but its symbolic name. The base class turns that into the class pair the browser needs, so no icon carries a hard-coded CSS class of its own:
 
 ```csharp
-public class IconInfoCircle : IIcon
+public class IconAnchor : Icon
 {
-    public IHtmlNode Render(IRenderContext renderContext, 
-        IVisualTree visualTree, 
-        string id = null, 
-        string description = null, 
-        string css = null, 
-        string style = null, 
-        string role = null)
-    {
-        return new HtmlElementTextSemanticsSpan()
-        {
-            Class = "fas fa-info-circle"
-        };
-    }
+    public override string Symbol => "anchor";
+}
+
+// new IconAnchor().Class  ->  "wx-icon-light wx-icon-light-anchor"
+```
+
+The first class carries the mask geometry and the sizing, the second selects the drawing. Keeping the class name out of the icon is what allows a drawing to be replaced, or the whole set to be swapped, without touching any caller.
+
+`ImageIcon` covers the other case: an icon that is a picture rather than a drawn glyph. It implements the same `IIcon` interface, returns no symbol and renders an `<img>`, so an image can stand in for a drawn icon anywhere an `IIcon` is accepted.
+
+### Using an icon
+
+Controls take a `Func<IRenderControlContext, IIcon>`:
+
+```csharp
+new ControlButton() { Icon = _ => new IconFloppyDisk(), Text = _ => "Save" };
+```
+
+Pages, setting categories and fragments declare theirs through an attribute:
+
+```csharp
+[WebIcon<IconGear>]
+public sealed class SettingsPage : IPage { }
+```
+
+On the client, controls resolve through the inherited helper rather than writing class names, and anything that builds a whole element goes through the factory:
+
+```javascript
+icon.className = this._iconClass("anchor");          // -> "wx-icon-light wx-icon-light-anchor"
+webexpress.webui.Icon.create("anchor");              // -> <i class="wx-icon-light …">
+webexpress.webui.Icon.create("/assets/img/a.png");   // -> <img class="wx-icon-img" …>
+```
+
+Assigning a bare name (`element.className = "anchor"`) is the failure mode to watch for: it yields an element no rule matches, so it renders as empty space rather than as an error.
+
+### Adding an icon
+
+1. Draw it against the contract in `Assets/icons/README.md`: a 21×21 canvas, `viewBox="0 0 21 21"`, strokes only, no fills, rounded caps and joins, no metadata or editor attributes.
+2. Name it after the subject rather than its use — `floppy-disk`, not `save` — and drop it into `Assets/icons/`.
+3. Add the mask rule to `Assets/css/webexpress.webui.icon.css`.
+4. Add the class under `WebIcon/`.
+
+Steps 3 and 4 are what make the drawing reachable. A file without a rule renders nothing at all, and a drawing without a class cannot be used from C#.
+
+### Reskinning through a theme
+
+Because an icon is selected by class and drawn by a mask, a **theme can repoint that class at a different drawing**. Every control that already asks for the class follows, without knowing the theme exists:
+
+```css
+.wx-icon-light-home {
+    -webkit-mask-image: url("../icons/monkeyisland/home.svg");
+    mask-image: url("../icons/monkeyisland/home.svg");
 }
 ```
 
-This implementation showcases the core functionality of the `IconInfoCircle` class. The render method generates an HTML span element (`HtmlElementTextSemanticsSpan`) with a CSS class (`fas fa-info-circle`) that defines the icon's appearance. In contrast to standard icons, which typically reference a file path to an external asset, web icons directly produce HTML code that can be embedded into the HTML document. Additional optional parameters, such as id, description, and css, provide flexibility in customizing the icon's rendering for various use cases.
+```csharp
+[ThemeStyle("assets/css/monkeyisland.icon.css")]
+public sealed class MonkeyIslandTheme : IThemeWebApp { }
+```
 
 ## Controls
 
@@ -4768,7 +4818,6 @@ To provide clarity about the metadata specified in the code above, the following
 |Image       |String          |1            |Yes      |Link to an image that visually represents the topic.
 |ThemeMode   |ThemeMode       |1            |Yes      |Indicates the theme mode (e.g., Light or Dark).
 |ThemeStyle  |String          |1            |Yes      |Link to an theme css style (e.g., material, flat, or skeuomorphic).
-|IconTheme   |`TypeIconTheme` |1            |Yes      |The icon theme to apply when this theme is active. `Default` (FontAwesome glyphs) or `Light` (lightweight SVG variants).
 
 ### Picking a default per application and overriding it
 
@@ -4804,7 +4853,7 @@ The visual tree's theme-selection priority is:
    page's `Process` override based on whatever the application stored).
 2. The application's declared default (`[Theme<TTheme>]`).
 3. The first theme registered for the application (legacy fallback).
-4. `null` (no active theme; `IconTheme` falls back to `TypeIconTheme.Default`).
+4. `null` (no active theme).
 
 The framework does NOT consult cookies, sessions, or identities - persistence
 is owned by the application.
@@ -4836,8 +4885,8 @@ new ControlDataSelectionTheme("themeSelector")
 //    consult your store on its own:
 public override void Process(IRenderContext ctx, VisualTreeWebApp visualTree)
 {
-    if (MyStore.Get(ctx.Request) == typeof(LightIconTheme).FullName?.ToLower())
-        visualTree.UseTheme<LightIconTheme>();
+    if (MyStore.Get(ctx.Request) == typeof(LightModeTheme).FullName?.ToLower())
+        visualTree.UseTheme<LightModeTheme>();
     base.Process(ctx, visualTree);
 }
 ```

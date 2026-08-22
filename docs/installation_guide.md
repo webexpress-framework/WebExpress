@@ -18,7 +18,6 @@ available as open source:
 - https://github.com/dotnet/core (MIT)
 - https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
-- https://fontawesome.com/ (CC BY 4.0 and MIT)
 - https://popper.js.org/ (MIT)
 
 ```
