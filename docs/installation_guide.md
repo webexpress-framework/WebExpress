@@ -16,9 +16,7 @@ from https://github.com/webexpress-framework/WebExpress. WebExpress is based on 
 available as open source:
 
 - https://github.com/dotnet/core (MIT)
-- https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
-- https://popper.js.org/ (MIT)
 
 ```
 The MIT License (MIT)
