@@ -74,21 +74,43 @@ an optional port. Add one entry for every address you want to serve. Using `*` a
 WebExpress listen on every network address of the machine, which is handy when other computers
 should be able to reach it.
 
-To serve over **HTTPS** (an encrypted, padlock-in-the-browser connection) you also need a certificate.
-WebExpress reads it from a `.pfx` file together with its password.
+For development, keep the endpoint on **HTTP**. The shipped configuration does not require certificates. Configure **HTTPS only for production**, where the central `CertificateManager` supplies each listener with its validated certificate and issuer chain.
 
-|Name       |Required  |What it means
-|-----------|----------|----------------------------------------------------------
-|`Uri`      |yes       |The address to listen on, e.g. `http://localhost/`, `http://*:8080/` or `https://localhost:443/`.
-|`PfxFile`  |for HTTPS |Path to your certificate file (a `.pfx` file).
-|`Password` |for HTTPS |The password that unlocks the certificate file.
+|Name               |Purpose
+|-------------------|-----------------------------------------
+|`Uri`              |The listening address, such as `http://localhost:8080/` for development or `https://*:443/` for production.
+|`PfxFile`          |An optional inline PFX path, absolute or relative to `Certificates.Directory`.
+|`Password`         |The password for an inline PFX file.
+|`CertificateAlias` |An optional stable name for the inline certificate, or a reference to a shared inventory entry.
+
+For certificate selection, the alias takes precedence. Without an alias, an inline PFX is identified by its endpoint URI; otherwise the endpoint's concrete hostname must resolve a configured inventory entry. A wildcard listener needs an alias or inline PFX.
+
+### Production certificate inventory
+
+For shared certificate configuration, add `Certificates` under `WebExpress`. The file store imports only configured PFX references. `Directory` defaults to the working directory. `WarningThresholdDays` defaults to `[30, 14, 7]`, accepts nonnegative day values and can be an empty array to disable expiry warnings.
 
 ```json
+"Certificates": {
+  "Directory": "./ssl",
+  "WarningThresholdDays": [30, 14, 7],
+  "Items": [
+    {
+      "Alias": "public-site",
+      "Store": "file",
+      "Reference": "site.pfx",
+      "Password": "",
+      "HostNames": ["site.example.com"]
+    }
+  ]
+},
 "Endpoints": [
-  { "Uri": "http://localhost/" },
-  { "Uri": "https://localhost:443/", "PfxFile": "./cert/server.pfx", "Password": "secret" }
+  { "Uri": "https://*:443/", "CertificateAlias": "public-site" }
 ]
 ```
+
+For secrets, supply the actual password through `WEBEXPRESS_WebExpress__Certificates__Items__0__Password`, or place it in protected deployment settings. `Store` defaults to `file`; modules may register additional stores through the manager. Alias and hostname keys must be unique across the inventory, ignoring case. Configured hostnames must be covered by certificate subject alternative names.
+
+For startup behavior, an unusable certificate referenced by an HTTPS endpoint stops startup before listeners open. The manager exposes issuer, validity dates, thumbprint and suitability status, and logs startup expiry warnings. This release has fixed certificates per listener, so separate certificates require separate ports or IP addresses. SNI selection, automatic renewal, file watching and periodic warning checks are future extensions. See the [production HTTPS installation instructions](installation_guide.md#https-for-production) for validation scope and complete deployment examples.
 
 ### Language and regional formatting – `Culture`
 

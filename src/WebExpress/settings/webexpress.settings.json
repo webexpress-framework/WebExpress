@@ -13,7 +13,8 @@
       "TimePattern": "dd.MM.yyyy HH:mm:ss"
     },
 
-    // The addresses the server listens on. An https endpoint also needs "PfxFile" and "Password".
+    // Development environments use HTTP without TLS certificates.
+    // Configure HTTPS and provide the appropriate certificate references for production.
     "Endpoints": [
       { "Uri": "http://localhost/" }
     ],

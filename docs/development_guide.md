@@ -131,6 +131,7 @@ The components of **WebExpress** and its applications are centrally managed in t
 |----------------------------|---------------------
 |ApplicationManager          |An application is the logical combination of functionalities into an application system. 
 |AssetManager                |Assets like static JavaScript files are delivered by **WebExpress**.
+|CertificateManager          |Loads and validates the shared X.509 certificate inventory, resolves production HTTPS certificates and provides status metadata through a replaceable store abstraction.
 |EndpointManager             |Manages all endpoints (pages, resources, REST APIs, assets) that can be addressed with a URI.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
@@ -168,6 +169,7 @@ In addition, you can create your own components and register them in the `Compon
 ║     │ RemoveManager:Event                                        │                   ║
 ║     ├────────────────────────────────────────────────────────────┤                   ║
 ║     │ HttpServerContext:IHttpServerContext                       │ 1                 ║
+║     │ CertificateManager:ICertificateManager                     │                   ║
 ║     │ Managers:IEnumerable<IComponentManager>                    ├─────┐             ║
 ║     │ LogManager:ILogManager                                     │     │             ║
 ║     │ PackageManager:IPackageManager                             │     │             ║
@@ -3969,6 +3971,161 @@ Entity           1 │
              └────────────┘
 ```
 
+Identities and groups must be loaded from a persistent data source, which may be provided by the application itself or retrieved from an external identity management system (e.g., LDAP). Policies and identity-related resources are defined and enforced by the application, typically through static configuration or hardcoded logic. The UML diagram below highlights the key relationships and structural elements:
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                                                    ┌───────────────────────────────┐ ║
+║                                                    │ <<Interface>>                 │ ║
+║         ┌──────────────────────────────────┐       │ IIdentityProvider             │ ║
+║         │ <<Interface>>                    │       ├───────────────────────────────┤ ║
+║         │ IComponentHub                    │       ├───────────────────────────────┤ ║
+║         ├──────────────────────────────────┤ 1     │ GetIdentities:                │ ║
+║         │ IdentityManager:IIdentityManager ├────┐  │   IEnumerable<IIdentity>      │ ║
+║         │ …                                │    │  │ GetGroups:                    │ ║
+║         └──────────────────────────────────┘    │  │   IEnumerable<IIdentityGroup> │ ║
+║                                                 │  │ CreateForbiddenResponse(      │ ║
+║                                                 │  │   IRequest,IPageContext,      │ ║
+║                         ┌───────────────────┐   │  │   IIdentity):IResponse        │ ║
+║                         │ <<Interface>>     │   │  │ CreateAuthenticationPrompt(   │ ║
+║                         │ IComponentManager │   │  │   IRequest,IPageContext,      │ ║
+║                         ├───────────────────┤   │  │   IIdentity):IResponse        │ ║
+║                         └────────Δ──────────┘   │  └─────────────────────────▲─────┘ ║
+║                                  ¦              │                          * │       ║
+║                                  ¦            1 │                            │       ║
+║          ┌───────────────────────┴──────────────▼───────────────────────┐ 1  │       ║
+║          │ <<Interface>>                                                ├────┘       ║
+║ ┌--------┤ IIdentityManager                                             │            ║
+║ ¦        ├──────────────────────────────────────────────────────────────┤            ║
+║ ¦        │ Policies:IEnumerable<IIdentityPolicyContext>                 │            ║
+║ ¦        │ Permissions:IEnumerable<IIdentityPermissionContext>          │            ║
+║ ¦        ├──────────────────────────────────────────────────────────────┤            ║
+║ ¦        │ CreateAuthenticationPrompt(IRequest,IPageContext,IIdentity): │            ║
+║ ¦        │   IdentityTokenPair                                          │            ║
+║ ¦        │ CreateForbiddenResponse(IRequest,IPageContext,IIdentity):    │            ║
+║ ¦        │ Login(IIdentity,IRequest):IdentityTokenPair                  │            ║
+║ ¦        │ Logout(IRequest)                                             │            ║
+║ ¦        │ Refresh(IRequest):IdentityTokenPair                          │            ║
+║ ¦        │ CreatePersonalAccessToken(IIdentity,IApplicationContext,     │            ║
+║ ¦        │   TimeSpan,IEnumerable<String>):IdentityTokenPair            │            ║
+║ ¦        │ RevokePersonalAccessToken(String,IApplicationContext):Bool   │            ║
+║ ¦        │ ApplyAuthenticationCookies(IRequest,IResponse)               │            ║
+║ ¦        │ GetCurrentIdentity(IRequest):IIdentity                       │            ║
+║ ¦        │ CheckAccess(IIdentity,IEndpointContext):Bool                 │            ║
+║ ¦        │ CheckAccess(IIdentity,IIdentityPolicy):Bool                  │            ║
+║ ¦        │ CheckAccess<TPermission>(IApplicationContext):Bool           │            ║
+║ ¦        └────────┬────────────────────┬───────────┬─────────────┬──────┘            ║
+║ ¦               1 │                  1 │         1 │           1 │                   ║
+║ ¦                 │                    │           │             └─────┐             ║
+║ ¦                 │                    │           │                   │             ║
+║ ¦               * │                    │           └─────┐             │             ║
+║ ¦  ┌──────────────▼────────────────┐   │                 │             │             ║
+║ ¦  │ <<Interface>>                 │   │                 │             │             ║
+║ ¦  │ IIdentity                     │   │                 │             │             ║
+║ ¦  ├───────────────────────────────┤   │                 │             │             ║
+║ ¦  │ Id:Guid                       │   │                 │             │             ║
+║ ¦  │ Name:String                   │   │                 │             │             ║
+║ ¦  │ Email:String                  │   │                 │             │             ║
+║ ¦  │ PasswordHash:String           │   │                 │             │             ║
+║ ¦  │ Groups:                       │   │                 │             │             ║
+║ ¦  │   IEnumerable<IIdentityGroup> │   │                 │             │             ║
+║ ¦  ├───────────────────────────────┤   │                 │             │             ║
+║ ¦  │                               │   │                 │             │             ║
+║ ¦  │                               │   │                 │             │             ║
+║ ¦  └───────────────────────────────┘   │                 │             │             ║
+║ ¦              Δ                       │                 │             │             ║
+║ ¦              ¦                     * │                 │             │             ║
+║ ¦              ¦    ┌──────────────────▼─────────────┐   │             │             ║
+║ ¦              ¦    │ <<Interface>>                  │   │             │             ║
+║ ¦              ¦    │ IIdentityGroup                 │   │             │             ║
+║ ¦              ¦    ├────────────────────────────────┤   │             │             ║
+║ ¦              ¦    │ Id:Guid                        │   │             │             ║
+║ ¦              ¦    │ Name:String                    │   │             │             ║
+║ ¦              ¦    │ Policies:                      │   │             │             ║
+║ ¦              ¦    │   IEnumerable<IIdentityPolicy> │   │             │             ║
+║ ¦              ¦    ├────────────────────────────────┤   │             │             ║
+║ ¦              ¦    └────Δ───────────────────────────┘   │             │             ║
+║ ¦              ¦         ¦                               │             │             ║
+║ ¦              ¦         ¦                             * │             │             ║
+║ ¦              ¦         ¦    ┌──────────────────────────▼─────────┐   │             ║
+║ ¦              ¦         ¦    │ <<Interface>>                      │   │             ║
+║ ¦              ¦         ¦    │ IIdentityPolicy                    │   │             ║
+║ ¦              ¦         ¦    ├────────────────────────────────────┤   │             ║
+║ ¦              ¦         ¦    │ Id:String                          │   │             ║
+║ ¦              ¦         ¦    │ Name:String                        │   │             ║
+║ ¦              ¦         ¦    │ Description:String                 │   │             ║
+║ ¦              ¦         ¦    │ Permissions:                       │   │             ║
+║ ¦              ¦         ¦    │   IEnumerable<IIdentityPermission> │   │             ║
+║ ¦              ¦         ¦    ├────────────────────────────────────┤   │             ║
+║ ¦              ¦         ¦    └─────────────────Δ──────────────────┘   │             ║
+║ ¦              ¦         ¦                      ¦                    * │             ║
+║ ¦              ¦         ¦                      ¦          ┌───────────▼─────────┐   ║
+║ ¦              ¦         ¦                      ¦          │ <<Interface>>       │   ║
+║ ¦              ¦         ¦                      ¦          │ IIdentityPermission │   ║
+║ ¦              ¦         ¦                      ¦          ├─────────────────────┤   ║
+║ ¦              ¦         ¦                      ¦          │ Id:String           │   ║
+║ ¦              ¦         ¦                      ¦          │ Name:String         │   ║
+║ ¦              ¦         ¦                      ¦          │ Description:String  │   ║
+║ ¦              ¦         ¦                      ¦          ├─────────────────────┤   ║
+║ ¦              ¦         └-------------┐        ¦          └─────────Δ───────────┘   ║
+║ ¦              ¦                       ¦        ¦                    ¦               ║
+╚═¦══════════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╝
+  ¦              ¦                       ¦        ¦                    ¦
+╔MyPlugin════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╗
+║ ¦              ¦                       ¦        ¦                    ¦               ║
+║ ¦  ┌───────────┴───────────────────┐   ¦        ¦                    └-┐             ║
+║ ¦  │ MyIdentity                    │   ¦        ¦                      ¦             ║
+║ ¦  ├───────────────────────────────┤   ¦        └------------┐         ¦             ║
+║ ¦  │ Id:Guid                       │   ¦                     ¦         ¦             ║
+║ ¦  │ Name:String                   │   ¦                     ¦         ¦             ║
+║ ¦  │ Email:String                  │   ¦                     ¦         ¦             ║
+║ ¦  │ PasswordHash:String           │1  ¦                     ¦         ¦             ║
+║ ¦  │ Groups:                       ├───¦─────┐               ¦         ¦             ║
+║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │               ¦         ¦             ║
+║ ¦  ├───────────────────────────────┤   ¦     │               ¦         ¦             ║
+║ ¦  │                               │   ¦     │               ¦         ¦             ║
+║ ¦  │                               │   ¦     │               ¦         ¦             ║
+║ ¦  └───────────────────────────────┘   ¦     │               ¦         ¦             ║
+║ ¦                                      ¦     │               ¦         ¦             ║
+║ ¦                                    * ¦   * │               ¦         ¦             ║
+║ ¦                   ┌──────────────────┴─────▼───────┐       ¦         ¦             ║
+║ ¦                   │ MyIdentityGroup                │       ¦         ¦             ║
+║ ¦                   ├────────────────────────────────┤       ¦         ¦             ║
+║ ¦                   │ Id:Guid                        │       ¦         ¦             ║
+║ ¦                   │ Name:String                    │1      ¦         ¦             ║
+║ ¦                   │ Policies:                      ├──┐    ¦         ¦             ║
+║ ¦                   │   IEnumerable<IIdentityPolicy> │  │    ¦         ¦             ║
+║ ¦                   ├────────────────────────────────┤  │    ¦         ¦             ║
+║ ¦                   └────────────────────────────────┘  │    ¦         ¦             ║
+║ ¦                                                       │    ¦         ¦             ║
+║ ¦                                                     * │    ¦         ¦             ║
+║ ¦                 create  ┌─────────────────────────────▼────┴─┐       ¦             ║
+║ ├------------------------►│ MyIdentityPolicy                   │       ¦             ║
+║ ¦                         ├────────────────────────────────────┤       ¦             ║
+║ ¦                         │ Id:String                          │       ¦             ║
+║ ¦                         │ Name:String                        │       ¦             ║
+║ ¦                         │ Description:String                 │1      ¦             ║
+║ ¦                         │ Permissions:                       ├──┐    ¦             ║
+║ ¦                         │   IEnumerable<IIdentityPermission> │  │    ¦             ║
+║ ¦                         ├────────────────────────────────────┤  │    ¦             ║
+║ ¦                         └────────────────────────────────────┘  │    ¦             ║
+║ ¦                                                                 │    ¦             ║
+║ ¦                                                               * │    ¦             ║
+║ ¦                                             create       ┌──────▼────┴──────────┐  ║
+║ └----------------------------------------------------------► MyIdentityPermission │  ║
+║                                                            ├──────────────────────┤  ║
+║                                                            │ Id:String            │  ║
+║                                                            │ Name:String          │  ║
+║                                                            │ Description:String   │  ║
+║                                                            ├──────────────────────┤  ║
+║                                                            └──────────────────────┘  ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+`IIdentityPolicy` and `IIdentityPermission` are marker interfaces: the id, name, description and the policy-permission relations shown in the diagram are declared through the `[Name]`, `[Description]`, `[Permission<>]` and `[Policy<>]` attributes on the definition classes and are surfaced at runtime through `IIdentityPolicyContext` and `IIdentityPermissionContext`.
+
 **WebExpress** provides the following default groups:
 
 |Group |Description
@@ -4019,7 +4176,7 @@ To provide clarity about the metadata specified in the code above, the following
 |Description |String            |1            |Yes      |The description of the permission. This can be a key to internationalization.
 |Policy      |`IIdentityPolicy` |n            |Yes      |Inherits the characteristics of the specified policy.
 
-The authorization boundary evaluates the policies required by an endpoint through `IdentityManager.CheckAccess(IIdentity, IEndpointContext)`. Every required policy must be satisfied by the validated identity. Permission-specific operations use `CheckAccess(applicationContext, identity, permissionType)` against the effective permission claims captured at login. Local groups and explicitly mapped external policies contribute to this snapshot before tokens are issued.
+In the case of an authorization check (can an endpoint (e.g. a page) be accessed by an identity), it must be checked whether there is at least one transition (identity -> group -> policy -> permission). This is done by the function `CheckAccess(IIdentity, IEndpointContext): Bool` of the `IdentityManager`. A return value of `true` means that access can be made.
 
 ```
 ╔═══════════════════════════════════════════╗
@@ -4058,13 +4215,103 @@ The authorization boundary evaluates the policies required by an endpoint throug
          ╚══════════════╝           ╚══════════════════╝           ╚════════════════╝
 ```
 
-# Authentication
+## Authentication
 
 WebCore authenticates requests using signed tokens rather than a user object in an in-memory session. Every source supplies `IIdentity`; `IdentityManager.Login` captures its subject, name, email, roles, policies, and effective permissions and issues the same `IdentityTokenPair`. Password hashes are never serialized. Application sessions remain available for optional application state and are created only when needed.
 
-## Deployment configuration
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                            ┌──────────────────────────────┐                          ║
+║                            │ <<Interface>>                │                          ║
+║                            │ IComponentHub                │                          ║
+║                            ├──────────────────────────────┤   ┌───────────────────┐  ║
+║                            │ IdentityProviderManager:     │   │ <<Interface>>     │  ║
+║                            │   IIdentityProviderManager   │   │ IComponentManager │  ║
+║                            │ IdentityTokenStoreManager:   │   ├───────────────────┤  ║
+║                            │   IIdentityTokenStoreManager │   └────────Δ───────Δ──┘  ║
+║                            │ …                            │            ¦       ¦     ║
+║                            └───────────────┬──────────────┘            ¦       ¦     ║
+║                                            │ 1                         ¦       └---┐ ║
+║                                            │                           ¦           ¦ ║
+║  ┌──────────────────────────┐      ┌───────▼───────────────────────────┴─────┐     ¦ ║
+║  │ IdentityManager          │      │ <<Interface>>                           │     ¦ ║
+║  ├──────────────────────────┤      │ IIdentityProvider                       │     ¦ ║
+║  │ Issue(IIdentity,String): │      ├─────────────────────────────────────────┤     ¦ ║
+║  │  IdentityTokenPair       │      │ GetIdentities():IEnumerable<IIdentity>  │     ¦ ║
+║  │ ValidateAccessToken(...) │      │ GetGroups():IEnumerable<IIdentityGroup> │     ¦ ║
+║  │ ValidatePersonalAccess   │      │ CreateAuthenticationPrompt(IRequest,    │     ¦ ║
+║  │  Token(...)              │      │  IPageContext,IIdentity):IResponse      │     ¦ ║
+║  │ Refresh(...)             │      │ CreateForbiddenResponse(IRequest,       │     ¦ ║
+║  │ CreatePersonalAccess     │      │  IPageContext,IIdentity):IResponse      │     ¦ ║
+║  │  Token(...):String       │      └────────────────△────────────────────────┘     ¦ ║
+║  │ RevokePersonalAccess     │          ┌------------┴-----------┐                  ¦ ║
+║  │  Token(...):Bool         │          ¦                        ¦                  ¦ ║
+║  │ RevokeGrant(...)         │  ┌───────┴───────────┐ ┌──────────┴────────────────┐ ¦ ║
+║  │ ProtectChallenge(...)    │  │ LocalIdentity     │ │ OpenIdConnectIdentity     │ ¦ ║
+║  │ ValidateChallenge(...)   │  │  Provider         │ │  Provider                 │ ¦ ║
+║  │ ConsumeChallenge(...)    │  ├───────────────────┤ ├───────────────────────────┤ ¦ ║
+║  │ RevokeRefreshGrant(...)  │  ├───────────────────┤ │ ProviderId:String         │ ¦ ║
+║  └──────────┬───────────────┘  │ Authenticate(...) │ ├───────────────────────────┤ ¦ ║
+║             │1                 │  :IIdentity       │ │ CreateChallengeAsync(...) │ ¦ ║
+║             │                  │ GetIdentities()   │ │ AuthenticateCallbackAsync │ ¦ ║
+║  ┌──────────▼───────────────┐  │  (abstract)       │ │  (...):Task<IIdentity>    │ ¦ ║
+║  │ <<Interface>>            │  │ GetGroups()       │ │ MapIdentity(JsonWebToken) │ ¦ ║
+║  │ IIdentityTokenStore      │  └───────────────────┘ │  :IIdentity (virtual)     │ ¦ ║
+║  ├──────────────────────────┤                        │ ReadRoles(JsonWebToken)   │ ¦ ║
+║  │ TryConsume(...):Bool     │                        │  :IEnumerable<String>     │ ¦ ║
+║  │ Revoke(...)              │                        │  (virtual)                │ ¦ ║
+║  │ IsRevoked(...):Bool      │                        └────────────▲──────────────┘ ¦ ║
+║  └─▲──────────△─────────────┘                                     ¦                ¦ ║
+║  * │          ¦                                                   ¦                ¦ ║
+║    │   ┌------┴-----------┐                                       ¦                ¦ ║
+║    │   ¦                  ¦                                       ¦                ¦ ║
+║    │   ¦     ┌────────────┴───────────┐         ┌----------------------------------┘ ║
+║    │   ¦     │ FileIdentityTokenStore │         ¦                 ¦                  ║
+║    │   ¦     ├────────────────────────┤         ¦                 └--------------┐   ║
+║    │   ¦     └────────────────────────┘         ¦                                ¦   ║
+║    │   ¦                                        ¦                                ¦   ║
+║    │   ¦               ┌────────────────────────┴─────────────────────────────┐  ¦   ║
+║    │   ¦               │ <<Interface>>                                        │  ¦   ║
+║    │   ¦               │ IIdentityTokenStoreManager : IComponentManager       │  ¦   ║
+║    │   ¦               ├──────────────────────────────────────────────────────┤  ¦   ║
+║    └───────────────────┤ Stores:IEnumerable<IIdentityTokenStore>              │  ¦   ║
+║        ¦               ├──────────────────────────────────────────────────────┤  ¦   ║
+║        ¦               │ GetStore(IApplicationContext):IIdentityTokenStore    │  ¦   ║
+║        ¦               │ Register(IIdentityTokenStore,IApplicationContext)    │  ¦   ║
+║        ¦               │ Unregister(IIdentityTokenStore,IApplicationContext): │  ¦   ║
+║        ¦               │   Bool                                               │  ¦   ║
+║        ¦               └──────────────────────────────────────────────────────┘  ¦   ║
+║        ¦                                                                         ¦   ║
+║        ¦     ┌───────────────────────────────┐                                   ¦   ║
+║        ¦     │ IdentityTokenPair             │                                   ¦   ║
+║        ¦     ├───────────────────────────────┤                                   ¦   ║
+║        ¦     │ AccessToken:String            │                                   ¦   ║
+║        ¦     │ RefreshToken:String           │                                   ¦   ║
+║        ¦     │ AccessTokenExpiresAt:         │              ┌--------------------┘   ║
+║        ¦     │  DateTimeOffset               │              ¦                        ║
+║        ¦     │ RefreshTokenExpiresAt:        │              ¦                        ║
+║        ¦     │  DateTimeOffset               │              ¦                        ║
+║        ¦     └───────────────────────────────┘              ¦                        ║
+║        ¦                                                    ¦                        ║
+╚════════¦════════════════════════════════════════════════════¦════════════════════════╝
+         ¦                                                    ¦
+╔MyPlugin¦════════════════════════════════════════════════════¦════════════════════════╗
+║        ¦                                                    ¦                        ║
+║        └-------┐                           ┌────────────────┴────────────────┐       ║
+║                ¦                           │ MyOpenIdConnectIdentityProvider │       ║
+║     ┌──────────┴───────────┐               ├─────────────────────────────────┤       ║
+║     │ MyIdentityTokenStore │               ├─────────────────────────────────┤       ║
+║     ├──────────────────────┤               │ MapIdentity(...)                │       ║
+║     └──────────────────────┘               │ ReadRoles(...)                  │       ║
+║                                            └─────────────────────────────────┘       ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
 
-Configure `WebExpress:Authentication` through the existing configuration system:
+### Deployment configuration
+
+The Authentication defines the deployment's trust boundary. The token issuer and audience, the shared signing key, transport requirements, the durable token-store location, and the credential lifetimes enforced for every application on this host. Configure this section through the existing configuration system:
 
 ```json
 {
@@ -4090,9 +4337,9 @@ The configuration must be available to the executable host, including when login
 
 The development host ships an `Authentication` section in `WebExpress.Develop/src/WebExpress.Develop.App/settings/webexpress.settings.json` with a public development signing key and `RequireHttps: false`. These initial values can be shared through Git and allow the hosted WebUI tutorial to log in at `http://localhost/webui` without a certificate. Rebuild and restart `WebExpress.Develop.App` after changing its settings. Before production use, replace the public key with a private random key, set `RequireHttps: true`, and configure valid HTTPS, deployment-specific issuer and audience values, and durable shared token storage. This host runs multiple applications, so root authentication endpoints require an explicit application selector unless a default `ApplicationId` is configured.
 
-Access-token validation is stateless. Refresh replay protection, OIDC challenge consumption, and PAT revocation use `IIdentityTokenStore`. The provided `FileIdentityTokenStore` stores hashed token identifiers and their expiration times, without passwords, raw tokens, or identity records. Its shared filesystem must support atomic exclusive file creation across nodes. Preserve it across restarts; restrict write access to the server. Markers may be removed after their recorded Unix expiration plus the deployment's maximum clock drift. Keep server clocks synchronized. An unavailable store must fail the affected operation.
+Access-token validation is stateless. Refresh replay protection, OIDC challenge consumption, and PAT revocation use `IIdentityTokenStore`, resolved per application through `IIdentityTokenStoreManager`. `IdentityManager` holds no store instance of its own; each store lookup passes through `IComponentHub.IdentityTokenStoreManager.GetStore(applicationContext)`, which returns exactly one store for the given application. Applications requiring a store other than the default `FileIdentityTokenStore` — for example a distributed cache or database-backed store — supply it through `IdentityTokenStoreManager.Register(store, applicationContext)`; `Unregister` removes a specific binding again. The manager's `Stores` property exposes the complete set of currently bound stores across all applications, primarily for diagnostics and administration; it must not be used to select the store for a particular request. Plugin or application removal automatically deregisters and disposes the associated store. The default `FileIdentityTokenStore` stores hashed token identifiers and their expiration times, without passwords, raw tokens, or identity records. Its shared filesystem must support atomic exclusive file creation across nodes. Preserve it across restarts; restrict write access to the server. Markers may be removed after their recorded Unix expiration plus the deployment's maximum clock drift. Keep server clocks synchronized. An unavailable store must fail the affected operation.
 
-## HTTP interface
+### HTTP interface
 
 The root endpoints are handled before application sitemap routing. Select the application with `?application=<ApplicationId>` or the configured default. JSON requests use `Content-Type: application/json`. Every POST/DELETE also requires `X-WebExpress-Auth: 1`; browser Origin headers must match the request origin. Use the frontend's `ServiceRegistry` to call these endpoints with credentials and the required header. Authentication responses carry `Cache-Control: no-store`.
 
@@ -4112,13 +4359,15 @@ The development override `RequireHttps: false` uses the separate cookie names `w
 
 Refresh rotation is single-use and preserves the original absolute grant deadline. Reusing a consumed refresh token revokes the grant, including its successor. Clients must serialize refresh requests, including across tabs; a lost refresh response or replay requires a new login. A refresh token is rejected in the access-cookie and Bearer channels. Logout prevents renewal immediately; existing access tokens remain valid until their short expiry. Roles and permissions are snapshots for the grant's lifetime; directory changes take effect after a new login. Immediate access-token revocation would require an additional online check and is not part of this model.
 
-## Local identity providers
+### Local identity providers
 
 Derive a plugin provider from `LocalIdentityProvider` and implement `GetIdentities` against the application's user directory. The default verifier accepts ASP.NET Core Identity `PasswordHasher<IIdentity>` hashes (salted PBKDF2). Existing stores using a different password format must migrate their hashes or implement `Authenticate` against their own credential-verification service. Never issue a token before that verification succeeds. `GetGroups` supplies existing policy-bearing groups; effective permissions are captured by `IdentityManager` at login.
 
 `IdentityProviderManager` discovers public, concrete `IIdentityProvider` classes in loaded plugins, once per application and provider type. Constructors may receive `IComponentHub`, `IHttpServerContext`, `IApplicationContext`, and `IPluginContext`. Classes with other required dependencies are registered explicitly using `ComponentHub.IdentityProviderManager.Register(provider, application)`. Plugin/application removal deregisters its providers and disposes owned resources. Do not also manually register an automatically discovered provider.
 
-## External provider extensions
+`IdentityTokenStoreManager` binds exactly one `IIdentityTokenStore` per application, in contrast to `IdentityProviderManager`, which permits several concurrent providers per application. `ComponentHub.IdentityTokenStoreManager.GetStore(applicationContext)` returns the store bound to that application, defaulting to a shared `FileIdentityTokenStore` when no application-specific store has been registered. An application that requires alternative durable storage — for example, a distributed cache or database-backed store such as `MyIdentityTokenStore` in a plugin — replaces the default binding through `Register(store, applicationContext)`; registering a second store for the same application replaces the previous binding rather than adding a second one. `Unregister` removes an explicit binding again, after which `GetStore` falls back to the default. Plugin or application removal unregisters and disposes the bound store automatically. Do not also manually register the automatically discovered default store.
+
+### External provider extensions
 
 The external authentication boundary uses the authorization code flow. The callback receives a code, and the shared OpenID Connect pipeline exchanges it at the configured authority using PKCE S256. A signed callback cookie binds state, nonce, verifier, provider, and application to the initiating browser. Each challenge expires after five minutes and can be consumed only once across server instances.
 
@@ -4130,13 +4379,148 @@ The authorization mapping is explicit. The default `ReadRoles` implementation re
 
 The lifecycle integration uses the existing plugin discovery contract. A public concrete provider with an injectable constructor is registered automatically for each associated application. Its constructor can read configuration from `IPluginContext.Settings`. A configured provider with additional dependencies can instead be registered through `IdentityProviderManager.Register`. Plugin and application removal also remove their provider bindings.
 
-The protocol foundation follows [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth). Token purpose separation follows [JWT Best Current Practices](https://www.rfc-editor.org/rfc/rfc8725.html), and replay protection follows [OAuth Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700.html).
-
-## Personal access tokens
+### Personal access tokens
 
 Technical clients send `Authorization: Bearer <PAT>`. PATs are application-bound, expire at their explicit deadline, and are never refreshed. Requested permissions must be a subset of the owner's effective permissions. Roles and policy claims are omitted to prevent policy-based privilege escalation. PATs satisfy the framework's authenticated-access policy; permission-protected operations use `CheckAccess` with their specific permission type. Endpoints requiring additional role policies do not implicitly grant access to PATs. PAT creation/revocation HTTP endpoints require a browser identity, and revocation requires ownership.
 
 An explicit invalid Authorization header never falls back to a browser cookie. Access and refresh tokens are not accepted as PATs. Persist PATs in a secret store; after expiry or revocation the owner must explicitly create a replacement.
+
+## Certificate management
+
+For production HTTPS, **WebExpress** manages X.509 certificates centrally through `CertificateManager`. The service loads configured material, validates its suitability for TLS server authentication and resolves it by alias or hostname. Applications and hosting components use `ICertificateManager` instead of accessing certificate files. The host owns one manager and exposes the same instance through `IHttpServerContext.CertificateManager` and `IComponentHub.CertificateManager`.
+
+For environment separation, use **HTTP for development** and **HTTPS only for production**. The shipped development configuration remains HTTP only and requires no PFX file or trusted development certificate. Certificate deployment belongs in the production server configuration.
+
+For the object model, `CertificateManager` implements `ICertificateManager` and obtains material from `ICertificateStore`. The built-in `FileCertificateStore` provides local PFX support. `CertificateMaterial` carries the leaf and supplied chain for HTTPS consumers, while `CertificateInfo` provides metadata for diagnostics without exposing credentials or private keys.
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║              ┌────────────────────────────────────────┐                              ║
+║              │ <<Interface>>                          │                              ║
+║              │ IComponentHub                          │                              ║
+║              ├────────────────────────────────────────┤                              ║
+║              │ CertificateManager:ICertificateManager │                              ║
+║              └───────────────────┬────────────────────┘                              ║
+║                                  │                                                   ║
+║                                  │                                                   ║
+║    ┌─────────────────────────────▼─────────────────────────────┐                     ║
+║    │ <<Interface>>                                             │                     ║
+║    │ ICertificateManager : IDisposable                         │                     ║
+║    ├───────────────────────────────────────────────────────────┤                     ║
+║    │ RegisterStore(ICertificateStore)                          │                     ║
+║    │ Load(HttpServerSettings)                                  │                     ║
+║    │ Resolve(String):CertificateMaterial                       │                     ║
+║    │ Resolve(EndpointSettings):CertificateMaterial             │                     ║
+║    │ GetCertificates():IReadOnlyList<CertificateInfo>          │                     ║
+║    └─────────────────────────────┬─────────────────────────────┘                     ║
+║                                  │ *                                                 ║
+║                                  │                                                   ║
+║    ┌─────────────────────────────▼─────────────────────────────┐                     ║
+║    │ <<Interface>>                                             │                     ║
+║    │ ICertificateStore                                         │                     ║
+║    ├───────────────────────────────────────────────────────────┤                     ║
+║    │ Name:String                                               │                     ║
+║    │ Load(reference, password):CertificateMaterial             │                     ║
+║    └─────────────────────────────△─────────────────────────────┘                     ║
+║                                  ¦                                                   ║
+║                 ┌----------------┴-----------------------------┐                     ║
+║                 ¦                                              ¦                     ║
+║    ┌────────────┴─────────────┐                                ¦                     ║
+║    │ FileCertificateStore     │                                ¦                     ║
+║    ├──────────────────────────┤                                ¦                     ║
+║    │ Name = "file"            │                                ¦                     ║
+║    │ local PFX material       │                                ¦                     ║
+║    └──────────────────────────┘                                ¦                     ║
+║                                                                ¦                     ║
+║                                                                ¦                     ║
+╚════════════════════════════════════════════════════════════════¦═════════════════════╝
+                                                                 ¦
+╔MyPlugin════════════════════════════════════════════════════════¦═════════════════════╗
+║                                                                ¦                     ║
+║                                              ┌─────────────────┴─────────────────┐   ║
+║                                              │ MyCertificateStore                │   ║
+║                                              ├───────────────────────────────────┤   ║
+║                                              │ module-owned provider             │   ║
+║                                              └───────────────────────────────────┘   ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Certificate access
+
+For application access, obtain the shared manager from the component hub. `Resolve(string)` accepts a configured alias or concrete hostname with case-insensitive lookup. DNS names are normalized, including international names and trailing dots; IP addresses use their normalized representation. `Resolve(EndpointSettings)` also checks a concrete endpoint hostname against the certificate's subject alternative names. Unknown mappings throw `KeyNotFoundException`, and unusable material throws `InvalidOperationException`.
+
+```csharp
+using WebExpress.WebCore;
+using WebExpress.WebCore.WebCertificate;
+
+ICertificateManager manager = WebEx.ComponentHub.CertificateManager;
+CertificateMaterial material = manager.Resolve("public-site");
+var metadata = manager.GetCertificates();
+```
+
+For lifetime management, the host owns the manager and disposes it after its HTTPS listeners have stopped. A consumer borrows `CertificateMaterial` and must not dispose or modify its leaf certificate or chain. An explicit inventory reload retains earlier material until manager disposal because an existing listener may still hold it. This release requires a server restart to apply changed certificates to listeners.
+
+### Certificate configuration
+
+For production configuration, use the existing `WebExpress` settings section. The shared `Certificates` block contains `Directory`, `WarningThresholdDays` and `Items`. Each item supplies an `Alias`, optional concrete `HostNames`, a `Store` defaulting to `file`, a store-specific `Reference` and an optional `Password`. The file store resolves relative PFX references against `Directory`; a relative directory is based on the process working directory. Absolute paths are supported, and omitting the directory preserves existing relative endpoint PFX paths.
+
+```json
+{
+  "WebExpress": {
+    "Certificates": {
+      "Directory": "/opt/wx/ssl",
+      "WarningThresholdDays": [30, 14, 7],
+      "Items": [
+        {
+          "Alias": "public-site",
+          "HostNames": ["www.example.org"],
+          "Reference": "public-site.pfx"
+        }
+      ]
+    },
+    "Endpoints": [
+      { "Uri": "https://*:443/", "CertificateAlias": "public-site" }
+    ]
+  }
+}
+```
+
+For password delivery, supply `WEBEXPRESS_WebExpress__Certificates__Items__0__Password` through deployment secrets rather than source control. Existing endpoint definitions can also use `PfxFile`, `Password` and an optional `CertificateAlias`. When neither an alias nor an inline PFX is supplied, the endpoint resolves its hostname through the shared inventory. A wildcard listener requires an explicit alias or inline definition. Aliases and host mappings must identify exactly one certificate, and only configured files are loaded.
+
+For several hostnames, register separate inventory entries and select them through the endpoint configuration. Each listener uses one fixed certificate in this release, so distinct certificates require separate listening addresses or ports. Hostname mappings establish the basis for future SNI selection; configuring multiple hostnames on the same address and port does not currently enable SNI.
+
+### Validation and status
+
+For startup validation, the manager checks validity dates, private key presence, basic constraints, TLS server authentication EKU and digital signature key usage when those usage extensions are present, and subject alternative name coverage of configured hostnames. A CA certificate cannot serve as the leaf. Supplied intermediate certificates are handed to Kestrel with the leaf; client trust and revocation checks remain outside these local suitability checks. If an HTTPS endpoint cannot resolve usable material, startup fails before opening any listener.
+
+For diagnostics, `GetCertificates()` returns immutable `CertificateInfo` snapshots containing alias, hostnames, store, subject, issuer, thumbprint, UTC validity dates and combined `CertificateStatus` flags. Current validity is evaluated on every metadata read and resolution. The following flags describe whether material can be used:
+
+|Status              |Meaning                                                            |Usable for HTTPS
+|--------------------|-------------------------------------------------------------------|----------------
+|`Valid`             |The local suitability checks passed.                               |Yes.
+|`ExpiringSoon`      |The remaining lifetime reached a configured warning threshold.     |Yes, unless combined with a failure flag.
+|`Expired`           |The validity period has ended.                                     |No.
+|`NotYetValid`       |The validity period has not started.                               |No.
+|`MissingPrivateKey` |The leaf has no private key.                                       |No.
+|`InvalidUsage`      |The leaf or its usage extensions are unsuitable for server TLS.    |No.
+|`HostNameMismatch`  |A configured hostname is not covered by subject alternative names. |No.
+|`LoadFailed`        |The configured material could not be loaded.                       |No.
+
+For expiry warnings, omitted thresholds default to 30, 14 and 7 days. A nonnegative array replaces the defaults, and an empty array disables expiry warnings. Loading logs the nearest applicable threshold with the alias and UTC expiry time. Loading failures remain visible as inventory entries, while passwords and raw provider exceptions are excluded from logs. Periodic monitoring is not implemented in this version.
+
+For administrative inspection, WebApp exposes **Settings > System > Certificates** to identities with `SystemAccessPolicy`. The page reads the same manager metadata, displays summary counts and translated status labels, and prioritizes unusable and soon-expiring entries. It provides an overview and diagnostics; deployment changes remain in server configuration. Page refresh updates metadata without reading certificate files or replacing listener certificates.
+
+### Certificate provider extensions
+
+For custom storage, implement `ICertificateStore` in a separate module and call `RegisterStore` before `Load(HttpServerSettings)`. Configuration selects the provider by its case-insensitive name, with `file` reserved for the built-in store. The module retains ownership of the store. Each successful `Load(reference, password)` transfers newly owned `CertificateMaterial` to the manager; the provider must clean up its material on failure and must not return certificates already owned by another entry.
+
+For inventory replacement, `Load(HttpServerSettings)` validates the complete configuration before publishing the new inventory. Configuration errors preserve the previous inventory. Individual provider failures publish diagnostic failure entries. Provider registration, loading and resolution are serialized by the manager. Providers must supply private keys that work with the host platform; the file store uses temporary key containers on Windows and `EphemeralKeySet` on other platforms.
+
+For future automation, separate modules can add ACME acquisition, renewal scheduling, DNS and HTTP challenges, Azure Key Vault or other sources behind this contract. Applications continue using `ICertificateManager`. The Core currently provides no ACME implementation, challenge processor, file watcher, periodic monitor, automatic listener replacement or SNI selector.
+
+For deployment examples, see [HTTPS for production](installation_guide.md#https-for-production) and [Production certificate inventory](config.md#production-certificate-inventory).
 
 # WebApp template
 
