@@ -16,5 +16,5 @@
 	<artifact>WebExpress.dll</artifact>
 	<artifact>WebExpress.exe</artifact>
 	<artifact>WebExpress.runtimeconfig.json</artifact>
-	<artifact>config/webexpress.config.xml</artifact>
+	<artifact>settings/webexpress.settings.json</artifact>
 </package>

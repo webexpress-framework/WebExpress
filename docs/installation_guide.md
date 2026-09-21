@@ -183,16 +183,16 @@ pi@wx:~ $ sudo systemctl enable webexpress.service
 Before WebExpress can be started, it must be configured. Furthermore, the desired web applications must be installed. 
 
 ## Basic configuration
-The configuration file ```/opt/wx/config/webexpress.config.xml``` stores the general settings of WebExpress.
+The settings file ```/opt/wx/settings/webexpress.settings.json``` stores the general settings of WebExpress. It is a JSON file; every setting of the server sits under the name `WebExpress`. All other `.json` files in the `settings` directory are read as well – that is where the installed plugins keep their own settings, each under `Plugins` in a section of its own. See the [configuration guide](config.md) for every setting.
 
 |Property         |Description                                                                                      |Example
 |-----------------|-------------------------------------------------------------------------------------------------|---
-|Endpoint         |Creates an endpoint on which WebExpress listens and processes incoming connections. Any number of endpoints can be configured. -uri: The Uri with the scheme, a hostname, and a port. The hostname * represents all available endpoints. If no port is specified, the default port is used (e.g. 443 for Https). -pfx: The keystore in the form of a pfx file -password: The password of the pfx file. |```<endpoint uri=http://*/ /><endpoint uri="https://*:443/" pfx="./Cert/wx.pfx" password="hello" />```
-|Kestrel          |Configures the underlying Kestrel server and all request limits. maxconcurrentconnections: Number of concurrently active connections. maxrequestbodysize: The maximum number of bytes that may be transferred to the web server in the body. |```<kestrel><maxconcurrentconnections>300</maxconcurrentconnections><maxrequestbodysize>30000000</maxrequestbodysize></kestrel>```
-|Culture          |Specifies the language, calendar used, and formatting for dates and numbers for expenses.        |```<culture>de-DE</culture>```
-|Assets directory |Contains static files that are to be served by the web server.                                   |```<assets>./</assets>```
-|Context path     |The context path is the prefix path of a Uri (e.g. http://localhost/contextpath/pathToResource). |```<contextpath>wx</contextpath>```
-|Plugin directory |Directory where the plugins are executed.                                                        |```<packages>./</packages>```
+|Endpoints        |Creates an endpoint on which WebExpress listens and processes incoming connections. Any number of endpoints can be configured. -Uri: The Uri with the scheme, a hostname, and a port. The hostname * represents all available endpoints. If no port is specified, the default port is used (e.g. 443 for Https). -PfxFile: The keystore in the form of a pfx file -Password: The password of the pfx file. |```"Endpoints": [ { "Uri": "http://*/" }, { "Uri": "https://*:443/", "PfxFile": "./ssl/wx.pfx", "Password": "hello" } ]```
+|Kestrel          |Configures the underlying Kestrel server and all request limits. MaxConcurrentConnections: Number of concurrently active connections. MaxRequestBodySize: The maximum number of bytes that may be transferred to the web server in the body. |```"Kestrel": { "MaxConcurrentConnections": 300, "MaxRequestBodySize": 30000000 }```
+|Culture          |Specifies the language, calendar used, and formatting for dates and numbers for expenses.        |```"Culture": "de-DE"```
+|Assets directory |Contains static files that are to be served by the web server.                                   |```"AssetPath": "./"```
+|Context path     |The context path is the prefix path of a Uri (e.g. http://localhost/contextpath/pathToResource). |```"ContextPath": "wx"```
+|Plugin directory |Directory where the plugins are executed.                                                        |```"PackagePath": "./"```
 
 ## Setting up https
 Secure and confidential communication between the WebClient and the web server can be guaranteed by using certificates. In the simplest 
@@ -282,7 +282,7 @@ pi@wx:~ $ openssl pkcs12 -info -in wx.pfx
 
 ### Installing certificates in WebExpress
 For an https connection, the pfx file (```wx.pfx```) is required. This serves as a certificate store by containing all relevant certificates. This must 
-be transferred to the web server and stored in the ```/opt/wx/ssl``` directory in the web server configuration. To do this, however, the directory must 
+be transferred to the web server and stored in the ```/opt/wx/ssl``` directory referenced by the web server settings. To do this, however, the directory must 
 first be created.
 
 ``` bash

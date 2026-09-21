@@ -134,7 +134,8 @@ The components of **WebExpress** and its applications are centrally managed in t
 |EndpointManager             |Manages all endpoints (pages, resources, REST APIs, assets) that can be addressed with a URI.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
-|IdentityManager             |Users or technical objects that are used for identity and access management.
+|IdentityManager             |Issues and validates identity tokens and evaluates authorization policies and permissions.
+|IdentityProviderManager     |Discovers authentication providers and manages their application and plugin lifetimes.
 |IncludeManager              |Manages the dynamic integration of JavaScript and CSS files into the HTML header. In release mode, the files are delivered bundled and minified.
 |InternationalizationManager |Provides language packs for the internationalization of applications.
 |JobManager                  |Jobs can be used for cyclic processing of tasks.
@@ -237,6 +238,7 @@ By using dependency injection, it is ensured that all required dependencies are 
    ├─📁 lib
    │ └─📁 runtime
    │   └─📁 <rid>
+   ├─📁 settings
    ├─📁 licences
    ├─📄 readme.md
    └─📄 <packagename>.spec
@@ -248,6 +250,7 @@ By using dependency injection, it is ensured that all required dependencies are 
 |lib              |This directory contains the libraries.
 |runtimes         |Contains the platform-dependent libraries.
 |rid              |A runtime identifier (RID) of the supported runtime (see .NET Runtime Identifier (RID) catalog). Each supported runtime is created in its own directory.
+|settings         |The settings files (json) of the plugins. On installation they are deployed to the settings directory of the server, see [Plugin settings](#plugin-settings).
 |licences         |Storage location of all third-party licenses and your own license.
 |readme.md        |The description of the package contents for the user.
 |packagename.spec |The specification of the package.
@@ -338,6 +341,38 @@ The synthesized entries exist in the read path only. They are never added to `Pa
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+### Plugin settings
+
+Everything a server reads from a file lives in one directory, `settings`, next to the program: `webexpress.settings.json` with the settings of the server and one json file per plugin with the plugin's own settings. All files of the directory are merged into a single `IConfiguration` (the .NET configuration model), in alphabetical order of their names with the main file last, and environment variables prefixed `WEBEXPRESS_` on top. Because everything is merged, a plugin keeps its values under `Plugins` in a section named after its plugin id - two plugins can then never overwrite each other's values:
+
+```json
+{
+  "Plugins": {
+    "webexpress.tutorial.webapp": {
+      "Greeting": "Hello, world!",
+      "Database": { "ConnectionString": "..." }
+    }
+  }
+}
+```
+
+A plugin reads its section through `IPluginContext.Settings`, which is that section and nothing else - the server's settings and those of other plugins are out of its reach:
+
+```csharp
+var greeting = PluginContext.Settings["Greeting"];
+var database = PluginContext.Settings.GetSection("Database").Get<DatabaseOptions>();
+```
+
+The directory is watched, so a value read on every use follows an edit of the file without a restart. The settings of the server itself - endpoints, directories, culture - are bound once at start-up into `HttpServerSettings` and take a restart. The merged configuration is available as `IHttpServerContext.Configuration`; the directory as `IHttpServerContext.SettingsPath`.
+
+A package ships the defaults of its plugin as a settings file named in the spec:
+
+```xml
+<settings>settings/webexpress.tutorial.webapp.settings.json</settings>
+```
+
+The `PackageBuilder` places the file under `settings/` in the package, and the `PackageManager` deploys it to the settings directory of the server on installation and reloads the configuration, so the plugin finds its section when it boots. A file that already exists there is never overwritten - it is the administrator's, and an update of the package keeps their changes. A value in `webexpress.settings.json` overrides the plugin's file, which is where an administrator changes a default without touching the plugin's file.
+
 ## Plugin model
 
 The plugin system can be used to extend both **WebExpress** and application functionalities. Each plugin must have exactly one plugin class that implements `IPlugin`. The following example demonstrates the implementation of a plugin:
@@ -399,8 +434,8 @@ The implemented methods from the interface cover the life cycle of the plugin. M
 ║                                                   ¦   │ Copyright:String        │    ║
 ║          ┌───────────────┐                        ¦   │ License:String          │    ║
 ║          │ <<Interface>> │                        ¦   │ Icon:IRoute             │    ║
-║          │ IComponent    │                        ¦   └─────────────────────────┘    ║
-║          ├───────────────┤                        ¦                                  ║
+║          │ IComponent    │                        ¦   │ Settings:IConfiguration │    ║
+║          ├───────────────┤                        ¦   └─────────────────────────┘    ║
 ║          └──────Δ────────┘                        ¦                                  ║
 ║                 ¦                                 ¦                                  ║
 ║                 ¦                                 ¦                                  ║
@@ -3934,167 +3969,6 @@ Entity           1 │
              └────────────┘
 ```
 
-Identities and groups must be loaded from a persistent data source, which may be provided by the application itself or retrieved from an external identity management system (e.g., LDAP). Policies and identity-related resources are defined and enforced by the application, typically through static configuration or hardcoded logic. The UML diagram below highlights the key relationships and structural elements:
-
-```
-╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
-║                                                                                      ║
-║                                                    ┌───────────────────────────────┐ ║
-║                                                    │ <<Interface>>                 │ ║
-║         ┌──────────────────────────────────┐       │ IIdentityProvider             │ ║
-║         │ <<Interface>>                    │       ├───────────────────────────────┤ ║
-║         │ IComponentHub                    │       ├───────────────────────────────┤ ║
-║         ├──────────────────────────────────┤ 1     │ GetIdentities:                │ ║
-║         │ IdentityManager:IIdentityManager ├────┐  │   IEnumerable<IIdentity>      │ ║
-║         │ …                                │    │  │ GetGroups:                    │ ║
-║         └──────────────────────────────────┘    │  │   IEnumerable<IIdentityGroup> │ ║
-║                                                 │  │ CreateForbiddenResponse(      │ ║
-║                                                 │  │   IRequest,IPageContext,      │ ║
-║                         ┌───────────────────┐   │  │   IIdentity):IResponse        │ ║
-║                         │ <<Interface>>     │   │  │ CreateAuthenticationPrompt(   │ ║
-║                         │ IComponentManager │   │  │   IRequest,IPageContext,      │ ║
-║                         ├───────────────────┤   │  │   IIdentity):IResponse        │ ║
-║                         └────────Δ──────────┘   │  └─────────────────────────▲─────┘ ║
-║                                  ¦              │                          * │       ║
-║                                  ¦            1 │                            │       ║
-║                         ┌────────┴──────────────▼───────────────────────┐ 1  │       ║
-║                         │ <<Interface>>                                 ├────┘       ║
-║ ┌-----------------------┤ IIdentityManager                              │            ║
-║ ¦                       ├───────────────────────────────────────────────┤            ║
-║ ¦                       │ Policies:IEnumerable<IIdentityPolicyContext>  │            ║
-║ ¦                       │ Permissions:                                  │            ║
-║ ¦                       │   IEnumerable<IIdentityPermissionContext>     │            ║
-║ ¦                       ├───────────────────────────────────────────────┤            ║
-║ ¦                       │ CreateForbiddenResponse(IRequest,             │            ║
-║ ¦                       │   IPageContext,IIdentity):IResponse           │            ║
-║ ¦                       │ CreateAuthenticationPrompt(IRequest,          │            ║
-║ ¦                       │   IPageContext,IIdentity):IResponse           │            ║
-║ ¦                       │ Login(IIdentity,IRequest):Session             │            ║
-║ ¦                       │ Logout(IRequest)                              │            ║
-║ ¦                       │ GetCurrentIdentity(IRequest):IIdentity        │            ║
-║ ¦                       │ RegisterIdentityProvider(IIdentityProvider,   │            ║
-║ ¦                       │   IApplicationContext)                        │            ║
-║ ¦                       │ UnregisterIdentityProvider(IIdentityProvider, │            ║
-║ ¦                       │   IApplicationContext)                        │            ║
-║ ¦                       │ GetIdentities(IApplicationContext):           │            ║
-║ ¦                       │   IEnumerable<IIdentity>                      │            ║
-║ ¦                       │ GetGroups(IApplicationContext):               │            ║
-║ ¦                       │   IEnumerable<IIdentityGroup>                 │            ║
-║ ¦                       │ CheckAccess(IIdentity,IEndpointContext):Bool  │            ║
-║ ¦                       │ CheckAccess(IIdentity,IIdentityPolicy):Bool   │            ║
-║ ¦                       │ CheckAccess<TPolicy,TPermission>(             │            ║
-║ ¦                       │   IApplicationContext):Bool                   │            ║
-║ ¦                       └──────┬──────────┬───────────┬──────────┬──────┘            ║
-║ ¦                            1 │        1 │         1 │        1 │                   ║
-║ ¦                 ┌────────────┘          │           │          └─────┐             ║
-║ ¦                 │                    ┌──┘           │                │             ║
-║ ¦               * │                    │              └──┐             │             ║
-║ ¦  ┌──────────────▼────────────────┐   │                 │             │             ║
-║ ¦  │ <<Interface>>                 │   │                 │             │             ║
-║ ¦  │ IIdentity                     │   │                 │             │             ║
-║ ¦  ├───────────────────────────────┤   │                 │             │             ║
-║ ¦  │ Id:Guid                       │   │                 │             │             ║
-║ ¦  │ Name:String                   │   │                 │             │             ║
-║ ¦  │ Email:String                  │   │                 │             │             ║
-║ ¦  │ PasswordHash:String           │   │                 │             │             ║
-║ ¦  │ Groups:                       │   │                 │             │             ║
-║ ¦  │   IEnumerable<IIdentityGroup> │   │                 │             │             ║
-║ ¦  ├───────────────────────────────┤   │                 │             │             ║
-║ ¦  │                               │   │                 │             │             ║
-║ ¦  │                               │   │                 │             │             ║
-║ ¦  └───────────────────────────────┘   │                 │             │             ║
-║ ¦              Δ                       │                 │             │             ║
-║ ¦              ¦                     * │                 │             │             ║
-║ ¦              ¦    ┌──────────────────▼─────────────┐   │             │             ║
-║ ¦              ¦    │ <<Interface>>                  │   │             │             ║
-║ ¦              ¦    │ IIdentityGroup                 │   │             │             ║
-║ ¦              ¦    ├────────────────────────────────┤   │             │             ║
-║ ¦              ¦    │ Id:Guid                        │   │             │             ║
-║ ¦              ¦    │ Name:String                    │   │             │             ║
-║ ¦              ¦    │ Policies:                      │   │             │             ║
-║ ¦              ¦    │   IEnumerable<IIdentityPolicy> │   │             │             ║
-║ ¦              ¦    ├────────────────────────────────┤   │             │             ║
-║ ¦              ¦    └────Δ───────────────────────────┘   │             │             ║
-║ ¦              ¦         ¦                               │             │             ║
-║ ¦              ¦         ¦                             * │             │             ║
-║ ¦              ¦         ¦    ┌──────────────────────────▼─────────┐   │             ║
-║ ¦              ¦         ¦    │ <<Interface>>                      │   │             ║
-║ ¦              ¦         ¦    │ IIdentityPolicy                    │   │             ║
-║ ¦              ¦         ¦    ├────────────────────────────────────┤   │             ║
-║ ¦              ¦         ¦    │ Id:String                          │   │             ║
-║ ¦              ¦         ¦    │ Name:String                        │   │             ║
-║ ¦              ¦         ¦    │ Description:String                 │   │             ║
-║ ¦              ¦         ¦    │ Permissions:                       │   │             ║
-║ ¦              ¦         ¦    │   IEnumerable<IIdentityPermission> │   │             ║
-║ ¦              ¦         ¦    ├────────────────────────────────────┤   │             ║
-║ ¦              ¦         ¦    └─────────────────Δ──────────────────┘   │             ║
-║ ¦              ¦         ¦                      ¦                    * │             ║
-║ ¦              ¦         ¦                      ¦          ┌───────────▼─────────┐   ║
-║ ¦              ¦         ¦                      ¦          │ <<Interface>>       │   ║
-║ ¦              ¦         ¦                      ¦          │ IIdentityPermission │   ║
-║ ¦              ¦         ¦                      ¦          ├─────────────────────┤   ║
-║ ¦              ¦         ¦                      ¦          │ Id:String           │   ║
-║ ¦              ¦         ¦                      ¦          │ Name:String         │   ║
-║ ¦              ¦         ¦                      ¦          │ Description:String  │   ║
-║ ¦              ¦         ¦                      ¦          ├─────────────────────┤   ║
-║ ¦              ¦         └-------------┐        ¦          └─────────Δ───────────┘   ║
-║ ¦              ¦                       ¦        ¦                    ¦               ║
-╚═¦══════════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╝
-  ¦              ¦                       ¦        ¦                    ¦     
-╔MyPlugin════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╗
-║ ¦              ¦                       ¦        ¦                    ¦               ║
-║ ¦  ┌───────────┴───────────────────┐   ¦        ¦                    └-┐             ║
-║ ¦  │ MyIdentity                    │   ¦        ¦                      ¦             ║
-║ ¦  ├───────────────────────────────┤   ¦        └------------┐         ¦             ║
-║ ¦  │ Id:Guid                       │   ¦                     ¦         ¦             ║
-║ ¦  │ Name:String                   │   ¦                     ¦         ¦             ║
-║ ¦  │ Email:String                  │   ¦                     ¦         ¦             ║
-║ ¦  │ PasswordHash:String           │1  ¦                     ¦         ¦             ║
-║ ¦  │ Groups:                       ├───¦─────┐               ¦         ¦             ║
-║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │               ¦         ¦             ║
-║ ¦  ├───────────────────────────────┤   ¦     │               ¦         ¦             ║
-║ ¦  │                               │   ¦     │               ¦         ¦             ║
-║ ¦  │                               │   ¦     │               ¦         ¦             ║
-║ ¦  └───────────────────────────────┘   ¦     │               ¦         ¦             ║
-║ ¦                                      ¦     │               ¦         ¦             ║
-║ ¦                                    * ¦   * │               ¦         ¦             ║
-║ ¦                   ┌──────────────────┴─────▼───────┐       ¦         ¦             ║
-║ ¦                   │ MyIdentityGroup                │       ¦         ¦             ║
-║ ¦                   ├────────────────────────────────┤       ¦         ¦             ║
-║ ¦                   │ Id:Guid                        │       ¦         ¦             ║
-║ ¦                   │ Name:String                    │1      ¦         ¦             ║
-║ ¦                   │ Policies:                      ├──┐    ¦         ¦             ║
-║ ¦                   │   IEnumerable<IIdentityPolicy> │  │    ¦         ¦             ║
-║ ¦                   ├────────────────────────────────┤  │    ¦         ¦             ║
-║ ¦                   └────────────────────────────────┘  │    ¦         ¦             ║
-║ ¦                                                       │    ¦         ¦             ║
-║ ¦                                                     * │    ¦         ¦             ║
-║ ¦                 create  ┌─────────────────────────────▼────┴─┐       ¦             ║
-║ ├------------------------►│ MyIdentityPolicy                   │       ¦             ║
-║ ¦                         ├────────────────────────────────────┤       ¦             ║
-║ ¦                         │ Id:String                          │       ¦             ║
-║ ¦                         │ Name:String                        │       ¦             ║
-║ ¦                         │ Description:String                 │1      ¦             ║
-║ ¦                         │ Permissions:                       ├──┐    ¦             ║
-║ ¦                         │   IEnumerable<IIdentityPermission> │  │    ¦             ║
-║ ¦                         ├────────────────────────────────────┤  │    ¦             ║
-║ ¦                         └────────────────────────────────────┘  │    ¦             ║
-║ ¦                                                                 │    ¦             ║
-║ ¦                                                               * │    ¦             ║
-║ ¦                                             create       ┌──────▼────┴──────────┐  ║
-║ └----------------------------------------------------------► MyIdentityPermission │  ║
-║                                                            ├──────────────────────┤  ║
-║                                                            │ Id:String            │  ║
-║                                                            │ Name:String          │  ║
-║                                                            │ Description:String   │  ║
-║                                                            ├──────────────────────┤  ║
-║                                                            └──────────────────────┘  ║
-║                                                                                      ║
-╚══════════════════════════════════════════════════════════════════════════════════════╝
-```
-
-`IIdentityPolicy` and `IIdentityPermission` are marker interfaces: the id, name, description and the policy-permission relations shown in the diagram are declared through the `[Name]`, `[Description]`, `[Permission<>]` and `[Policy<>]` attributes on the definition classes and are surfaced at runtime through `IIdentityPolicyContext` and `IIdentityPermissionContext`.
-
 **WebExpress** provides the following default groups:
 
 |Group |Description
@@ -4145,7 +4019,7 @@ To provide clarity about the metadata specified in the code above, the following
 |Description |String            |1            |Yes      |The description of the permission. This can be a key to internationalization.
 |Policy      |`IIdentityPolicy` |n            |Yes      |Inherits the characteristics of the specified policy.
 
-In the case of an authorization check (can an endpoint (e.g. a page) be accessed by an identity), it must be checked whether there is at least one transition (identity -> group -> policy -> permission). This is done by the function `CheckAccess(IIdentity, IEndpointContext): Bool` of the `IdentityManager`. A return value of `true` means that access can be made.
+The authorization boundary evaluates the policies required by an endpoint through `IdentityManager.CheckAccess(IIdentity, IEndpointContext)`. Every required policy must be satisfied by the validated identity. Permission-specific operations use `CheckAccess(applicationContext, identity, permissionType)` against the effective permission claims captured at login. Local groups and explicitly mapped external policies contribute to this snapshot before tokens are issued.
 
 ```
 ╔═══════════════════════════════════════════╗
@@ -4183,6 +4057,86 @@ In the case of an authorization check (can an endpoint (e.g. a page) be accessed
          ║ Grant access ║           ║ Status page 401  ║           ║ Hide component ║
          ╚══════════════╝           ╚══════════════════╝           ╚════════════════╝
 ```
+
+# Authentication
+
+WebCore authenticates requests using signed tokens rather than a user object in an in-memory session. Every source supplies `IIdentity`; `IdentityManager.Login` captures its subject, name, email, roles, policies, and effective permissions and issues the same `IdentityTokenPair`. Password hashes are never serialized. Application sessions remain available for optional application state and are created only when needed.
+
+## Deployment configuration
+
+Configure `WebExpress:Authentication` through the existing configuration system:
+
+```json
+{
+  "WebExpress": {
+    "Authentication": {
+      "Issuer": "https://app.example.org",
+      "Audience": "webexpress-production",
+      "SigningKey": "<base64-encoded random key containing at least 32 bytes>",
+      "RequireHttps": true,
+      "TokenStorePath": "/data/shared/authentication",
+      "ApplicationId": "example.application",
+      "AccessTokenLifetime": "00:05:00",
+      "RefreshTokenLifetime": "7.00:00:00",
+      "MaximumPersonalAccessTokenLifetime": "90.00:00:00"
+    }
+  }
+}
+```
+
+Supply the production signing key through deployment secrets, never source control. Every replica needs the same issuer, audience, key, and durable token-store directory. Missing configuration disables authentication endpoints; there is no generated per-process signing key. Key replacement invalidates outstanding tokens. Internal JWTs use HS256, explicit token types, application-specific audiences, expiration, and unique identifiers. A deployment's signing key must not be reused by another service. Browser authentication endpoints require HTTPS by default as observed by WebCore.
+
+The configuration must be available to the executable host, including when login is implemented through WebApp's `RestApiSession`. A missing `WebExpress:Authentication` section causes central token issuance to reject login with `Configure WebExpress:Authentication before signing in.` Place deployment configuration in the host's active settings directory or provide environment variables such as `WEBEXPRESS_WebExpress__Authentication__SigningKey`. A configuration file in a plugin's source directory does not configure the running host unless it is deployed to that settings directory.
+
+The development host ships an `Authentication` section in `WebExpress.Develop/src/WebExpress.Develop.App/settings/webexpress.settings.json` with a public development signing key and `RequireHttps: false`. These initial values can be shared through Git and allow the hosted WebUI tutorial to log in at `http://localhost/webui` without a certificate. Rebuild and restart `WebExpress.Develop.App` after changing its settings. Before production use, replace the public key with a private random key, set `RequireHttps: true`, and configure valid HTTPS, deployment-specific issuer and audience values, and durable shared token storage. This host runs multiple applications, so root authentication endpoints require an explicit application selector unless a default `ApplicationId` is configured.
+
+Access-token validation is stateless. Refresh replay protection, OIDC challenge consumption, and PAT revocation use `IIdentityTokenStore`. The provided `FileIdentityTokenStore` stores hashed token identifiers and their expiration times, without passwords, raw tokens, or identity records. Its shared filesystem must support atomic exclusive file creation across nodes. Preserve it across restarts; restrict write access to the server. Markers may be removed after their recorded Unix expiration plus the deployment's maximum clock drift. Keep server clocks synchronized. An unavailable store must fail the affected operation.
+
+## HTTP interface
+
+The root endpoints are handled before application sitemap routing. Select the application with `?application=<ApplicationId>` or the configured default. JSON requests use `Content-Type: application/json`. Every POST/DELETE also requires `X-WebExpress-Auth: 1`; browser Origin headers must match the request origin. Use the frontend's `ServiceRegistry` to call these endpoints with credentials and the required header. Authentication responses carry `Cache-Control: no-store`.
+
+Local authentication uses `POST /api/auth/login` with a JSON object containing `username` and `password`. A successful directory verification produces the common protected token cookies. The endpoint does not accept passwords in query parameters.
+
+Credential renewal uses `POST /api/auth/refresh` with the refresh cookie and no credentials in the body. `POST /api/auth/logout` revokes renewal using the current access cookie, including a signed but expired one. `DELETE /api/auth/refresh` revokes the grant directly through the refresh cookie. Both logout operations expire the access and refresh cookies.
+
+External authentication starts at `GET /api/auth/authorize` with the `application` and `provider` query parameters. The endpoint redirects the browser to the selected plugin provider. `GET /api/auth/callback` receives the registered selectors, authorization code, and state, then issues local token cookies only after the external identity has been verified.
+
+Personal credential creation uses `POST /api/auth/pat` from an authenticated browser. A request such as `{"lifetimeSeconds":3600,"permissions":["Example.ReadPermission"]}` returns the newly created credential once in the `token` property. `DELETE /api/auth/pat` accepts `{"token":"..."}` and revokes that credential only when it belongs to the current browser identity.
+
+Login, refresh, and callback responses contain `authenticated` and `expiresAt`, never access or refresh token strings. Authentication failures use a generic 401; malformed requests use 400, origin/header failures 403, method errors 405, local login throttling 429, and unavailable external services 503. Local login permits ten attempts per minute per observed client IP and server instance. A multi-node deployment should also apply aggregate login throttling at its ingress.
+
+The access cookie is `__Host-wx-access`, scoped to `/`. The refresh cookie is `__Secure-wx-refresh`, scoped to `/api/auth/refresh`. Both are Secure, HttpOnly, host-only, and SameSite=Lax. The browser retains the access cookie until the refresh grant expires so logout can still identify an expired grant. This does **not** extend its signed access lifetime: expired access tokens cannot authenticate. One browser cookie pair represents one selected application on a host.
+
+The development override `RequireHttps: false` uses the separate cookie names `wx-access` and `wx-refresh` without the Secure attribute. HttpOnly, SameSite=Lax, refresh path restrictions, signatures, expiration, and browser-origin checks remain enforced. Production mode does not accept these development cookie names. HTTP exposes credentials and tokens on the network, so this override and any publicly shared development key must be replaced before production use. The generic OpenID Connect provider retains its HTTPS requirements for external authorities and callback URLs.
+
+Refresh rotation is single-use and preserves the original absolute grant deadline. Reusing a consumed refresh token revokes the grant, including its successor. Clients must serialize refresh requests, including across tabs; a lost refresh response or replay requires a new login. A refresh token is rejected in the access-cookie and Bearer channels. Logout prevents renewal immediately; existing access tokens remain valid until their short expiry. Roles and permissions are snapshots for the grant's lifetime; directory changes take effect after a new login. Immediate access-token revocation would require an additional online check and is not part of this model.
+
+## Local identity providers
+
+Derive a plugin provider from `LocalIdentityProvider` and implement `GetIdentities` against the application's user directory. The default verifier accepts ASP.NET Core Identity `PasswordHasher<IIdentity>` hashes (salted PBKDF2). Existing stores using a different password format must migrate their hashes or implement `Authenticate` against their own credential-verification service. Never issue a token before that verification succeeds. `GetGroups` supplies existing policy-bearing groups; effective permissions are captured by `IdentityManager` at login.
+
+`IdentityProviderManager` discovers public, concrete `IIdentityProvider` classes in loaded plugins, once per application and provider type. Constructors may receive `IComponentHub`, `IHttpServerContext`, `IApplicationContext`, and `IPluginContext`. Classes with other required dependencies are registered explicitly using `ComponentHub.IdentityProviderManager.Register(provider, application)`. Plugin/application removal deregisters its providers and disposes owned resources. Do not also manually register an automatically discovered provider.
+
+## External provider extensions
+
+The external authentication boundary uses the authorization code flow. The callback receives a code, and the shared OpenID Connect pipeline exchanges it at the configured authority using PKCE S256. A signed callback cookie binds state, nonce, verifier, provider, and application to the initiating browser. Each challenge expires after five minutes and can be consumed only once across server instances.
+
+The extension contract is the abstract `OpenIdConnectIdentityProvider` class. A future plugin derives its provider from this class and supplies `OpenIdConnectSettings` through its constructor. The plugin can override `ReadRoles` to translate provider-specific role claims and `MapIdentity` to normalize additional identity information after cryptographic validation. WebCore contains no Keycloak provider. A Keycloak integration belongs in a separate plugin and is outside this implementation.
+
+The provider configuration pins an exact HTTPS authority, client ID, optional confidential-client secret, and registered redirect URI. The redirect URI includes the application and provider selectors, for example `https://app.example.org/api/auth/callback?application=example.application&provider=external`. Discovery, signing-key retrieval, and code exchange use HTTPS. Accepted ID tokens require a valid asymmetric signature, the configured issuer and client audience, a valid lifetime, the expected nonce, and an authorized-party claim consistent with the client.
+
+The authorization mapping is explicit. The default `ReadRoles` implementation reads a `roles` array from the verified ID token. A plugin may translate another claim layout into those role labels. `RolePermissions` maps labels to full local permission class names, and `RolePolicies` maps labels to full local policy class names. An unmapped role grants no local rights. The issuer and external subject jointly determine the stable internal identity identifier.
+
+The lifecycle integration uses the existing plugin discovery contract. A public concrete provider with an injectable constructor is registered automatically for each associated application. Its constructor can read configuration from `IPluginContext.Settings`. A configured provider with additional dependencies can instead be registered through `IdentityProviderManager.Register`. Plugin and application removal also remove their provider bindings.
+
+The protocol foundation follows [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth). Token purpose separation follows [JWT Best Current Practices](https://www.rfc-editor.org/rfc/rfc8725.html), and replay protection follows [OAuth Security Best Current Practice](https://www.rfc-editor.org/rfc/rfc9700.html).
+
+## Personal access tokens
+
+Technical clients send `Authorization: Bearer <PAT>`. PATs are application-bound, expire at their explicit deadline, and are never refreshed. Requested permissions must be a subset of the owner's effective permissions. Roles and policy claims are omitted to prevent policy-based privilege escalation. PATs satisfy the framework's authenticated-access policy; permission-protected operations use `CheckAccess` with their specific permission type. Endpoints requiring additional role policies do not implicitly grant access to PATs. PAT creation/revocation HTTP endpoints require a browser identity, and revocation requires ownership.
+
+An explicit invalid Authorization header never falls back to a browser cookie. Access and refresh tokens are not accepted as PATs. Persist PATs in a secret store; after expiry or revocation the owner must explicitly create a replacement.
 
 # WebApp template
 
