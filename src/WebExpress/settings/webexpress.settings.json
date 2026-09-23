@@ -20,6 +20,9 @@
     ],
 
     // Optional fine-tuning of the underlying Kestrel server. A value left out keeps its default.
+    // Https endpoints serve HTTP/3 (QUIC over UDP) next to HTTP/1.1 and HTTP/2 whenever the OS
+    // provides QUIC (Windows 11 / Server 2022, Linux with libmsquic); open the UDP port as well.
+    // "Protocols": "Http1AndHttp2" keeps them off UDP.
     "Kestrel": {
       "MaxConcurrentConnections": 300,
       "MaxRequestBodySize": 3000000000,
@@ -32,6 +35,24 @@
     // though the server sees plain http.
     "Session": {
       "TimeoutMinutes": 43200
+    },
+
+    // Security headers and cookie attributes. Optional; every response carries a strict content
+    // security policy (inline scripts need the per-response nonce the server renders), nosniff,
+    // SAMEORIGIN framing, a referrer policy and - over https only - one year of HSTS. Cookies
+    // default to SameSite=Lax. Loosen a protection explicitly, e.g.:
+    //   "ContentSecurityPolicy": "default-src 'self'; script-src 'self' 'nonce-{nonce}' https://cdn.example.org",
+    //   "ContentSecurityPolicyReportOnly": true,   // observe violations before enforcing
+    //   "HstsMaxAge": 0,                           // switch HSTS off
+    //   "HstsIncludeSubDomains": true,
+    //   "CookieSameSite": "Strict",
+    //   "Headers": { "X-Frame-Options": "", "Permissions-Policy": "camera=(self)" }, // "" removes a header
+    // State-changing requests (POST/PUT/PATCH/DELETE) and websockets that another site triggers
+    // in the browser are rejected with 403 (checked via Origin and Sec-Fetch-Site; requests with
+    // an Authorization header and non-browser clients are unaffected):
+    //   "CsrfProtection": false,                   // switch the check off
+    //   "TrustedOrigins": [ "https://portal.example.org" ]
+    "Security": {
     },
 
     "Culture": "en-US",
