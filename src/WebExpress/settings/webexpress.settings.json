@@ -3,6 +3,10 @@
   // configuration; this file is merged last, so its values win over those of the other files.
   "WebExpress": {
 
+    // allow admitted work to drain before container termination releases its resources
+    "Shutdown": "graceful",
+    "ShutdownTimeoutSeconds": 30,
+
     // Log file. Mode: Off (no file), Append (keep adding) or Override (start afresh).
     "Log": {
       "Mode": "Off",

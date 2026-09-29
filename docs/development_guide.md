@@ -2660,7 +2660,8 @@ To provide clarity about the metadata specified in the code above, the following
 
 ## Health model
 
-Health components contribute the availability of critical application dependencies to the global `/health` endpoint. WebCore checks the host lifecycle and component registry, while applications supply database, queue, external service, or background worker checks through `IHealth` in `WebExpress.WebCore.WebHealt`. The `HealthManager` discovers these components through plugin and application events, following the registration model of `FragmentManager`. The following UML diagram illustrates the manager, its application bindings, and a health component:
+Health components provide the availability of critical application dependencies for the global `/health` endpoint. While `WebCore` monitors the host lifecycle and general component registration, the applications themselves contribute specific checks. These include checks for databases, message queues, external services, or background workers, which are implemented via the `IHealth` interface. The `HealthManager` automatically discovers these components through plugin and application events and handles their registration. The following UML diagram illustrates the structure of the manager, its application bindings, and the structure of a health component:
+
 
 ```
 ╔WebExpress.WebCore════════════════════════════════════════════════════════════════════╗
@@ -2737,7 +2738,7 @@ Health components contribute the availability of critical application dependenci
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Health components are public sealed classes implementing `IHealth`. A plugin contributes its classes to its own applications and to applications associated with it through the plugin's `Application` attributes. The manager registers each class once per plugin and application, including applications added after the plugin was loaded. Applications do not call a registration method. The example below checks a configured database with a real connection and a minimal query:
+Health components are defined as `public sealed` classes that implement the `IHealth` interface. A plugin provides its classes to its own applications as well as to those applications associated with it through its `Application` attributes. The manager registers each class exactly once per plugin and application. This also applies to applications that are added after the plugin has been loaded. The following example demonstrates how to check a configured database using a connection and a minimal test query:
 
 ```csharp
 using Microsoft.Extensions.Configuration;
@@ -2785,9 +2786,9 @@ public sealed class MyDatabaseHealth : IHealth
 }
 ```
 
-The database example reads `Database:Provider` and `Database:ConnectionString` from the contributing plugin's settings. The provider must be registered with `DbProviderFactories` during plugin initialization. The query assumes a database supporting `SELECT 1`; use the provider's equivalent read operation when necessary. An exception or `HealthCheckResult.Unhealthy("diagnostic context")` fails the aggregate health decision and records the technical details only in server logs.
+The database example reads `Database:Provider` and `Database:ConnectionString` from the configuration of the contributing plugin. The provider requires registration with `DbProviderFactories` during plugin initialization. The test query assumes that the database supports `SELECT 1`. If necessary, the equivalent read operation of the respective provider must be used. An exception or a return value of `HealthCheckResult.Unhealthy("diagnostic context")` sets the overall health status to failed, and the technical details are recorded exclusively in the server logs.
 
-The health attribute configures the execution budget of each application binding. The following table describes the available component metadata:
+The health attribute configures the execution budget of the respective application binding. The following table describes the available component metadata:
 
 |Attribute     |Type         |Multiplicity |Optional |Description
 |--------------|-------------|-------------|---------|-----------------
@@ -2797,19 +2798,19 @@ The health attribute configures the execution budget of each application binding
 
 The manager exposes discovered bindings through `HealthChecks` and `GetHealthChecks(IApplicationContext)`, and reports binding changes through `AddHealth` and `RemoveHealth`. Each `IHealthContext` contains the contributing plugin, associated application, diagnostic component identifier, and execution timeout. Consumers can obtain the manager through constructor injection or `IComponentHub.HealthManager`.
 
-Component activation is deferred until the first probe and uses the same `ComponentActivator` mechanism as fragments. Constructors can receive `IHealthContext`, `IApplicationContext`, `IComponentHub`, `IHttpServerContext`, `IComponentId`, and registered component managers. A successfully created instance is reused for its application binding. Constructor failures remain registered as unhealthy checks and are retried by later probes.
+Component activation is deferred until the first probe and uses the standard `ComponentActivator` mechanism. Constructors can receive `IHealthContext`, `IApplicationContext`, `IComponentHub`, `IHttpServerContext`, `IComponentId`, and registered component managers. A successfully created instance is reused for its application binding. Constructor failures remain registered as unhealthy checks and are retried by later probes.
 
 Component execution runs different bindings concurrently and waits for every result. Each check must perform a small, read-only operation, honor its cancellation token, and return unhealthy while a required dependency is still initializing. Missing tasks or results, unsuccessful results, exceptions, invalid timeout metadata, and exceeded budgets fail health. Completed results are not cached, so a later probe can observe recovery. Applications must supply checks for every dependency required to serve traffic; dependencies without a health component cannot affect the aggregate result.
 
 Concurrent probes share an unfinished invocation of the same binding. A timeout bounds each caller's wait even if component construction or synchronous application code blocks. Further probes cannot start overlapping invocations until that operation completes. A disconnected caller stops waiting without cancelling work shared with another caller. Code that ignores cooperative cancellation cannot be forcibly terminated by the manager.
 
-Component removal follows application and plugin ownership. Removing an application detaches all of its health bindings, and unloading a contributing plugin also removes bindings for applications owned by other plugins. Components may implement `IDisposable`; disposal occurs after any active invocation finishes. Disposing the manager stops discovery and removes all bindings. A registry change during a probe prevents an outdated successful response.
+Component removal follows application and plugin ownership. Removing an application detaches all of its health bindings, and unloading a contributing plugin also removes bindings for applications owned by other plugins. Components may implement `IDisposable`; disposal occurs after any active invocation finishes.
 
 ### Global health endpoint
 
 The endpoint is available at `/health` and `/health/` on every configured HTTP or HTTPS listener without authentication. These paths are reserved by WebCore and are independent of `ContextPath`, application routes, and the public `ExternalUri`. Query parameters neither select checks nor enable diagnostic output. Health processing does not redirect to login pages or issue authentication or session cookies.
 
-The framework checks require completed HTTP server startup and an initialized component registry. Startup becomes healthy after listener startup and all `Started` handlers complete. Beginning `HttpServer.Stop()` clears the running state before requests are drained. A missing health manager or an uninitialized component manager produces `503`. Framework state is evaluated again after dependency checks complete, so shutdown during a probe prevents a successful response.
+The framework checks require completed HTTP server startup and an initialized component registry. Startup becomes healthy after listener startup and all `Started` handlers complete. Beginning `HttpServer.Stop()` clears the running state before requests are drained. Framework state is evaluated again after dependency checks complete, so shutdown during a probe prevents a successful response.
 
 The successful response uses HTTP `200 OK` only when all framework and application checks pass. A host without application health components can report success when its framework checks pass. A `GET /health` response has the following body:
 

@@ -67,6 +67,17 @@ noticed right away rather than silently ignored.
 
 All of the settings in this section go inside the `"WebExpress"` block.
 
+### Container termination: `Shutdown`
+
+The shutdown policy enables controlled container termination when set to `"graceful"`. WebExpress stops admitting requests and background work, waits for already admitted operations, and then releases owned resources. `"immediate"` is the default when this setting is omitted. The `ShutdownTimeoutSeconds` setting defaults to 30 and accepts values from 1 through 86400.
+
+```json
+"Shutdown": "graceful",
+"ShutdownTimeoutSeconds": 30
+```
+
+The container timeout must leave time for draining and cleanup. For example, use `terminationGracePeriodSeconds: 45` with a 30-second drain budget and increase it further if a Kubernetes `preStop` hook consumes part of that interval. The [Graceful shutdown guide](https://github.com/webexpress-framework/WebExpress.WebCore/blob/main/docs/graceful-shutdown.md) describes signals, environment overrides, application integration, and deployment verification.
+
 ### Listening for visitors – `Endpoints`
 
 An **endpoint** is an address your server answers on: a protocol (`http` or `https`), a host name and
