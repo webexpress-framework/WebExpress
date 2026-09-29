@@ -135,6 +135,7 @@ The components of **WebExpress** and its applications are centrally managed in t
 |EndpointManager             |Manages all endpoints (pages, resources, REST APIs, assets) that can be addressed with a URI.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
+|HealthManager               |Discovers application health components and combines their results with framework availability for the global health endpoint.
 |IdentityManager             |Issues and validates identity tokens and evaluates authorization policies and permissions.
 |IdentityProviderManager     |Discovers authentication providers and manages their application and plugin lifetimes.
 |IncludeManager              |Manages the dynamic integration of JavaScript and CSS files into the HTML header. In release mode, the files are delivered bundled and minified.
@@ -181,6 +182,7 @@ In addition, you can create your own components and register them in the `Compon
 ║     │ ResourceManager:IResourceManager                           │     │             ║
 ║     │ ThemeManager:IThemeManager                                 │     │             ║
 ║     │ FragmentManager:IFragmentManager                           │     │             ║
+║     │ HealthManager:IHealthManager                               │     │             ║
 ║     │ SitemapManager:ISitemapManager                             │     │             ║
 ║     │ InternationalizationManager:IInternationalizationManager   │     │             ║
 ║     │ SessionManager:ISessionManager                             │     │             ║
@@ -2655,6 +2657,224 @@ To provide clarity about the metadata specified in the code above, the following
 |Permission    |`Permission` |n            |Yes      |Grants access to the fragment.       
 |Condition     |`ICondition` |1            |Yes      |Condition that must be met for the fragment to be available.
 |Cache         |Bool         |1            |Yes      |Determines whether the fragment is created once and reused each time it is called. This attribute is active only if the associated page also has the cache attribute. 
+
+## Health model
+
+Health components contribute the availability of critical application dependencies to the global `/health` endpoint. WebCore checks the host lifecycle and component registry, while applications supply database, queue, external service, or background worker checks through `IHealth` in `WebExpress.WebCore.WebHealt`. The `HealthManager` discovers these components through plugin and application events, following the registration model of `FragmentManager`. The following UML diagram illustrates the manager, its application bindings, and a health component:
+
+```
+╔WebExpress.WebCore════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║         ┌──────────────────────────────────┐                                         ║
+║         │ <<Interface>>                    │                                         ║
+║         │ IComponentHub                    │                                         ║
+║         ├──────────────────────────────────┤ 1                                       ║
+║         │ HealthManager:IHealthManager     ├─────┐                                   ║
+║         │ …                                │     │                                   ║
+║         └──────────────────────────────────┘     │                                   ║
+║                                                  │                                   ║
+║              ┌───────────────────┐               │                                   ║
+║              │ <<Interface>>     │               │                                   ║
+║              │ IComponentManager │               │                                   ║
+║              ├───────────────────┤               │                                   ║
+║              └────────Δ──────────┘               │                                   ║
+║                       ¦                        1 │                                   ║
+║             ┌─────────┴──────────────────────────▼────────┐                          ║
+║             │ <<Interface>>                               │                          ║
+║             │ IHealthManager                              ├----------------┐         ║
+║             ├─────────────────────────────────────────────┤                ¦         ║
+║             │ AddHealth:Event                             │                ¦         ║
+║             │ RemoveHealth:Event                          │                ¦         ║
+║             ├─────────────────────────────────────────────┤ 1              ¦         ║
+║             │ HealthChecks:IEnumerable<IHealthContext>    ├─────────┐      ¦         ║
+║             ├─────────────────────────────────────────────┤         │      ¦         ║
+║             │ GetHealthChecks(IApplicationContext)        │         │      ¦         ║
+║             │   :IEnumerable<IHealthContext>              │         │      ¦         ║
+║             │ CheckAsync(CancellationToken):Task<bool>    │         │      ¦         ║
+║             └─────────────────────────────────────────────┘         │      ¦         ║
+║                                                                     │      ¦         ║
+║                            ┌────────────────┐                       │      ¦         ║
+║                            │ <<Interface>>  │                       │      ¦         ║
+║                            │ IContext       │                       │      ¦         ║
+║                            ├────────────────┤                       │      ¦         ║
+║                            └───────Δ────────┘                       │      ¦         ║
+║                                    ¦                                │      ¦         ║
+║               ┌────────────────────┴───────────────────┐            │      ¦         ║
+║               │ <<Interface>>                          │ *          │      ¦         ║
+║               │ IHealthContext                         ◄────────────┘      ¦         ║
+║               ├────────────────────────────────────────┤                   ¦         ║
+║               │ PluginContext:IPluginContext           │                   ¦         ║
+║               │ ApplicationContext:IApplicationContext │                   ¦         ║
+║               │ HealthId:IComponentId                  │                   ¦         ║
+║               │ Timeout:TimeSpan                       │                   ¦         ║
+║               └────────────────────────────────────────┘                   ¦         ║
+║                                                                            ¦         ║
+║                            ┌────────────────┐                              ¦         ║
+║                            │ <<Interface>>  │                              ¦         ║
+║                            │ IComponent     │                              ¦         ║
+║                            ├────────────────┤                              ¦         ║
+║                            └───────Δ────────┘                              ¦         ║
+║                                    ¦                                       ¦         ║
+║             ┌──────────────────────┴────────────────────────┐              ¦         ║
+║             │ <<Interface>>                                 │              ¦         ║
+║             │ IHealth                                       │              ¦         ║
+║             ├───────────────────────────────────────────────┤              ¦         ║
+║             │ CheckAsync(CancellationToken)                 │              ¦         ║
+║             │   :Task<HealthCheckResult>                    │              ¦         ║
+║             └──────────────────────Δ────────────────────────┘              ¦         ║
+║                                    ¦                                       ¦         ║
+╚════════════════════════════════════¦═══════════════════════════════════════¦═════════╝
+                                     ¦                                       ¦
+╔MyPlugin════════════════════════════¦═══════════════════════════════════════¦═════════╗
+║                                    ¦                                       ¦         ║
+║             ┌──────────────────────┴────────────────────────┐       create ¦         ║
+║             │ MyDatabaseHealth                              ◄--------------┘         ║
+║             ├───────────────────────────────────────────────┤                        ║
+║             │ CheckAsync(CancellationToken)                 │                        ║
+║             │   :Task<HealthCheckResult>                    │                        ║
+║             └───────────────────────────────────────────────┘                        ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+Health components are public sealed classes implementing `IHealth`. A plugin contributes its classes to its own applications and to applications associated with it through the plugin's `Application` attributes. The manager registers each class once per plugin and application, including applications added after the plugin was loaded. Applications do not call a registration method. The example below checks a configured database with a real connection and a minimal query:
+
+```csharp
+using Microsoft.Extensions.Configuration;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
+using WebExpress.WebCore.WebAttribute;
+using WebExpress.WebCore.WebHealt;
+
+/// <summary>
+/// Includes required database access in the application's health decision.
+/// </summary>
+[HealthTimeout(3000)]
+public sealed class MyDatabaseHealth : IHealth
+{
+    private readonly IConfiguration _settings;
+
+    /// <summary>
+    /// Uses the contributing plugin's configuration without exposing credentials in probe responses.
+    /// </summary>
+    /// <param name="healthContext">The binding supplying the plugin and application configuration context.</param>
+    private MyDatabaseHealth(IHealthContext healthContext)
+    {
+        _settings = healthContext.PluginContext.Settings.GetSection("Database");
+    }
+
+    /// <summary>
+    /// Verifies a database round trip within the health component's cancellation budget.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token limiting the dependency operation.</param>
+    /// <returns>A successful result when the configured database accepts the query.</returns>
+    public async Task<HealthCheckResult> CheckAsync(CancellationToken cancellationToken)
+    {
+        var factory = DbProviderFactories.GetFactory(_settings["Provider"]);
+        await using var connection = factory.CreateConnection();
+        connection.ConnectionString = _settings["ConnectionString"];
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
+        command.CommandTimeout = 2;
+        await command.ExecuteScalarAsync(cancellationToken);
+
+        return HealthCheckResult.Healthy();
+    }
+}
+```
+
+The database example reads `Database:Provider` and `Database:ConnectionString` from the contributing plugin's settings. The provider must be registered with `DbProviderFactories` during plugin initialization. The query assumes a database supporting `SELECT 1`; use the provider's equivalent read operation when necessary. An exception or `HealthCheckResult.Unhealthy("diagnostic context")` fails the aggregate health decision and records the technical details only in server logs.
+
+The health attribute configures the execution budget of each application binding. The following table describes the available component metadata:
+
+|Attribute     |Type         |Multiplicity |Optional |Description
+|--------------|-------------|-------------|---------|-----------------
+|HealthTimeout |Int          |1            |Yes      |The positive execution budget in milliseconds. The default is 5000. A value of zero or less makes the component unhealthy.
+
+### Health component lifecycle
+
+The manager exposes discovered bindings through `HealthChecks` and `GetHealthChecks(IApplicationContext)`, and reports binding changes through `AddHealth` and `RemoveHealth`. Each `IHealthContext` contains the contributing plugin, associated application, diagnostic component identifier, and execution timeout. Consumers can obtain the manager through constructor injection or `IComponentHub.HealthManager`.
+
+Component activation is deferred until the first probe and uses the same `ComponentActivator` mechanism as fragments. Constructors can receive `IHealthContext`, `IApplicationContext`, `IComponentHub`, `IHttpServerContext`, `IComponentId`, and registered component managers. A successfully created instance is reused for its application binding. Constructor failures remain registered as unhealthy checks and are retried by later probes.
+
+Component execution runs different bindings concurrently and waits for every result. Each check must perform a small, read-only operation, honor its cancellation token, and return unhealthy while a required dependency is still initializing. Missing tasks or results, unsuccessful results, exceptions, invalid timeout metadata, and exceeded budgets fail health. Completed results are not cached, so a later probe can observe recovery. Applications must supply checks for every dependency required to serve traffic; dependencies without a health component cannot affect the aggregate result.
+
+Concurrent probes share an unfinished invocation of the same binding. A timeout bounds each caller's wait even if component construction or synchronous application code blocks. Further probes cannot start overlapping invocations until that operation completes. A disconnected caller stops waiting without cancelling work shared with another caller. Code that ignores cooperative cancellation cannot be forcibly terminated by the manager.
+
+Component removal follows application and plugin ownership. Removing an application detaches all of its health bindings, and unloading a contributing plugin also removes bindings for applications owned by other plugins. Components may implement `IDisposable`; disposal occurs after any active invocation finishes. Disposing the manager stops discovery and removes all bindings. A registry change during a probe prevents an outdated successful response.
+
+### Global health endpoint
+
+The endpoint is available at `/health` and `/health/` on every configured HTTP or HTTPS listener without authentication. These paths are reserved by WebCore and are independent of `ContextPath`, application routes, and the public `ExternalUri`. Query parameters neither select checks nor enable diagnostic output. Health processing does not redirect to login pages or issue authentication or session cookies.
+
+The framework checks require completed HTTP server startup and an initialized component registry. Startup becomes healthy after listener startup and all `Started` handlers complete. Beginning `HttpServer.Stop()` clears the running state before requests are drained. A missing health manager or an uninitialized component manager produces `503`. Framework state is evaluated again after dependency checks complete, so shutdown during a probe prevents a successful response.
+
+The successful response uses HTTP `200 OK` only when all framework and application checks pass. A host without application health components can report success when its framework checks pass. A `GET /health` response has the following body:
+
+```json
+{"status":"healthy"}
+```
+
+The failure response uses HTTP `503 Service Unavailable` with the following fixed summary. Application identifiers, component names, connection details, exception messages, and stack traces are excluded from the response:
+
+```json
+{"status":"unhealthy","message":"One or more critical components are unavailable."}
+```
+
+The HTTP contract sets `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-store`. A `HEAD` request evaluates the same checks and returns the same status without a body. Other methods return `405 Method Not Allowed` and `Allow: GET, HEAD` without invoking checks. Failed request parsing also produces a fixed unhealthy response for the reserved health path.
+
+The server log provides diagnostic context for operators investigating `503` responses. Failed application checks record the application identifier, component identifier, and failure description. Exceptions include their technical context. Health components must not repair dependencies, mutate business data, or recursively invoke `/health`.
+
+### Docker health checks
+
+The Dockerfile example below probes aggregate health every thirty seconds. The image must contain `curl` and a shell, and the URL must match the container's configured listener. With the default five-second component budget, the command permits seven seconds for the request and Docker permits eight seconds for the command. Increase these values when a component uses a longer budget.
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=8s --start-period=30s --retries=3 \
+  CMD curl --fail --silent --show-error --max-time 7 http://127.0.0.1:8080/health || exit 1
+```
+
+Docker records health from the command's exit code. Health state alone does not restart a standalone Docker container. The interval, timeout, startup allowance, and retry count are deployment decisions described in the [Docker HEALTHCHECK reference](https://docs.docker.com/reference/dockerfile/#healthcheck).
+
+### Kubernetes probes
+
+The container specification below uses the aggregate endpoint for startup, readiness, and liveness. Replace the image and port with the deployment's values and configure WebExpress to listen on the container interface at that port. The example assumes that restarting an instance is an appropriate response to sustained failure of any registered dependency.
+
+```yaml
+containers:
+  - name: webexpress
+    image: your-registry/your-webexpress-app:your-version
+    ports:
+      - name: http
+        containerPort: 8080
+    startupProbe:
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 5
+      timeoutSeconds: 7
+      failureThreshold: 30
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 7
+      failureThreshold: 1
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 30
+      timeoutSeconds: 7
+      failureThreshold: 3
+```
+
+The startup probe delays readiness and liveness probing until startup succeeds. Readiness failures remove the instance from normal Service traffic, while repeated liveness failures cause a container restart. These behaviors follow the [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+
+The aggregate contract has the same meaning for every caller. A shared database outage therefore also fails liveness when liveness uses `/health`. Applications where a restart cannot correct an external dependency outage should use `/health` for readiness and define a separate application-specific liveness strategy before enabling liveness. Probe timeouts must exceed the longest component budget plus transport overhead, and startup allowances must cover the actual initialization duration.
 
 ## Web icons
 
