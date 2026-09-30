@@ -655,6 +655,8 @@ The methods implemented from the interface cover the life cycle of the applicati
 ║           ¦  │ RemoveApplication:Event                           │                   ║
 ║           ¦  ├───────────────────────────────────────────────────┤ 1                 ║
 ║           ¦  │ Applications:IEnumerable<IApplicationContext>     ├───┐               ║
+║           ¦  │ FailedApplications:                               │   │               ║
+║           ¦  │   IEnumerable<ApplicationFailure>                 │   │               ║
 ║           ¦  ├───────────────────────────────────────────────────┤   │               ║
 ║           ¦  │ GetApplication(ApplicationId):IApplicationContext │   │               ║
 ║           ¦  │ GetApplication(Type):IApplicationContext          │   │               ║
@@ -708,6 +710,8 @@ The methods implemented from the interface cover the life cycle of the applicati
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+An application whose constructor throws is not registered: it has no `ApplicationContext`, no routes, and no health bindings, and the remaining applications of the plugin are registered regardless. So that the failure does not disappear with the log line, the `ApplicationManager` keeps it in `FailedApplications` as an `ApplicationFailure` with the application identifier, the declaring plugin, and the exception thrown by the constructor (unwrapped from the reflection call). The entry remains until the plugin is removed or registered again. While it exists, the framework checks of the health endpoint fail (see *Health model*).
+
 ## Endpoint model
 
 Endpoints are (web) elements that can be accessed with a URI (Uniform Resource Identifier). When a plugin is loaded, all classes marked as resources are automatically determined from the assembly and included in a sitemap. For this purpose, the affected classes are provided with attributes. Endpoints are virtual and are implemented through specific derivations such as pages, resources, or REST APIs. Additionally, custom endpoints can also be defined. The following UML diagram illustrates the relationships and internal structure of the `EndpointManager` and the `Endpoint` it manages:
@@ -723,15 +727,15 @@ Endpoints are (web) elements that can be accessed with a URI (Uniform Resource I
 ║         ¦     ¦      ¦                                                               ║
 ║  ┌----- ¦-----┘      └----------------------┐                                        ║
 ║  ¦      ¦                                   ¦                                        ║
-║  ¦      ¦            ┌──────────────────────┴────────────────────────┐               ║
-║  ¦      ¦          * │ <<Interface>>                                 │               ║
-║  ¦      ¦      ┌─────► ISitemapManager                               │               ║
-║  ¦      ¦      │     ├───────────────────────────────────────────────┤ 1             ║
-║  ¦      ¦      │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────────┐   ║
-║  ¦      ¦      │     ├───────────────────────────────────────────────┤           │   ║
-║  ¦      ¦      │     │ Refresh()                                     ◄------┐    │   ║
-║  ¦      ¦      │     │ SearchResource(Uri,SearchContext):SearchResult │      ¦    │   ║
-║  ¦      ¦      │     └───────────────────────────────────────────────┘      ¦    │   ║
+║  ¦      ¦            ┌──────────────────────┴─────────────────────────┐              ║
+║  ¦      ¦          * │ <<Interface>>                                  │              ║
+║  ¦      ¦      ┌─────► ISitemapManager                                │              ║
+║  ¦      ¦      │     ├────────────────────────────────────────────────┤ 1            ║
+║  ¦      ¦      │     │ SiteMap:IEnumerable<IEndpointContext>          ├──────────┐   ║
+║  ¦      ¦      │     ├────────────────────────────────────────────────┤          │   ║
+║  ¦      ¦      │     │ Refresh()                                      ◄-----┐    │   ║
+║  ¦      ¦      │     │ SearchResource(Uri,SearchContext):SearchResult │     ¦    │   ║
+║  ¦      ¦      │     └────────────────────────────────────────────────┘     ¦    │   ║
 ║  ¦      ¦      │                                                            ¦    │   ║
 ║  ¦      ¦      │                                                            ¦    │   ║
 ║  ¦      ¦      │   ┌───────────────────────────────────┐                    ¦    │   ║
@@ -883,15 +887,15 @@ All assets are placed under the "assets" path, which is located within the main 
 ║        ¦            ¦                                                                ║
 ║        ¦            └-----------------------------┐                                  ║
 ║        ¦                                          ¦                                  ║
-║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
-║        ¦                 * │ <<Interface>>                                 │         ║
-║        ¦             ┌─────► ISitemapManager                               │         ║
-║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
-║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║        ¦             │     ├───────────────────────────────────────────────┤   │     ║
-║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
-║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦                   ┌──────────────────────┴─────────────────────────┐        ║
+║        ¦                 * │ <<Interface>>                                  │        ║
+║        ¦             ┌─────► ISitemapManager                                │        ║
+║        ¦             │     ├────────────────────────────────────────────────┤ 1      ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║        ¦             │     ├────────────────────────────────────────────────┤  │     ║
+║        ¦             │     │ Refresh()                                      │  │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║        ¦             │     └────────────────────────────────────────────────┘  │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │   ┌────────────────────────────────┐                    │     ║
@@ -1070,15 +1074,15 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║        ¦            ¦                                                                ║
 ║        ¦            └-----------------------------┐                                  ║
 ║        ¦                                          ¦                                  ║
-║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
-║        ¦                 * │ <<Interface>>                                 │         ║
-║        ¦             ┌─────► ISitemapManager                               │         ║
-║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
-║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║        ¦             │     ├───────────────────────────────────────────────┤   │     ║
-║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
-║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦                   ┌──────────────────────┴─────────────────────────┐        ║
+║        ¦                 * │ <<Interface>>                                  │        ║
+║        ¦             ┌─────► ISitemapManager                                │        ║
+║        ¦             │     ├────────────────────────────────────────────────┤ 1      ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║        ¦             │     ├────────────────────────────────────────────────┤  │     ║
+║        ¦             │     │ Refresh()                                      │  │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║        ¦             │     └────────────────────────────────────────────────┘  │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │   ┌──────────────────────────────────┐                  │     ║
@@ -1276,14 +1280,14 @@ The following class diagram illustrates the architecture of the `IncludeManager`
 ║        ¦            ¦                                                                ║
 ║        ¦            └-----------------------------┐                                  ║
 ║        ¦                                          ¦                                  ║
-║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
-║        ¦                 * │ <<Interface>>                                 │         ║
-║        ¦             ┌─────► ISitemapManager                               │         ║
-║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
-║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
-║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦                   ┌──────────────────────┴─────────────────────────┐        ║
+║        ¦                 * │ <<Interface>>                                  │        ║
+║        ¦             ┌─────► ISitemapManager                                │        ║
+║        ¦             │     ├────────────────────────────────────────────────┤ 1      ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║        ¦             │     │ Refresh()                                      │  │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║        ¦             │     └────────────────────────────────────────────────┘  │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │   ┌──────────────────────────────────┐                  │     ║
 ║        ¦             │   │ <<Interface>>                    │                  │     ║
@@ -1421,15 +1425,15 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║         ¦             ¦                                                              ║
 ║         ¦             └------------------------┐                                     ║
 ║         ¦                                      ¦                                     ║
-║         ¦               ┌──────────────────────┴────────────────────────┐            ║
-║         ¦             * │ <<Interface>>                                 │            ║
-║         ¦         ┌─────► ISitemapManager                               │            ║
-║         ¦         │     ├───────────────────────────────────────────────┤ 1          ║
-║         ¦         │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────┐    ║
-║         ¦         │     ├───────────────────────────────────────────────┤       │    ║
-║         ¦         │     │ Refresh()                                     │       │    ║
-║         ¦         │     │ SearchResource(Uri,SearchContext):SearchResult │       │    ║
-║         ¦         │     └───────────────────────────────────────────────┘       │    ║
+║         ¦               ┌──────────────────────┴─────────────────────────┐           ║
+║         ¦             * │ <<Interface>>                                  │           ║
+║         ¦         ┌─────► ISitemapManager                                │           ║
+║         ¦         │     ├────────────────────────────────────────────────┤ 1         ║
+║         ¦         │     │ SiteMap:IEnumerable<IEndpointContext>          ├──────┐    ║
+║         ¦         │     ├────────────────────────────────────────────────┤      │    ║
+║         ¦         │     │ Refresh()                                      │      │    ║
+║         ¦         │     │ SearchResource(Uri,SearchContext):SearchResult │      │    ║
+║         ¦         │     └────────────────────────────────────────────────┘      │    ║
 ║         ¦         │                                                             │    ║
 ║         ¦         └───────────────┐                                             │    ║
 ║         ¦                         │                                             │    ║
@@ -1951,15 +1955,15 @@ The following diagram outlines how the class structure and interactions for the 
 ║         ¦                       ¦                                                    ║
 ║         ¦                       └-----------------┐                                  ║
 ║         ¦                                         ¦                                  ║
-║         ¦                * ┌──────────────────────┴────────────────────────┐         ║
-║         ¦                  │ <<Interface>>                                 │         ║
-║         ¦            ┌─────► ISitemapManager                               │         ║
-║         ¦            │     ├───────────────────────────────────────────────┤ 1       ║
-║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
-║         ¦            │     │ Refresh()                                     │   │     ║
-║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
-║         ¦            │     └───────────────────────────────────────────────┘   │     ║
+║         ¦                * ┌──────────────────────┴───────────────────── ───┐        ║
+║         ¦                  │ <<Interface>>                                  │        ║
+║         ¦            ┌─────► ISitemapManager                                │        ║
+║         ¦            │     ├────────────────────────────────────────────────┤ 1      ║
+║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║         ¦            │     ├────────────────────────────────────────────────┤  │     ║
+║         ¦            │     │ Refresh()                                      │  │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║         ¦            │     └────────────────────────────────────────────────┘  │     ║
 ║         ¦            │                                                         │     ║
 ║         ¦            └───────────────┐                                         │     ║
 ║         ¦                            │                                         │     ║
@@ -2234,15 +2238,15 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║         ¦                       ¦                                                    ║
 ║         ¦                       └-----------------┐                                  ║
 ║         ¦                                         ¦                                  ║
-║         ¦                * ┌──────────────────────┴────────────────────────┐         ║
-║         ¦                  │ <<Interface>>                                 │         ║
-║         ¦            ┌─────► ISitemapManager                               │         ║
-║         ¦            │     ├───────────────────────────────────────────────┤ 1       ║
-║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
-║         ¦            │     │ Refresh()                                     │   │     ║
-║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │   │     ║
-║         ¦            │     └───────────────────────────────────────────────┘   │     ║
+║         ¦                * ┌──────────────────────┴─────────────────────────┐        ║
+║         ¦                  │ <<Interface>>                                  │        ║
+║         ¦            ┌─────► ISitemapManager                                │        ║
+║         ¦            │     ├────────────────────────────────────────────────┤ 1      ║
+║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║         ¦            │     ├──────────────────────────────────────────v─────┤  │     ║
+║         ¦            │     │ Refresh()                                      │  │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║         ¦            │     └────────────────────────────────────────────────┘  │     ║
 ║         ¦            │                                                         │     ║
 ║         ¦            └───────────────┐                                         │     ║
 ║         ¦                            │                                         │     ║
@@ -2692,6 +2696,7 @@ Health components provide the availability of critical application dependencies 
 ║             │ GetHealthChecks(IApplicationContext)        │         │      ¦         ║
 ║             │   :IEnumerable<IHealthContext>              │         │      ¦         ║
 ║             │ CheckAsync(CancellationToken):Task<bool>    │         │      ¦         ║
+║             │ CheckLiveness():bool                        │         │      ¦         ║
 ║             └─────────────────────────────────────────────┘         │      ¦         ║
 ║                                                                     │      ¦         ║
 ║                            ┌────────────────┐                       │      ¦         ║
@@ -2808,9 +2813,9 @@ Component removal follows application and plugin ownership. Removing an applicat
 
 ### Global health endpoint
 
-The endpoint is available at `/health` and `/health/` on every configured HTTP or HTTPS listener without authentication. These paths are reserved by WebCore and are independent of `ContextPath`, application routes, and the public `ExternalUri`. Query parameters neither select checks nor enable diagnostic output. Health processing does not redirect to login pages or issue authentication or session cookies.
+The endpoint is available at `/health` and `/health/` on every configured HTTP or HTTPS listener without authentication. The liveness variant `/health/live` (and `/health/live/`) evaluates only the framework checks and never invokes an application health component, so an outage of a dependency the process does not own cannot restart it. These paths are reserved by WebCore and are independent of `ContextPath`, application routes, and the public `ExternalUri`. Query parameters neither select checks nor enable diagnostic output. Health processing does not redirect to login pages or issue authentication or session cookies.
 
-The framework checks require completed HTTP server startup and an initialized component registry. Startup becomes healthy after listener startup and all `Started` handlers complete. Beginning `HttpServer.Stop()` clears the running state before requests are drained. Framework state is evaluated again after dependency checks complete, so shutdown during a probe prevents a successful response.
+The framework checks require completed HTTP server startup, an initialized component registry, and every declared application. An application whose constructor throws is not registered and therefore leaves no health bindings behind; the `ApplicationManager` records it in `FailedApplications` (identifier, plugin, and exception), and the framework checks fail for as long as the declaring plugin is loaded. The server log names the application and the exception on every probe. Startup becomes healthy after listener startup and all `Started` handlers complete. Beginning `HttpServer.Stop()` clears the running state before requests are drained. Framework state is evaluated again after dependency checks complete, so shutdown during a probe prevents a successful response.
 
 The successful response uses HTTP `200 OK` only when all framework and application checks pass. A host without application health components can report success when its framework checks pass. A `GET /health` response has the following body:
 
@@ -2841,7 +2846,7 @@ Docker records health from the command's exit code. Health state alone does not 
 
 ### Kubernetes probes
 
-The container specification below uses the aggregate endpoint for startup, readiness, and liveness. Replace the image and port with the deployment's values and configure WebExpress to listen on the container interface at that port. The example assumes that restarting an instance is an appropriate response to sustained failure of any registered dependency.
+The container specification below uses the aggregate endpoint for startup and readiness, and the liveness variant for liveness. Replace the image and port with the deployment's values and configure WebExpress to listen on the container interface at that port.
 
 ```yaml
 containers:
@@ -2866,7 +2871,7 @@ containers:
       failureThreshold: 1
     livenessProbe:
       httpGet:
-        path: /health
+        path: /health/live
         port: http
       periodSeconds: 30
       timeoutSeconds: 7
@@ -2875,7 +2880,7 @@ containers:
 
 The startup probe delays readiness and liveness probing until startup succeeds. Readiness failures remove the instance from normal Service traffic, while repeated liveness failures cause a container restart. These behaviors follow the [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
 
-The aggregate contract has the same meaning for every caller. A shared database outage therefore also fails liveness when liveness uses `/health`. Applications where a restart cannot correct an external dependency outage should use `/health` for readiness and define a separate application-specific liveness strategy before enabling liveness. Probe timeouts must exceed the longest component budget plus transport overhead, and startup allowances must cover the actual initialization duration.
+A shared database outage fails `/health` and takes every instance out of the Service, but leaves `/health/live` healthy, so it restarts nothing that a restart could not fix. `/health/live` fails for a host stuck in startup or shutdown, a component manager that failed to initialize, and a declared application that could not be created. Applications whose own dependencies are cured by a restart - a database file on the pod's volume, for example - can point liveness at `/health` instead. Probe timeouts must exceed the longest component budget plus transport overhead, and startup allowances must cover the actual initialization duration.
 
 ## Web icons
 
@@ -4473,6 +4478,8 @@ WebCore authenticates requests using signed tokens rather than a user object in 
 ║  │ ValidateChallenge(...)   │  │  Provider         │ │  Provider                 │ ¦ ║
 ║  │ ConsumeChallenge(...)    │  ├───────────────────┤ ├───────────────────────────┤ ¦ ║
 ║  │ RevokeRefreshGrant(...)  │  ├───────────────────┤ │ ProviderId:String         │ ¦ ║
+║  │ IsAuthentication         │  │                   │ │                           │ ¦ ║
+║  │  Configured(...):Bool    │  │                   │ │                           │ ¦ ║
 ║  └──────────┬───────────────┘  │ Authenticate(...) │ ├───────────────────────────┤ ¦ ║
 ║             │1                 │  :IIdentity       │ │ CreateChallengeAsync(...) │ ¦ ║
 ║             │                  │ GetIdentities()   │ │ AuthenticateCallbackAsync │ ¦ ║
@@ -4555,6 +4562,30 @@ The Authentication defines the deployment's trust boundary. The token issuer and
 Supply the production signing key through deployment secrets, never source control. Every replica needs the same issuer, audience, key, and durable token-store directory. Missing configuration disables authentication endpoints; there is no generated per-process signing key. Key replacement invalidates outstanding tokens. Internal JWTs use HS256, explicit token types, application-specific audiences, expiration, and unique identifiers. A deployment's signing key must not be reused by another service. Browser authentication endpoints require HTTPS by default as observed by WebCore.
 
 The configuration must be available to the executable host, including when login is implemented through WebApp's `RestApiSession`. A missing `WebExpress:Authentication` section causes central token issuance to reject login with `Configure WebExpress:Authentication before signing in.` Place deployment configuration in the host's active settings directory or provide environment variables such as `WEBEXPRESS_WebExpress__Authentication__SigningKey`. A configuration file in a plugin's source directory does not configure the running host unless it is deployed to that settings directory.
+
+Components that depend on sign-in - a health check, a setup page - ask `IIdentityManager.IsAuthenticationConfigured(applicationContext)` instead of restating these rules. It returns `true` only when the section yields a signing authority (issuer and audience set, a Base64 signing key of at least 256 bits, valid lifetimes) and the application has a token store, either a registered one or the default store under `TokenStorePath`. A missing section returns `false`; a section that exists but is unusable also returns `false` rather than throwing, and the reason is written to the server log without the key. Resolving the default store creates its directory, as the first sign-in would, so a directory that cannot be created surfaces as an exception. The authentication endpoints use the same question and answer `503` with `authentication_not_configured` when it returns `false`.
+
+```csharp
+[HealthTimeout(1000)]
+public sealed class MyAuthenticationHealth : IHealth
+{
+    private readonly IHealthContext _healthContext;
+    private readonly IComponentHub _componentHub;
+
+    private MyAuthenticationHealth(IHealthContext healthContext, IComponentHub componentHub)
+    {
+        _healthContext = healthContext;
+        _componentHub = componentHub;
+    }
+
+    public Task<HealthCheckResult> CheckAsync(CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_componentHub.IdentityManager.IsAuthenticationConfigured(_healthContext.ApplicationContext)
+            ? HealthCheckResult.Healthy()
+            : HealthCheckResult.Unhealthy("WebExpress:Authentication cannot issue sign-in tokens."));
+    }
+}
+```
 
 The development host ships an `Authentication` section in `WebExpress.Develop/src/WebExpress.Develop.App/settings/webexpress.settings.json` with a public development signing key and `RequireHttps: false`. These initial values can be shared through Git and allow the hosted WebUI tutorial to log in at `http://localhost/webui` without a certificate. Rebuild and restart `WebExpress.Develop.App` after changing its settings. Before production use, replace the public key with a private random key, set `RequireHttps: true`, and configure valid HTTPS, deployment-specific issuer and audience values, and durable shared token storage. This host runs multiple applications, so root authentication endpoints require an explicit application selector unless a default `ApplicationId` is configured.
 
