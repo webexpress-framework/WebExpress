@@ -3390,6 +3390,167 @@ The arrangement of the form contents can be controlled by the `ControlFormItemGr
 ╚═════════════════════════════════════════════════════════════════╝
 ```
 
+## PDF model
+
+Stored text - a Markdown document or the value the WYSIWYG editor writes, which `ControlContent` shows as its reading view - can be turned into a PDF file on the server. The renderer lives in `WebExpress.WebUI.WebPdf` and is built the same way as `WebMarkdown`: a document model, renderers that fill it from a source format, and a writer that produces the output. It runs entirely in-process, without a browser, a headless print service or a third-party library, so a file can be produced wherever the server runs - in a REST endpoint, a job, a notification or a mail handler.
+
+The model is a flow of blocks, not a set of positioned shapes. Nothing is placed on a page until the document is written, so page size, margins, font and running texts can be changed after the content has been converted, and the same model can be set on A4 as well as on Letter.
+
+```
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║  ┌──────────────────────────────┐   ┌──────────────────────────────┐                 ║
+║  │ PdfRendererMarkdown          │   │ PdfRendererContent           │                 ║
+║  ├──────────────────────────────┤   ├──────────────────────────────┤                 ║
+║  │ ConvertToPdf(MarkdownDoc.)   │   │ ConvertToPdf(String,         │                 ║
+║  │ ConvertMarkdownToPdf(String) │   │   TypeFormatContent)         │                 ║
+║  └──────────────┬───────────────┘   │ ConvertToPdf(ControlContent, │                 ║
+║                 ¦                   │   IRenderControlContext)     │                 ║
+║                 ¦                   └──────┬────────────────┬──────┘                 ║
+║                 ¦  ┌──────────────────────────────┐         ¦ EditorContent          ║
+║                 ¦  │ PdfRendererHtml              │◄--------┘ .ReadDocument          ║
+║                 ¦  ├──────────────────────────────┤                                  ║
+║                 ¦  │ ConvertToPdf(IHtmlNode[])    │                                  ║
+║                 ¦  │ ConvertHtmlToPdf(String)     │                                  ║
+║                 ¦  └──────────────┬───────────────┘                                  ║
+║                 ¦ create          ¦ create                                           ║
+║  ┌──────────────▼─────────────────▼───────────────┐1   * ┌─────────────────────────┐ ║
+║  │ PdfDocument                                    ├─────►│ <<abstract>>            │ ║
+║  ├────────────────────────────────────────────────┤      │ PdfBlockElement         │ ║
+║  │ Title, Author, Subject, Keywords, Language     │      ├─────────────────────────┤ ║
+║  │ CreationDate:DateTimeOffset?                   │      │ PlainText:String        │ ║
+║  │ PageSize:PdfPageSize                           │      └────────────Δ────────────┘ ║
+║  │ Margin:PdfMargin                               │                   ¦              ║
+║  │ FontFamily:PdfFontFamily                       │  Heading, Paragraph, Code, Rule, ║
+║  │ FontSize:Float                                 │  Image, PageBreak, List, Table,  ║
+║  │ Header, Footer:String                          │  Quote, Callout, ListItem,       ║
+║  │ Outline, Compress:Bool                         │  TableCell (PdfBlockElement...)  ║
+║  │ ImageResolver:Func<String, Byte[]>             │                                  ║
+║  ├────────────────────────────────────────────────┤      ┌─────────────────────────┐ ║
+║  │ Add(PdfBlockElement[]):PdfDocument             │      │ <<abstract>>            │ ║
+║  │ Save(Stream)                                   │      │ PdfInlineElement        │ ║
+║  │ ToArray():Byte[]                               │      └────────────Δ────────────┘ ║
+║  └───────────────────────┬────────────────────────┘                   ¦              ║
+║                          ¦ internal                    Text(Text, PdfTextStyle),     ║
+║  ┌───────────────────────▼────────────────────────┐    LineBreak, Checkbox           ║
+║  │ PdfLayout ──► PdfWriter (PdfFont, PdfImage)    │                                  ║
+║  └────────────────────────────────────────────────┘                                  ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Producing a file
+
+The usual case is the value behind a `ControlContent`. `PdfRendererContent` takes it in either of the two formats a value is stored in and applies the same rules as the reading view: a `RichText` value has its editing scaffolding - add-on frames, column resizers, instruction texts, the guard paragraphs around non-editable blocks - removed by `EditorContent.ReadDocument`, a `Markdown` value is parsed by the `MarkdownParser` that also backs `ControlText`. A REST endpoint that answers with the file looks like this:
+
+```csharp
+[Segment("article-pdf")]
+public sealed class ArticlePdf : IRestApi
+{
+    [Method(RequestMethod.GET)]
+    public IResponse Retrieve(Request request)
+    {
+        var article = Articles.Find(request.GetParameter("id")?.Value);
+        var document = PdfRendererContent.ConvertToPdf(article.Description, TypeFormatContent.RichText);
+
+        document.Title = article.Title;
+        document.Language = "de-DE";
+        document.Footer = "Seite {page} von {pages}";
+        document.ImageResolver = source => Attachments.Load(article, source);
+
+        var response = new ResponseOK { Content = document.ToArray() }
+            .AddHeaderContentType("application/pdf");
+
+        // inline opens the browser's viewer, attachment downloads the file
+        response.Header.ContentDisposition = $"inline; filename=\"{article.Id}.pdf\"";
+
+        return response;
+    }
+}
+```
+
+A control can also be converted as it stands, evaluated in the render context of the current request, which yields its placeholder when the value is empty - exactly what the page shows:
+
+```csharp
+var document = new ControlContent { Content = _ => record.Notes, Format = _ => TypeFormatContent.Markdown }
+    .ConvertToPdf(renderContext);
+```
+
+The renderers are also usable on their own:
+
+|Renderer              |Input                                                |Notes
+|----------------------|-----------------------------------------------------|----------------------------------------------------------------
+|`PdfRendererMarkdown` |`MarkdownDocument` or a Markdown string              |Counterpart of `MarkdownRendererHtml` on the same AST. Formatting inside table cells is kept; raw HTML in the text is formatted through `PdfRendererHtml`; plugins contribute their content only.
+|`PdfRendererHtml`     |`IEnumerable<IHtmlNode>` or HTML                     |Reads the inline `style` attribute (colors, font size and family, weight, alignment, indentation, widths) and a few well known classes (`wx-editor-row`/`wx-editor-region`, `alert-*`, `wx-callout-*`, `table-striped`). There is no style sheet. Scripts, styles, forms and embedded content are dropped.
+|`PdfRendererContent`  |A stored value and its format, or a `ControlContent` |Removes the editor scaffolding first; use it rather than `PdfRendererHtml` for anything the editor wrote.
+
+### Building a document by hand
+
+The model can be filled directly, for a report that is not stored text. Every container holds blocks, so a list item or a table cell can carry several paragraphs, a nested list or another table:
+
+```csharp
+var document = new PdfDocument { Title = "Inventory", PageSize = PdfPageSize.A4.Landscape(), Footer = "Page {page} of {pages}" }
+    .Add(new PdfBlockElementHeading(1, "Inventory"))
+    .Add(new PdfBlockElementParagraph()
+        .Add(new PdfInlineElementText("Counted on "), new PdfInlineElementText("1 October", new PdfTextStyle { Bold = true })))
+    .Add(new PdfBlockElementTable { Striped = true }
+        .Add(new PdfBlockElementTableRow([new PdfBlockElementTableCell("Item"), new PdfBlockElementTableCell("Count") { Align = PdfTextAlign.Right }]) { Header = true })
+        .Add(items.Select(i => new PdfBlockElementTableRow([new PdfBlockElementTableCell(i.Name), new PdfBlockElementTableCell(i.Count.ToString()) { Align = PdfTextAlign.Right }]))));
+
+File.WriteAllBytes("inventory.pdf", document.ToArray());
+```
+
+A `PdfTextStyle` is immutable and derived rather than changed (`style with { Italic = true }`), because the renderers build it while descending through nested markup: an emphasis inside a link inside a colored span adds to what its parents set and must not leak into the text that follows.
+
+### Elements
+
+|Element                    |Content          |Behaviour
+|---------------------------|-----------------|------------------------------------------------------------------------------
+|`PdfBlockElementHeading`   |Inline           |Levels 1-6, bold and larger; levels 1 and 2 are underlined. Becomes a bookmark. Kept on the page of what follows it: two lines of text, or a whole picture.
+|`PdfBlockElementParagraph` |Inline           |Broken into lines at spaces and across pages line by line. `Align` (left, center, right, justify; null inherits from the container), `Indent`, `Background`.
+|`PdfBlockElementCode`      |Text             |Monospaced on a shaded background; whitespace is kept, too long lines are wrapped at the last fitting character.
+|`PdfBlockElementQuote`     |Blocks           |Indented, muted, with a bar along the left edge on every page it spans.
+|`PdfBlockElementCallout`   |Blocks           |Tinted box with an accent bar; `Hint`, `Warning`, `Danger`, `Success`.
+|`PdfBlockElementList`      |`ListItem`s      |`Bullet` (shape changes with depth), `Numeric`, `LowerAlpha`, `UpperAlpha`, `LowerRoman`, `UpperRoman`, `None`; `Start`. A nested list is a block of its item.
+|`PdfBlockElementTable`     |Rows of cells    |See below.
+|`PdfBlockElementImage`     |Picture          |JPEG (embedded as is) and PNG (transparency kept as a soft mask); scaled into the content width; `Width`, `Height`, `Align`. Replaced by its alternative text when it cannot be read.
+|`PdfBlockElementRule`      |-                |A horizontal line.
+|`PdfBlockElementPageBreak` |-                |Starts a new page, unless the current one is still empty.
+|`PdfInlineElementText`     |Text and style   |Bold, italic, underline, strikethrough, superscript, subscript, font family, relative size, color, background, link.
+|`PdfInlineElementLineBreak`|-                |A forced line break.
+|`PdfInlineElementCheckbox` |State            |The drawn box of a task item.
+
+Tables size their columns the way a browser does with automatic layout: every column gets at least its longest word and the remaining width is shared by how much text a column would like to put on one line. `SetColumnWidths` fixes the widths instead - as proportions when every column has one, which is how the editor stores a resized table, or as lengths in points next to open columns (width zero), which then share what is left, as a `<col>` without a width does. Header rows at the top of a table are set bold on a shaded background and repeated on every page the table continues on. A row is moved to the next page as a whole when it fits on one; a row taller than a page is split, every cell continuing on the next page. A table with `Bordered = false` draws nothing of its own and serves as a column layout - the form the regions of an editor row are rendered in.
+
+### Layout and file format
+
+Writing a document runs two internal steps. `PdfLayout` sets the blocks on pages in a single pass from top to bottom. A container that draws behind its content - a code block, a callout, a table row - paints its background once its end is known, one segment per page it spans, into a background layer at the position it started at, so an outer box never covers the box of something nested in it. Table rows are measured before they are placed by running the same layout on an endless page. `PdfWriter` then writes the file: the catalog, the page tree, a content stream per page (compressed with FlateDecode unless `Compress` is off), the fonts, the images, the bookmarks, the link annotations and the cross-reference table.
+
+|Aspect        |Behaviour
+|--------------|-------------------------------------------------------------------------------------------
+|Fonts         |The standard fonts Helvetica, Times and Courier in four faces each, built into every reader and therefore not embedded. Line breaking uses their metrics.
+|Character set |WinAnsi (Windows-1252): the western European languages including umlauts, `€`, typographic quotes and dashes. A few characters outside of it have a stand-in (`→` becomes `->`); every other character is written as `?`. Document properties and bookmarks are written in UTF-16 and are not limited.
+|Links         |Only absolute `http`, `https`, `mailto` and `ftp` addresses become clickable; a relative path has no meaning in a file read away from the site, and a script address must not be followed.
+|Bookmarks     |One per heading, nested by level; `Outline = false` switches them off.
+|Running texts |`Header` and `Footer` are centered in the top and bottom margin; `{page}` and `{pages}` are replaced.
+|Determinism   |With a fixed `CreationDate` the output is identical byte for byte, which keeps generated files diffable and cacheable.
+
+### Pictures and security
+
+The document is generated on the server, and the text it is generated from is written by users. A renderer that followed every address a text names would let any author make the server issue requests on their behalf - to internal services, to the cloud metadata endpoint, to the file system. The PDF renderer therefore never fetches anything by itself. A picture is taken from `PdfBlockElementImage.Data`, from a `data:` address (which is what the editor stores for a pasted picture), or from `PdfDocument.ImageResolver`, a function the application provides and in which it decides which addresses are trustworthy - an asset of the application, an attachment of the record being printed. Without a resolver, any other picture is shown as its alternative text.
+
+```csharp
+document.ImageResolver = source =>
+{
+    // answer only paths of this site that name an attachment of the record
+    return source.StartsWith("/api/1/attachments/") && !source.Contains("..")
+        ? attachments.Read(record, source["/api/1/attachments/".Length..])
+        : null;
+};
+```
+
+The tutorial demonstrates the whole chain on the `Content` control page: the buttons in the *PDF* section call a REST endpoint (`WWW/Api/_1_/ContentPdf.cs`) that renders the rich text value, the same value as Markdown, and a showcase covering every element - long enough to show page breaks, the repeated table header, the footer and the bookmarks - and opens the file in the viewer of the browser.
+
 ## Session model
 
 A session establishes a state-based connection between the client and WebExpress using the otherwise stateless HTTP(S) protocol. The session is assigned to a cookie and is personalized. The cookie consists of a guid. Further data is not stored in the cookie, but on the server side in the `session` object. The following UML diagram illustrates the relationships and structure involved:
