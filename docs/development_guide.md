@@ -3539,15 +3539,15 @@ The model is a flow of blocks, not a set of positioned shapes. Nothing is placed
 ╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
 ║  ┌──────────────────────────────┐   ┌──────────────────────────────┐                 ║
-║  │ PdfRendererMarkdown          │   │ PdfRendererContent           │                 ║
+║  │ PdfRendererMarkdown          │   │ EditorContent (WebEditor)    │                 ║
 ║  ├──────────────────────────────┤   ├──────────────────────────────┤                 ║
-║  │ ConvertToPdf(MarkdownDoc.)   │   │ ConvertToPdf(String,         │                 ║
-║  │ ConvertMarkdownToPdf(String) │   │   TypeFormatContent)         │                 ║
-║  └──────────────┬───────────────┘   │ ConvertToPdf(ControlContent, │                 ║
-║                 ¦                   │   IRenderControlContext)     │                 ║
-║                 ¦                   └──────┬────────────────┬──────┘                 ║
-║                 ¦  ┌──────────────────────────────┐         ¦ EditorContent          ║
-║                 ¦  │ PdfRendererHtml              │◄--------┘ .ReadDocument          ║
+║  │ ConvertToPdf(MarkdownDoc.)   │   │ ReadDocument(String)         │                 ║
+║  │ ConvertMarkdownToPdf(String) │   │ ConvertToMarkdown(String)    │                 ║
+║  └──────────────┬───────────────┘   │ ConvertToPdf(String)         │                 ║
+║                 ¦                   └───────────────────────┬──────┘                 ║
+║                 ¦                                           ¦ scaffolding removed    ║
+║                 ¦  ┌──────────────────────────────┐         ¦ by the reading view    ║
+║                 ¦  │ PdfRendererHtml              │◄--------┘ rules                  ║
 ║                 ¦  ├──────────────────────────────┤                                  ║
 ║                 ¦  │ ConvertToPdf(IHtmlNode[])    │                                  ║
 ║                 ¦  │ ConvertHtmlToPdf(String)     │                                  ║
@@ -3580,7 +3580,12 @@ The model is a flow of blocks, not a set of positioned shapes. Nothing is placed
 
 ### Producing a file
 
-The usual case is the value behind a `ControlContent`. `PdfRendererContent` takes it in either of the two formats a value is stored in and applies the same rules as the reading view: a `RichText` value has its editing scaffolding - add-on frames, column resizers, instruction texts, the guard paragraphs around non-editable blocks - removed by `EditorContent.ReadDocument`, a `Markdown` value is parsed by the `MarkdownParser` that also backs `ControlText`. A REST endpoint that answers with the file looks like this:
+A file is made from the stored value, never from the control that shows it, so an export, a job or a mail handler needs no control, page or render context. The caller picks the entry point by the format the value is stored in:
+
+- a value the WYSIWYG editor wrote goes through `EditorContent.ConvertToPdf` (`WebExpress.WebUI.WebEditor`). It removes the editing scaffolding - add-on frames, column resizers, instruction texts, the guard paragraphs around non-editable blocks - by the same rules the reading view applies on the client, and hands the plain document to `PdfRendererHtml`. Both sides are held together by the shared fixture `Data/editor-content.fixture.json`.
+- a Markdown value goes through `PdfRendererMarkdown.ConvertMarkdownToPdf`, on the `MarkdownParser` that also backs `ControlText`.
+
+The PDF renderers themselves know nothing about the editor or the web layer; `EditorContent` depends on them, not the other way round. A REST endpoint that answers with the file looks like this:
 
 ```csharp
 [Segment("article-pdf")]
@@ -3590,7 +3595,7 @@ public sealed class ArticlePdf : IRestApi
     public IResponse Retrieve(Request request)
     {
         var article = Articles.Find(request.GetParameter("id")?.Value);
-        var document = PdfRendererContent.ConvertToPdf(article.Description, TypeFormatContent.RichText);
+        var document = EditorContent.ConvertToPdf(article.Description);
 
         document.Title = article.Title;
         document.Language = "de-DE";
@@ -3608,21 +3613,14 @@ public sealed class ArticlePdf : IRestApi
 }
 ```
 
-A control can also be converted as it stands, evaluated in the render context of the current request, which yields its placeholder when the value is empty - exactly what the page shows:
-
-```csharp
-var document = new ControlContent { Content = _ => record.Notes, Format = _ => TypeFormatContent.Markdown }
-    .ConvertToPdf(renderContext);
-```
+An empty value yields an empty document. A placeholder, as `ControlContent` shows one, is a decision of the page, so an export that wants one adds it itself.
 
 The renderers are also usable on their own:
 
 |Renderer              |Input                                                |Notes
 |----------------------|-----------------------------------------------------|----------------------------------------------------------------
 |`PdfRendererMarkdown` |`MarkdownDocument` or a Markdown string              |Counterpart of `MarkdownRendererHtml` on the same AST. Formatting inside table cells is kept; raw HTML in the text is formatted through `PdfRendererHtml`; plugins contribute their content only.
-|`PdfRendererHtml`     |`IEnumerable<IHtmlNode>` or HTML                     |Reads the inline `style` attribute (colors, font size and family, weight, alignment, indentation, widths) and a few well known classes (`wx-editor-row`/`wx-editor-region`, `alert-*`, `wx-callout-*`, `table-striped`). There is no style sheet. Scripts, styles, forms and embedded content are dropped.
-|`PdfRendererContent`  |A stored value and its format, or a `ControlContent` |Removes the editor scaffolding first; use it rather than `PdfRendererHtml` for anything the editor wrote.
-
+|`PdfRendererHtml`     |`IEnumerable<IHtmlNode>` or HTML                     |Reads the inline `style` attribute (colors, font size and family, weight, alignment, indentation, widths) and a few well known classes (`wx-editor-row`/`wx-editor-region`, `alert-*`, `wx-callout-*`, `table-striped`). There is no style sheet. Scripts, styles, forms and embedded content are dropped. It does not remove editor scaffolding; use `EditorContent.ConvertToPdf` for anything the editor wrote.
 ### Building a document by hand
 
 The model can be filled directly, for a report that is not stored text. Every container holds blocks, so a list item or a table cell can carry several paragraphs, a nested list or another table:
