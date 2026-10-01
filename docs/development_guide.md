@@ -3390,6 +3390,145 @@ The arrangement of the form contents can be controlled by the `ControlFormItemGr
 ╚═════════════════════════════════════════════════════════════════╝
 ```
 
+## Markdown model
+
+Text that is kept as plain text - a description field, an imported document, a README - is written in Markdown and rendered on the server. The model lives in `WebExpress.WebUI.WebMarkdown`: a parser turns the text into a tree of elements (`MarkdownDocument`), and renderers turn that tree into HTML, back into Markdown or into a PDF. Every consumer works on the same tree, so `ControlText` (`Format = TypeFormatText.Markdown`), `ControlContent` (`Format = TypeFormatContent.Markdown`) and the PDF renderer show one document the same way, and a value the WYSIWYG editor wrote can be brought into the format by reading its HTML into the same tree.
+
+```
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║  ┌──────────────────────────────┐   ┌─────────────────────────────────┐              ║
+║  │ MarkdownParser               │   │ MarkdownRendererHtmlToMarkdown  │              ║
+║  ├──────────────────────────────┤   ├─────────────────────────────────┤              ║
+║  │ Parse(String)                │   │ ConvertHtmlToMarkdown(String)   │              ║
+║  └──────┬───────────────┬───────┘   │ ConvertToDocument(IHtmlNode[])  │              ║
+║         ¦ internal      ¦ create    └──────────────┬──────────────────┘              ║
+║  ┌──────▼─────────────┐ ¦                          ¦ create                          ║
+║  │ MarkdownTokenizer  │ ¦                          ¦                                 ║
+║  │ MarkdownTokenStream│ ¦                          ¦                                 ║
+║  └────────────────────┘ ¦                          ¦                                 ║
+║  ┌──────────────────────▼──────────────────────────▼──────┐1  * ┌──────────────────┐ ║
+║  │ MarkdownDocument                                       ├────►│ <<interface>>    │ ║
+║  ├────────────────────────────────────────────────────────┤     │ IMarkdownElement │ ║
+║  │ Elements:IEnumerable<IMarkdownElement>                 │     ├──────────────────┤ ║
+║  ├────────────────────────────────────────────────────────┤     │ PlainText:String │ ║
+║  │ Add(IMarkdownElement[]):MarkdownDocument               │     └─────────Δ────────┘ ║
+║  │ GetPlainText():String                                  │               ¦          ║
+║  └───────────┬────────────────┬─────────────────┬─────────┘     ┌─────────┴────────┐ ║
+║              ¦ extension      ¦ extension       ¦ extension     │ MarkdownBlock-   │ ║
+║  ┌───────────▼──────────┐ ┌───▼──────────────┐ ┌▼─────────────┐ │   Element        │ ║
+║  │ MarkdownRendererHtml │ │ MarkdownRenderer-│ │ PdfRenderer- │ │ MarkdownInline-  │ ║
+║  ├──────────────────────┤ │   Markdown       │ │   Markdown   │ │   Element        │ ║
+║  │ ConvertToHtml(       │ ├──────────────────┤ ├──────────────┤ └──────────────────┘ ║
+║  │   IRenderControl-    │ │ ConvertTo-       │ │ ConvertToPdf │                      ║
+║  │   Context, Int?)     │ │   Markdown()     │ │   ()         │                      ║
+║  └──────────────────────┘ └──────────────────┘ └──────────────┘                      ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+The tree is built from two kinds of nodes. A `MarkdownBlockElement` occupies its own vertical space - a heading, a paragraph, a list, a table - and holds either inline elements or further blocks; a `MarkdownInlineElement` is a run of text inside a block and can nest (a bold run inside a link text inside an italic run). Every node offers `PlainText`, which is what the search index and the accessible names are built from.
+
+```csharp
+var document = MarkdownParser.Parse(record.Description);
+
+// as markup for a page; the headings continue the outline of the section the text sits in
+var html = document.ConvertToHtml(renderContext, headingLevel: 3);
+
+// normalized back to Markdown, for example after the tree was changed in code
+var markdown = document.ConvertToMarkdown();
+```
+
+### Syntax
+
+The parser reads the text line by line and decides on the first token of a line which block begins; a line that starts no other block continues the current paragraph. Indentation is counted in steps of two spaces or one tab.
+
+|Notation                                   |Element                              |Notes
+|-------------------------------------------|-------------------------------------|---------------------------------------------------------------
+|`#` to `######`                            |`MarkdownBlockElementHeader`         |`Level` 1-6.
+|`---`, `***`, `___`, `~~~` (three or more) |`MarkdownBlockElementHorizontalRule` |The line must contain nothing else.
+|`> `                                       |`MarkdownBlockElementQuote`          |The content is parsed as blocks again, so a quote can hold a list.
+|`>? `, `>! `, `>!! `, `>* `                |`MarkdownBlockElementCallout`        |`CalloutType` Hint, Warning, Danger, Success.
+|` ``` ` *language* ... ` ``` `             |`MarkdownBlockElementCode`           |`Language` and `Content` verbatim. Without a closing marker the line stays text.
+|`- `, `* `, `+ `                           |`MarkdownBlockElementList`           |Unordered. Indented items form a nested list in `Child`.
+|`1. `, `a. `, `A. `, `i. `, `I. `          |`MarkdownBlockElementList`           |Ordered; `MarkdownListType` and the start number come from the first marker.
+|Two leading spaces or a tab                |`MarkdownBlockElementIndent`         |Outside of a list.
+|`\|` at the start of a line                |`MarkdownBlockElementTable`          |See below.
+|`{{% name key="value" %}}` ... `{{% /name %}}`|`MarkdownBlockElementPlugin`      |`Name`, `Parameters`, the enclosed blocks as `Content`.
+|Any other line                             |`MarkdownBlockElementParagraph`      |Consecutive lines form one paragraph.
+
+|Notation                        |Element                                                 |Notes
+|--------------------------------|--------------------------------------------------------|----------------------------------------------
+|`*text*`                        |`MarkdownInlineElementItalic`                           |
+|`**text**`                      |`MarkdownInlineElementBold`                             |`***text***` is bold and italic.
+|`_text_`                        |`MarkdownInlineElementUnderline`                        |Underline, not italic. `__` adds bold, `___` bold and italic.
+|`~text~`, `~~text~~`            |`MarkdownInlineElementStrikethrough`                    |`~~~text~~~` adds bold.
+|`==text==`                      |`MarkdownInlineElementMarked`                           |
+|`` `code` ``                    |`MarkdownInlineElementCode`                             |
+|`[text](url)`                   |`MarkdownInlineElementLink`                             |
+|`![alt](url)`                   |`MarkdownInlineElementImage`                            |
+|`https://…`, `mailto:…`, …      |`MarkdownInlineElementUrl`                              |`http`, `https`, `ftp`, `ftps`, `ldap`, `ldaps`, `file`, `mailto`.
+|`[ ]`, `[x]`                    |`MarkdownInlineElementCheckbox`                         |Rendered as a disabled check box named by the text after it.
+|`[^1]`                          |`MarkdownInlineElementFootnote`                         |
+|`<tag>…</tag>`                  |`MarkdownInlineElementHtml`                             |Passed to the HTML output unescaped.
+|`{{name key="value"}}`          |`MarkdownInlineElementPlugin`                           |
+|Anything else                   |`MarkdownInlineElementPlainText`                        |
+
+An unmatched marker - a single `*` without its partner - stays in the text as it was written.
+
+Plugins are placeholders for content the text cannot carry itself. The HTML renderer writes them as a `div` with the classes `wx-plugin wx-plugin-inline` or `wx-plugin wx-plugin-block`, the name in `data-plugin` and every parameter as `data-plugin-{key}`, for a script on the page to fill in; the PDF renderer keeps only the enclosed content of a block plugin.
+
+Inline HTML is handed to the HTML output as it stands. Markdown from a source that is not trusted - a field any user can write - therefore goes through the same review as any other markup taken from it.
+
+### Tables
+
+```
+| Item     | Count | State   |
+|:---------|------:|:-------:|
+| Screws   |   120 | ok      |
+| Washers  |     8 | low,    |>>
+|          |       | reorder |
+|----------|-------|---------|
+| Total    |   128 |         |
+```
+
+A table is a run of lines that start with `|`. The first delimiter row separates the header from the body, a second one separates the body from the footer (`Columns`, `Rows` and `Footers`). Without any delimiter row every line is a body row.
+
+- **Alignment** is declared per column in the first delimiter row: `:---` left, `---:` right, `:---:` centered, `---` the default (left). The parser hands it to every cell of the column - header, body and footer - as `MarkdownBlockElementTableCell.Align`, so a renderer can read it from the cell it is drawing.
+- **A delimiter cell** is two or more hyphens, or hyphens with a colon on one or both sides; blanks around it are allowed. A lone `-` does not qualify, because tables commonly use it for "not available", and a body row of such cells must stay a row.
+- **The closing pipe** is optional and ends the last cell; what follows it is no cell. A cell that is left empty on purpose (`| a | |`) is kept.
+- **A pipe inside a cell** is written `\|`. As in GitHub Flavored Markdown this also holds inside a code span in a cell (`` `a\|b` `` shows `a|b`); outside of tables `\|` is a literal pipe as well, while a code span keeps its text verbatim.
+- **A continued row** ends in `>>`, after or instead of the closing pipe. The next line belongs to the same row: its cells are joined to the cells above column by column, separated by a blank, so `low,` and `reorder` become the one cell `low, reorder`. A row can be continued over any number of lines; a marker on the last line of the table is ignored. Lines of the header and of the footer are always joined this way, without a marker.
+- **Ragged rows** are padded with empty cells to the widest line of the table, so every row has as many cells as there are columns.
+- **Cell content** is trimmed and read as inline elements only - a cell is one line of text, so `#12`, `- open` or `1. first` stay text instead of becoming a heading or a list. `MarkdownBlockElementTableCell.Content` holds them in one `MarkdownBlockElementParagraph`, not the inline elements themselves; an empty cell has no content. A renderer converts cells with its block converter, otherwise the text is lost.
+
+`MarkdownRendererMarkdown` writes the alignment back into the delimiter row, the footer after a second delimiter row and every row on a single line with its formatting and its pipes escaped, so a table survives a round trip, while continued rows come back joined. This also holds for a table that `MarkdownRendererHtmlToMarkdown` read from the editor, whose cells hold the inline elements directly.
+
+The HTML renderer builds a `ControlTable`. The alignment of a column reaches it as `ControlTableColumn.Align`, which aligns the header, every cell and the footer of the column, and the footer becomes the footer of the table (`ControlTable.AddFooter`), which stays below the rows and is neither sorted nor selected with them. A cell of plain text becomes a `ControlTableCell`; a cell with formatting - emphasis, links, code, a check box - becomes a `ControlTableCellMarkup`, which keeps the markup on one line and is still sorted by its text. A header with formatting becomes the `TitleContent` of its column and is shown as such; the column is then named by the text of that content wherever a plain name is needed - the column chooser, the accessible name - so a link in a header is named by its text, not by its address.
+
+### Renderers
+
+|Renderer                          |Direction                                 |Notes
+|----------------------------------|------------------------------------------|----------------------------------------------------------------
+|`MarkdownRendererHtml`            |`MarkdownDocument` → `IHtmlNode`          |Used by `ControlText` and `ControlContent`. `headingLevel` lets the headings of an embedded document continue the outline of the page (`aria-level`) while keeping their look.
+|`MarkdownRendererMarkdown`        |`MarkdownDocument` → Markdown             |Normalizes the notation: lists with `-`/`1.`, tables with leading and closing pipes.
+|`MarkdownRendererHtmlToMarkdown`  |HTML → `MarkdownDocument` or Markdown     |For values the WYSIWYG editor wrote (`EditorContent.ConvertToMarkdown`). Takes the first row as the header of a table that has none, because Markdown has no notation for a table without one.
+|`PdfRendererMarkdown`             |`MarkdownDocument` → `PdfDocument`        |See the PDF model.
+
+The tree can also be built in code, which is how a renderer is tested without depending on the parser:
+
+```csharp
+var document = new MarkdownDocument()
+    .Add(new MarkdownBlockElementHeader(1, [new MarkdownInlineElementPlainText("Inventory")]))
+    .Add(new MarkdownBlockElementTable()
+        .AddColumn(new MarkdownBlockElementTableCell(MarkdownCellAlign.Left, [new MarkdownInlineElementPlainText("Item")]))
+        .AddColumn(new MarkdownBlockElementTableCell(MarkdownCellAlign.Right, [new MarkdownInlineElementPlainText("Count")]))
+        .AddRow([
+            new MarkdownBlockElementTableCell(MarkdownCellAlign.Left, [new MarkdownInlineElementPlainText("Screws")]),
+            new MarkdownBlockElementTableCell(MarkdownCellAlign.Right, [new MarkdownInlineElementPlainText("120")])
+        ]));
+```
+
 ## PDF model
 
 Stored text - a Markdown document or the value the WYSIWYG editor writes, which `ControlContent` shows as its reading view - can be turned into a PDF file on the server. The renderer lives in `WebExpress.WebUI.WebPdf` and is built the same way as `WebMarkdown`: a document model, renderers that fill it from a source format, and a writer that produces the output. It runs entirely in-process, without a browser, a headless print service or a third-party library, so a file can be produced wherever the server runs - in a REST endpoint, a job, a notification or a mail handler.
