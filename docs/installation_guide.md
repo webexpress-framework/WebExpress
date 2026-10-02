@@ -146,7 +146,7 @@ free of charge.
 The binaries of WebExpress can be obtained from GitHub via wget.
 
 ``` bash
-pi@wx:~ $ wget https://github.com/webexpress-framework/WebExpress/releases/download/2.0.0.0/WebExpress_2.0.0.0_LinuxArm32.zip
+pi@wx:~ $ wget https://github.com/webexpress-framework/WebExpress/releases/download/2.0.0-alpha/WebExpress_2.0.0-alpha_LinuxArm32.zip
 ```
 
 In preparation for the installation of WebExpress, a directory must be created under ```/opt/wx``` by unpacking the binaries.
@@ -158,7 +158,7 @@ pi@wx:~ $ sudo mkdir /opt/wx
 The archive must then be unpacked.
 
 ``` bash
-pi@wx:~ $ sudo unzip WebExpress_2.0.0.0_LinuxArm32.zip -d /opt/wx 
+pi@wx:~ $ sudo unzip WebExpress_2.0.0-alpha_LinuxArm32.zip -d /opt/wx 
 ```
 
 After WebExpress has been successfully unpacked, the execution rights must be granted.

@@ -260,19 +260,26 @@ fine; raise them if your applications need to accept large uploads.
 
 ### Choosing HTTP protocol versions – `Protocols`
 
-WebExpress speaks **HTTP/2** as well as HTTP/1.1. Over **HTTPS** the version is negotiated
-automatically for each connection (via TLS ALPN): modern browsers and clients use HTTP/2, older ones
-fall back to HTTP/1.1 – you do not have to configure anything. Over plain **HTTP**, connections use
-HTTP/1.1.
+WebExpress speaks **HTTP/3**, **HTTP/2** and HTTP/1.1. An **HTTPS** endpoint serves HTTP/3 (QUIC
+over UDP) next to HTTP/1.1 and HTTP/2 by default whenever the operating system provides QUIC
+(Windows 11 / Server 2022, Linux with libmsquic). Browsers learn about HTTP/3 from the `Alt-Svc`
+header and switch to it on their own, falling back to TCP wherever UDP is blocked – so open the UDP
+port as well. Over TCP the version is negotiated per connection (via TLS ALPN): modern clients use
+HTTP/2, older ones HTTP/1.1. Without QUIC support, an HTTPS endpoint serves HTTP/1.1 and HTTP/2 only.
+Over plain **HTTP**, connections use HTTP/1.1; HTTP/3 needs TLS and is never offered there.
 
 The optional `Protocols` value lets you pin which versions an endpoint offers. Leave it out to keep
 the default, which is the recommended setting for almost everyone.
 
-|Value           |What it means
-|----------------|--------------------------------------------------------------------------------
-|`Http1`         |HTTP/1.1 only.
-|`Http2`         |HTTP/2 only. On a plain (non-TLS) endpoint this enables cleartext HTTP/2 (h2c).
-|`Http1AndHttp2` |Both, with HTTP/2 preferred when the client supports it. **(default)**
+|Value                   |What it means
+|------------------------|------------------------------------------------------------------------
+|`Http1`                 |HTTP/1.1 only.
+|`Http2`                 |HTTP/2 only. On a plain (non-TLS) endpoint this enables cleartext HTTP/2 (h2c).
+|`Http1AndHttp2`         |HTTP/1.1 and HTTP/2, with HTTP/2 preferred. Keeps an HTTPS endpoint off UDP.
+|`Http1AndHttp2AndHttp3` |All three. **(default for HTTPS when QUIC is available)**
+
+HTTP/3 is dropped automatically where it cannot work – without TLS or without QUIC support – so it
+never leaves an endpoint unreachable.
 
 > **Note:** Cleartext HTTP/2 (h2c) has no automatic upgrade from HTTP/1.1, and browsers will not use
 > it over plain HTTP. Setting `Http2` on a non-TLS endpoint therefore only makes sense for clients
@@ -361,10 +368,11 @@ allows large uploads, uses US English and carries a setting for one plugin:
       "TimePattern": "dd.MM.yyyy HH:mm:ss"
     },
 
-    // Listen on plain HTTP and on encrypted HTTPS
+    // Listen on plain HTTP and on encrypted HTTPS. Keep the PFX password out of the file and
+    // supply it through WEBEXPRESS_WebExpress__Endpoints__1__Password instead.
     "Endpoints": [
       { "Uri": "http://localhost/" },
-      { "Uri": "https://localhost:443/", "PfxFile": "./cert/server.pfx", "Password": "secret" }
+      { "Uri": "https://localhost:443/", "PfxFile": "./cert/server.pfx", "Password": "" }
     ],
 
     // Advanced and optional: only needed to change the server defaults
