@@ -3476,7 +3476,7 @@ The parser reads the text line by line and decides on the first token of a line 
 
 An unmatched marker - a single `*` without its partner - stays in the text as it was written.
 
-Plugins are placeholders for content the text cannot carry itself. The HTML renderer writes them as a `div` with the classes `wx-plugin wx-plugin-inline` or `wx-plugin wx-plugin-block`, the name in `data-plugin` and every parameter as `data-plugin-{key}`, for a script on the page to fill in; the PDF renderer keeps only the enclosed content of a block plugin.
+Plugins are placeholders for content the text cannot carry itself. An add-on gives a plugin its look by a sealed class with a `Name` attribute: an `IMarkdownPlugin` for the page, registered by `MarkdownPluginManager`. Without one, the HTML renderer writes a `div` with the classes `wx-plugin wx-plugin-inline` or `wx-plugin wx-plugin-block`, the name in `data-plugin` and every parameter as `data-plugin-{key}`, for a script on the page to fill in; the PDF renderer keeps only the enclosed content of a block plugin.
 
 Inline HTML is handed to the HTML output as it stands. Markdown from a source that is not trusted - a field any user can write - therefore goes through the same review as any other markup taken from it.
 
