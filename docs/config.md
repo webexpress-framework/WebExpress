@@ -205,6 +205,30 @@ request came in over https.
 }
 ```
 
+### Monitoring – `Metrics`
+
+WebExpress publishes operating figures such as response times, error rates, memory use, logins and
+active users at `/metrics`, in the text format that Prometheus reads. The optional `Metrics` block
+controls this endpoint. Leave it out and the endpoint is available without a password. The figures
+name no user, but they do show how busy the server is and how many logins fail, so set a token
+whenever the endpoint can be reached from outside your own network.
+
+|Name                      |What it means
+|--------------------------|---------------------------------------------------------------------------
+|`Enabled`                 |Set to `false` to switch the endpoint off. The path `/metrics` is then free for an application of your own.
+|`BearerToken`             |A secret the monitoring system must send as `Authorization: Bearer <token>`. Without it, every request to `/metrics` is refused with `401`.
+|`ActiveUserWindowMinutes` |How recently a signed-in user must have sent a request to count as active. The default is `5`.
+
+```json
+"Metrics": {
+  "BearerToken": "a-long-random-secret"
+}
+```
+
+Keep the token out of files you share by setting it as an environment variable instead (see
+[Overriding settings from the environment](#overriding-settings-from-the-environment)):
+`WEBEXPRESS_WebExpress__Metrics__BearerToken`.
+
 ## Advanced: tuning the server – `Kestrel`
 
 Under the hood WebExpress uses a high-performance web server engine called

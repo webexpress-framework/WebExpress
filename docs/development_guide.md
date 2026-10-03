@@ -143,6 +143,7 @@ The components of **WebExpress** and its applications are centrally managed in t
 |JobManager                  |Jobs can be used for cyclic processing of tasks.
 |LogManager                  |Allows to create, view, and delete logs used for troubleshooting and monitoring system performance.
 |MessageQueueManager         |Handles the registration of message receivers and manages the distribution of messages via a bidirectional WebSocket connection. Enables real-time features such as notifications, status updates, and cross-system commands. Provided by `WebExpress.WebApp`.
+|MetricsManager              |Collects framework metrics, shared instruments and discovered application metric components for the global Prometheus endpoint `/metrics`.
 |NotificationManager         |Manages notifications that are displayed to users as pop-up windows. Provided by `WebExpress.WebUI`.
 |PackageManager              |Management of packages that extend the functionality of **WebExpress**.
 |PageManager                 |Manages the pages of the applications.
@@ -183,6 +184,7 @@ In addition, you can create your own components and register them in the `Compon
 ║     │ ThemeManager:IThemeManager                                 │     │             ║
 ║     │ FragmentManager:IFragmentManager                           │     │             ║
 ║     │ HealthManager:IHealthManager                               │     │             ║
+║     │ MetricsManager:IMetricsManager                             │     │             ║
 ║     │ SitemapManager:ISitemapManager                             │     │             ║
 ║     │ InternationalizationManager:IInternationalizationManager   │     │             ║
 ║     │ SessionManager:ISessionManager                             │     │             ║
@@ -2881,6 +2883,209 @@ containers:
 The startup probe delays readiness and liveness probing until startup succeeds. Readiness failures remove the instance from normal Service traffic, while repeated liveness failures cause a container restart. These behaviors follow the [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
 
 A shared database outage fails `/health` and takes every instance out of the Service, but leaves `/health/live` healthy, so it restarts nothing that a restart could not fix. `/health/live` fails for a host stuck in startup or shutdown, a component manager that failed to initialize, and a declared application that could not be created. Applications whose own dependencies are cured by a restart - a database file on the pod's volume, for example - can point liveness at `/health` instead. Probe timeouts must exceed the longest component budget plus transport overhead, and startup allowances must cover the actual initialization duration.
+
+## Metrics model
+
+Metrics make the operating state of a host measurable over time. While the health endpoint answers a yes-or-no question for orchestration, the global `/metrics` endpoint publishes figures such as response times, error rates, memory use, logins, active users, database accesses or LDAP requests in the Prometheus text format. Monitoring systems such as Prometheus collect them periodically, Grafana visualizes trends over long periods, and alert rules report rising error rates, resource bottlenecks or unusual load peaks early. `WebCore` records the framework figures itself; applications contribute their own through the `MetricsManager` in the namespace `WebExpress.WebCore.WebMetrics`, analogous to the health model.
+
+```
+╔WebExpress.WebCore════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌──────────────────────────────────────────────────────────────┐                   ║
+║   │ <<Interface>>                                                │                   ║
+║   │ IMetricsManager                                              │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ AddMetric:Event                                              │                   ║
+║   │ RemoveMetric:Event                                           │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ Metrics:IEnumerable<IMetricContext>                          │                   ║
+║   │ Instruments:IEnumerable<MetricInstrument>                    │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ GetMetrics(IApplicationContext):IEnumerable<IMetricContext>  │                   ║
+║   │ CreateCounter(name, help, labelNames):MetricCounter          │                   ║
+║   │ CreateGauge(name, help, labelNames):MetricGauge              │                   ║
+║   │ CreateHistogram(name, help, buckets, labelNames)             │                   ║
+║   │   :MetricHistogram                                           │                   ║
+║   │ CollectAsync(CancellationToken)                              │                   ║
+║   │   :Task<IReadOnlyList<MetricFamily>>                         │                   ║
+║   └──────────────────────────────────────────────────────────────┘                   ║
+║                                                                                      ║
+║   ┌──────────────────────────────────────────────────────────────┐                   ║
+║   │ <<Interface>>                                                │                   ║
+║   │ IMetric                                                      │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ CollectAsync(IMetricCollector, CancellationToken):Task       │                   ║
+║   └──────────────────────────────────────────────────────────────┘                   ║
+║                                                                                      ║
+║   ┌──────────────────────────────────────────────────────────────┐                   ║
+║   │ <<Interface>>                                                │                   ║
+║   │ IMetricCollector                                             │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ Counter(name, help, value, labels)                           │                   ║
+║   │ Gauge(name, help, value, labels)                             │                   ║
+║   │ Add(MetricInstrument)                                        │                   ║
+║   └──────────────────────────────────────────────────────────────┘                   ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+Applications contribute metrics in two complementary ways:
+
+- **Instruments** record a value where it occurs. `MetricCounter` counts events such as LDAP queries or failed imports, `MetricGauge` tracks a value that rises and falls such as queued jobs, and `MetricHistogram` records a distribution such as query durations in buckets, from which Prometheus computes percentiles across all instances. Instruments are thread-safe and cheap to update on request threads.
+- **Metric components** implement `IMetric` and report values at scrape time, such as the size of a connection pool or the counters a client library keeps itself. Like health components, they are discovered as `public sealed` classes and bound once per plugin and application.
+
+An instrument created through `CreateCounter`, `CreateGauge` or `CreateHistogram` is registered with the manager and exported on every scrape. The methods return the existing instrument for a name that is already declared, so independent parts of an application can record into the same series without sharing a reference; a declaration with another type, other labels or other buckets is refused with an `InvalidOperationException`. The framework's own instruments are part of this registry, which lets an application with a login form of its own count into `webexpress_identity_logins_total`:
+
+```csharp
+var logins = WebEx.ComponentHub.MetricsManager.CreateCounter
+(
+    "webexpress_identity_logins_total", "Login attempts by result.", "result"
+);
+
+logins.Increment("failure");
+```
+
+A metric component receives the same constructor injection as a health component and reports its values through the collector. The collector adds the label `application` with the identifier of the bound application, so the same component in several applications yields distinct series. The following example reports LDAP requests counted by an instrument and the open connections of a pool read at scrape time:
+
+```csharp
+/// <summary>
+/// Makes LDAP load and latency visible per application.
+/// </summary>
+[MetricTimeout(1000)]
+public sealed class MyLdapMetrics : IMetric
+{
+    /// <summary>
+    /// Counts requests where they happen; the LDAP client of the application records into it.
+    /// </summary>
+    public static MetricCounter Requests { get; } = new("ldap_requests_total", "LDAP requests by result.", "result");
+
+    /// <summary>
+    /// Records request durations so that slow directory servers show up as a percentile.
+    /// </summary>
+    public static MetricHistogram Duration { get; } = new("ldap_request_duration_seconds", "LDAP request duration.", null);
+
+    /// <summary>
+    /// Reports the instruments and the pool state on every scrape.
+    /// </summary>
+    /// <param name="collector">The collector receiving the values.</param>
+    /// <param name="cancellationToken">The token that expires when the collection exceeds its budget.</param>
+    /// <returns>A task that completes once all values have been reported.</returns>
+    public Task CollectAsync(IMetricCollector collector, CancellationToken cancellationToken)
+    {
+        collector.Add(Requests);
+        collector.Add(Duration);
+        collector.Gauge("ldap_pool_connections", "Open LDAP connections.", MyLdapPool.OpenConnections);
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+The LDAP client of the application records `MyLdapMetrics.Requests.Increment("success")` and `MyLdapMetrics.Duration.Observe(elapsed.TotalSeconds)` around each request. Instruments held in static members are shared by every application the plugin serves; an instrument that must be told apart per application belongs in an instance member of the component.
+
+Every distinct label value creates a series of its own. Labels must therefore only carry values from a small, bounded set - a result, a status class, a server name - and never user names, identifiers, paths or query texts. Metric names follow the Prometheus conventions: lowercase words separated by underscores, a unit suffix such as `_seconds` or `_bytes`, and `_total` for counters.
+
+The metric attribute configures the execution budget of the respective application binding. The following table describes the available component metadata:
+
+|Attribute     |Type         |Multiplicity |Optional |Description
+|--------------|-------------|-------------|---------|-----------------
+|MetricTimeout |Int          |1            |Yes      |The positive execution budget in milliseconds. The default is 2000. A value of zero or less makes the component fail on every scrape.
+
+### Metric component lifecycle
+
+The manager exposes discovered bindings through `Metrics` and `GetMetrics(IApplicationContext)`, and reports binding changes through `AddMetric` and `RemoveMetric`. Each `IMetricContext` contains the contributing plugin, associated application, component identifier, and execution timeout. Consumers obtain the manager through constructor injection or `IComponentHub.MetricsManager`.
+
+Component activation is deferred until the first scrape. A successfully created instance is reused for its application binding; constructor failures are retried by later scrapes. All bindings are collected concurrently. A component that throws, exceeds its budget, reports an invalid name, uses the reserved label `application`, reports a series twice, or reports a name with a type that contradicts an earlier one loses all of its values for that scrape - the remaining sources are unaffected. The outcome of each binding is published as `webexpress_metric_collector_up{application, collector}` with the value `1` or `0`, and the cause is recorded in the server log. Concurrent scrapes share an unfinished collection, so several Prometheus replicas do not multiply the work.
+
+A collection must only read state the application already keeps. A value that is expensive to determine - a `COUNT(*)` over a large table, for example - belongs in a job whose last result the component reports. Component removal follows application and plugin ownership, as with health components; components may implement `IDisposable`.
+
+### Framework metrics
+
+`WebCore` publishes the following series without any application code. Process and runtime series use the names of the official Prometheus client libraries, so existing dashboards and alert rules apply unchanged.
+
+|Metric                                     |Type      |Description
+|-------------------------------------------|----------|-----------------
+|`webexpress_info{version}`                 |Gauge     |Always `1`; the label carries the framework version.
+|`webexpress_http_requests_total{method,code}` |Counter |Handled requests by method and status code. Health and metrics requests are excluded.
+|`webexpress_http_request_duration_seconds` |Histogram |Time from receiving a request until its response is ready to be sent.
+|`webexpress_http_requests_in_flight`       |Gauge     |Requests currently being processed, excluding open WebSocket connections.
+|`webexpress_identity_logins_total{result}` |Counter   |Login attempts by `success`, `failure` and `throttled`.
+|`webexpress_identity_logouts_total`        |Counter   |Explicit sign-outs.
+|`webexpress_identity_active_users`         |Gauge     |Distinct identities with an authenticated request within the active user window (default five minutes).
+|`webexpress_sessions`                      |Gauge     |Sessions held by the server, including idle ones not yet cleaned up.
+|`webexpress_plugins`, `webexpress_applications`, `webexpress_applications_failed` |Gauge |Loaded plugins, registered applications and declared applications whose creation failed.
+|`webexpress_metric_collector_up{application,collector}` |Gauge |Whether a metric component reported its values in the last scrape.
+|`process_cpu_seconds_total`                |Counter   |CPU time of the process.
+|`process_resident_memory_bytes`, `process_virtual_memory_bytes`, `process_private_memory_bytes` |Gauge |Memory of the process as accounted by the operating system.
+|`process_open_handles`, `process_num_threads`, `process_start_time_seconds` |Gauge |Handles, threads and start time of the process.
+|`dotnet_total_memory_bytes`, `dotnet_gc_heap_size_bytes` |Gauge |Managed heap.
+|`dotnet_collection_count_total{generation}`, `dotnet_gc_pause_seconds_total` |Counter |Garbage collections and the time paused for them.
+|`dotnet_threadpool_threads`, `dotnet_threadpool_queue_length`, `dotnet_threadpool_completed_items_total` |Gauge, Counter |Thread pool saturation.
+
+A labelled series appears once the first value has been recorded for it.
+
+### Global metrics endpoint
+
+The endpoint is available at `/metrics` and `/metrics/` on every configured listener, independent of `ContextPath` and application routes. It neither creates sessions nor issues cookies, and its requests are not counted as traffic. A `GET` request returns `200 OK` with `Content-Type: text/plain; version=0.0.4; charset=utf-8` and `Cache-Control: no-store`; a `HEAD` request returns the same status without a body; other methods return `405 Method Not Allowed` with `Allow: GET, HEAD`. While the host stops or the manager is unavailable, the endpoint returns `503 Service Unavailable` without details.
+
+The `Metrics` block of the server settings controls the endpoint (see the [configuration guide](config.md#monitoring--metrics)). By default the endpoint is open, like `/health`. The series name no user, but they reveal load, login failures and the framework version; a deployment that exposes the listener beyond the cluster sets `BearerToken`, after which every request without `Authorization: Bearer <token>` receives `401 Unauthorized`. `Enabled: false` leaves the path to normal application routing.
+
+### Prometheus and Kubernetes
+
+The scrape configuration below reads the token from a file, for example a mounted Kubernetes secret:
+
+```yaml
+scrape_configs:
+  - job_name: webexpress
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/webexpress-metrics-token
+    static_configs:
+      - targets: ["webexpress:8080"]
+```
+
+With the Prometheus Operator, a `ServiceMonitor` selects the Service of the application and refers to the secret holding the token, which the application receives as the environment variable `WEBEXPRESS_WebExpress__Metrics__BearerToken`:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: webexpress
+spec:
+  selector:
+    matchLabels:
+      app: webexpress
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      authorization:
+        type: Bearer
+        credentials:
+          name: webexpress-metrics
+          key: token
+```
+
+The following alert rules illustrate typical use: a share of server errors above five percent, a 95th percentile response time above one second, and a metric component that keeps failing.
+
+```yaml
+groups:
+  - name: webexpress
+    rules:
+      - alert: WebExpressHighErrorRate
+        expr: |
+          sum by (instance) (rate(webexpress_http_requests_total{code=~"5.."}[5m]))
+            / sum by (instance) (rate(webexpress_http_requests_total[5m])) > 0.05
+        for: 10m
+      - alert: WebExpressSlowResponses
+        expr: |
+          histogram_quantile(0.95, sum by (instance, le) (rate(webexpress_http_request_duration_seconds_bucket[5m]))) > 1
+        for: 10m
+      - alert: WebExpressMetricCollectorDown
+        expr: webexpress_metric_collector_up == 0
+        for: 15m
+```
 
 ## Web icons
 
