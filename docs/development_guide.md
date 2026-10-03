@@ -2753,7 +2753,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using WebExpress.WebCore.WebAttribute;
-using WebExpress.WebCore.WebHealt;
+using WebExpress.WebCore.WebHealth;
 
 /// <summary>
 /// Includes required database access in the application's health decision.
