@@ -20,10 +20,7 @@ WebExpress is part of the WebExpress family. The project provides a web server f
 
 # Libraries used
 - https://github.com/dotnet/core (MIT)
-- https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
-- https://fontawesome.com/ (CC BY 4.0 and MIT)
-- https://popper.js.org/ (MIT)
 
 # Download 
 The current binaries are available for download [here](https://github.com/webexpress-framework/WebExpress/releases).
@@ -31,8 +28,8 @@ The current binaries are available for download [here](https://github.com/webexp
 # Start
 To get started with WebExpress, use the following links and tutorials.
 
-- [installation guide](https://github.com/webexpress-framework/WebExpress/blob/main/doc/installation_guide.md) 
-- [development guide](https://github.com/webexpress-framework/WebExpress/blob/main/doc/development_guide.md)
+- [installation guide](https://github.com/webexpress-framework/WebExpress/blob/main/docs/installation_guide.md) 
+- [development guide](https://github.com/webexpress-framework/WebExpress/blob/main/docs/development_guide.md)
 - [WebExpress.WebCore API Documentation](https://webexpress-framework.github.io/WebExpress.WebCore/) 
 - [WebExpress.WebUI API Documentation](https://webexpress-framework.github.io/WebExpress.WebUI/) 
 

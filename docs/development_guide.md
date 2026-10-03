@@ -2,17 +2,14 @@
 
 # WebExpress
 
-**WebExpress** is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry PI, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, **WebExpress** has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .Net language (e.g. C#).
+**WebExpress** is a lightweight web server that has been optimized for use in low-performance environments. Even on small systems, such as the Raspberry Pi, web applications can be operated efficiently. This is achieved through a small footprint with a low resource burden. Furthermore, **WebExpress** has a powerful and optimized plugin system, with a comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .NET language (e.g. C#).
 
 # License
 
 The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/webexpress-framework/WebExpress. **WebExpress** is based on components that are available as open source:
 
 - https://github.com/dotnet/core (MIT)
-- https://getbootstrap.com/ (MIT)
 - https://www.chartjs.org (MIT)
-- https://fontawesome.com/ (CC BY 4.0 and MIT)
-- https://popper.js.org/ (MIT)
 
 ```
 The MIT License (MIT)
@@ -74,7 +71,7 @@ The development of a web application without the need to use HTML, CSS, or JavaS
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-**WebExpress** consists of several program libraries, which serve as the basis for **WebExpress** projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions such as logging. The `WebExpress.UI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` program library represents the application that takes control of the individual functions and components. The `WebExpress.exe` program library is generic and can be replaced by its own program library.
+**WebExpress** consists of several program libraries, which serve as the basis for **WebExpress** projects. The `WebExpress.WebCore.dll` program library provides basic functions for creating content and additional functions such as logging. The `WebExpress.WebUI.dll` and `WebExpress.WebApp.dll` packages provide controls and templates that facilitate the development of (business) applications. `WebExpress.WebIndex.dll` provides full-text indexing. The `WebExpress.exe` executable represents the application that takes control of the individual functions and components. The `WebExpress.exe` executable is generic and can be replaced by its own host application.
 
 ```
 ╔WebExpress.exe════════════════════════════════════════════════════════════════════════╗
@@ -133,18 +130,26 @@ The components of **WebExpress** and its applications are centrally managed in t
 |Component                   |Description
 |----------------------------|---------------------
 |ApplicationManager          |An application is the logical combination of functionalities into an application system. 
-|AssetManager                |Assets like static java script files are delivered by **WebExpress**.
+|AssetManager                |Assets like static JavaScript files are delivered by **WebExpress**.
+|CertificateManager          |Loads and validates the shared X.509 certificate inventory, resolves production HTTPS certificates and provides status metadata through a replaceable store abstraction.
+|EndpointManager             |Manages all endpoints (pages, resources, REST APIs, assets) that can be addressed with a URI.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
-|IdentityManager             |Users or technical objects that are used for identity and access management.
+|HealthManager               |Discovers application health components and combines their results with framework availability for the global health endpoint.
+|IdentityManager             |Issues and validates identity tokens and evaluates authorization policies and permissions.
+|IdentityProviderManager     |Discovers authentication providers and manages their application and plugin lifetimes.
 |IncludeManager              |Manages the dynamic integration of JavaScript and CSS files into the HTML header. In release mode, the files are delivered bundled and minified.
 |InternationalizationManager |Provides language packs for the internationalization of applications.
 |JobManager                  |Jobs can be used for cyclic processing of tasks.
 |LogManager                  |Allows to create, view, and delete logs used for troubleshooting and monitoring system performance.
-|MessageQueueManager         |Handles the registration of message receivers and manages the distribution of messages via a bidirectional WebSocket connection. Enables real-time features such as notifications, status updates, and cross-system commands.
+|MessageQueueManager         |Handles the registration of message receivers and manages the distribution of messages via a bidirectional WebSocket connection. Enables real-time features such as notifications, status updates, and cross-system commands. Provided by `WebExpress.WebApp`.
+|MetricsManager              |Collects framework metrics, shared instruments and discovered application metric components for the global Prometheus endpoint `/metrics`.
+|NotificationManager         |Manages notifications that are displayed to users as pop-up windows. Provided by `WebExpress.WebUI`.
 |PackageManager              |Management of packages that extend the functionality of **WebExpress**.
+|PageManager                 |Manages the pages of the applications.
 |PluginManager               |Management of extension addons that extend the functionality of **WebExpress**.
 |ResourceManager             |Resources are contents that are delivered by **WebExpress**. These include, for example, websites that consist of HTML source code, arbitrary files (e.g. css, JavaScript, images) and REST interfaces, which are mainly used for communication via HTTP(S) with (other) systems.
+|RestApiManager              |Manages the REST API endpoints of the applications.
 |SessionManager              |Responsible for storing session data generated during the user session.
 |SettingPageManager          |Manages the settings of the application.
 |SitemapManager              |Manages the structure of the website, including navigation between different pages.
@@ -166,6 +171,7 @@ In addition, you can create your own components and register them in the `Compon
 ║     │ RemoveManager:Event                                        │                   ║
 ║     ├────────────────────────────────────────────────────────────┤                   ║
 ║     │ HttpServerContext:IHttpServerContext                       │ 1                 ║
+║     │ CertificateManager:ICertificateManager                     │                   ║
 ║     │ Managers:IEnumerable<IComponentManager>                    ├─────┐             ║
 ║     │ LogManager:ILogManager                                     │     │             ║
 ║     │ PackageManager:IPackageManager                             │     │             ║
@@ -173,14 +179,17 @@ In addition, you can create your own components and register them in the `Compon
 ║     │ ApplicationManager:IApplicationManager                     │     │             ║
 ║     │ EventManager:IEventManager                                 │     │             ║
 ║     │ JobManager:IJobManager                                     │     │             ║
-║     │ ResponseManager:IResponseManager                           │     │             ║
+║     │ EndpointManager:IEndpointManager                           │     │             ║
 ║     │ ResourceManager:IResourceManager                           │     │             ║
 ║     │ ThemeManager:IThemeManager                                 │     │             ║
 ║     │ FragmentManager:IFragmentManager                           │     │             ║
+║     │ HealthManager:IHealthManager                               │     │             ║
+║     │ MetricsManager:IMetricsManager                             │     │             ║
 ║     │ SitemapManager:ISitemapManager                             │     │             ║
 ║     │ InternationalizationManager:IInternationalizationManager   │     │             ║
 ║     │ SessionManager:ISessionManager                             │     │             ║
 ║     │ TaskManager:ITaskManager                                   │     │             ║
+║     │ …                                                          │     │             ║
 ║     ├────────────────────────────────────────────────────────────┤     │             ║
 ║     │ GetComponentManager(id):IComponentManager                  │     │             ║
 ║     │ GetComponentManager<TComponentManager>():TComponentManager │     │             ║
@@ -235,6 +244,7 @@ By using dependency injection, it is ensured that all required dependencies are 
    ├─📁 lib
    │ └─📁 runtime
    │   └─📁 <rid>
+   ├─📁 settings
    ├─📁 licences
    ├─📄 readme.md
    └─📄 <packagename>.spec
@@ -246,6 +256,7 @@ By using dependency injection, it is ensured that all required dependencies are 
 |lib              |This directory contains the libraries.
 |runtimes         |Contains the platform-dependent libraries.
 |rid              |A runtime identifier (RID) of the supported runtime (see .NET Runtime Identifier (RID) catalog). Each supported runtime is created in its own directory.
+|settings         |The settings files (json) of the plugins. On installation they are deployed to the settings directory of the server, see [Plugin settings](#plugin-settings).
 |licences         |Storage location of all third-party licenses and your own license.
 |readme.md        |The description of the package contents for the user.
 |packagename.spec |The specification of the package.
@@ -287,29 +298,86 @@ The `PackageManager` is responsible for provisioning the packages. This has the 
 
 New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning service cyclically scans the directory for new packets and loads them. If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). In addition package, the directory of the deactivated package is deleted and all contents (components) are removed from the running **WebExpress**. When **WebExpress** boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and loading the package into the package directory. When a package is deleted, it is removed from the package directory and from the catalog. The `PackageManager` manages the catalog. This can be accessed at runtime via the following classes:
 
+### Packages and statically deployed plugins
+
+Not every plugin arrives as a package. A plugin that is referenced by the host project is deployed next to the host assembly and is loaded by the `PluginManager` from the application directory, without ever passing through the `PackageManager`. In a plain `dotnet build` deployment this is the normal case: every plugin is static, no `wxp` file exists, and `catalog.xml` is `<catalog />`.
+
+The catalog therefore describes installed packages only, and reading `Catalog.Packages` answers a narrower question than "which plugins does this server run". The union of both is formed by `IPackageManager.GetPackages()`, which reports the catalog entries plus one synthesized entry per registered plugin that no catalog entry accounts for. A management surface has to read that method; going to the catalog directly leaves out every statically deployed plugin.
+
+|Property             |Installed package                   |Statically deployed plugin
+|---------------------|------------------------------------|---------------------------------------
+|`BuiltIn`            |`false`                             |`true`
+|`File`               |The `wxp` file name.                |Empty - there is no package behind it.
+|`State`              |`Available`, `Active` or `Disable`. |Always `Active`.
+|`Metadata`           |Read from the `spec` file.          |Read from the `IPluginContext`.
+|Written to catalog   |Yes.                                |Never.
+|Lifecycle operations |Apply.                              |Refused with a defined failure.
+
+The synthesized entries exist in the read path only. They are never added to `PackageCatalog.Packages`, because a persisted built-in entry would be read back as an installed package on the next start, would resolve to an empty package file name, and would be dropped again by the next directory scan as "no longer present". For the same reason `ActivatePackage`, `DeactivatePackage`, `UpdatePackage` and `UninstallPackage` refuse a built-in entry up front rather than running half of their steps: an assembly sitting in the application directory, loaded into the default assembly load context, cannot be replaced or removed while the process runs. Deduplication is by id - a plugin that is present both statically and as an installed package is reported once, as the package, which is the entry the operations can act on.
+
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║         ┌───────────────────┐                                                        ║
-║         │ <<Interface>>     │                                                        ║
-║         │ IComponentManager │                                                        ║
-║         ├───────────────────┤                                                        ║
-║         └────────Δ──────────┘                                                        ║
-║                  ¦                        ┌────────────────────────────────┐         ║
-║                  ¦                        │ <<Interface>>                  │         ║
-║      ┌───────────┴────────────┐           │ IComponentHub                  │         ║
-║      │ <<Interface>>          │ 1       1 ├────────────────────────────────┤         ║
-║      │ IPackageManager        ◄───────────┤ PackageManager:IPackageManager │         ║
-║      ├────────────────────────┤           │ …                              │         ║
-║      │ AddPackage:Event       │           └────────────────────────────────┘         ║
-║      │ RemovePackage:Event    │                                                      ║
-║      ├────────────────────────┤                                                      ║
-║      │ Catalog:PackageCatalog │                                                      ║
-║      ├────────────────────────┤                                                      ║
-║      └────────────────────────┘                                                      ║
+║         ┌───────────────────┐             ┌────────────────────────────────┐         ║
+║         │ <<Interface>>     │             │ <<Interface>>                  │         ║
+║         │ IComponentManager │             │ IComponentHub                  │         ║
+║         ├───────────────────┤             ├────────────────────────────────┤         ║
+║         └────────Δ──────────┘             │ PackageManager:IPackageManager │         ║
+║                  ¦                        │ …                              │         ║
+║                  ¦                        └───────────────┬────────────────┘         ║
+║                  ¦                                      1 │                          ║
+║      ┌───────────┴────────────────────┐                   │                          ║
+║      │ <<Interface>>                  │ 1                 │                          ║
+║      │ IPackageManager                ◄───────────────────┘                          ║
+║      ├────────────────────────────────┤                                              ║
+║      │ AddPackage:Event               │                                              ║
+║      │ RemovePackage:Event            │                                              ║
+║      ├────────────────────────────────┤                                              ║
+║      │ Catalog:PackageCatalog         │── installed packages only                    ║
+║      ├────────────────────────────────┤                                              ║
+║      │ GetPackages()                  │── installed packages + built-in plugins      ║
+║      │ GetPackage(id)                 │                                              ║
+║      │ InstallPackage(…)              │                                              ║
+║      │ ActivatePackage(id)            │──┐                                           ║
+║      │ DeactivatePackage(id)          │──┤                                           ║
+║      │ UpdatePackage(id, …)           │──┼─ refuse a built-in entry                  ║
+║      │ UninstallPackage(id)           │──┘                                           ║
+║      └────────────────────────────────┘                                              ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
+
+### Plugin settings
+
+Everything a server reads from a file lives in one directory, `settings`, next to the program: `webexpress.settings.json` with the settings of the server and one json file per plugin with the plugin's own settings. All files of the directory are merged into a single `IConfiguration` (the .NET configuration model), in alphabetical order of their names with the main file last, and environment variables prefixed `WEBEXPRESS_` on top. Because everything is merged, a plugin keeps its values under `Plugins` in a section named after its plugin id - two plugins can then never overwrite each other's values:
+
+```json
+{
+  "Plugins": {
+    "webexpress.tutorial.webapp": {
+      "Greeting": "Hello, world!",
+      "Database": { "ConnectionString": "..." }
+    }
+  }
+}
+```
+
+A plugin reads its section through `IPluginContext.Settings`, which is that section and nothing else - the server's settings and those of other plugins are out of its reach:
+
+```csharp
+var greeting = PluginContext.Settings["Greeting"];
+var database = PluginContext.Settings.GetSection("Database").Get<DatabaseOptions>();
+```
+
+The directory is watched, so a value read on every use follows an edit of the file without a restart. The settings of the server itself - endpoints, directories, culture - are bound once at start-up into `HttpServerSettings` and take a restart. The merged configuration is available as `IHttpServerContext.Configuration`; the directory as `IHttpServerContext.SettingsPath`.
+
+A package ships the defaults of its plugin as a settings file named in the spec:
+
+```xml
+<settings>settings/webexpress.tutorial.webapp.settings.json</settings>
+```
+
+The `PackageBuilder` places the file under `settings/` in the package, and the `PackageManager` deploys it to the settings directory of the server on installation and reloads the configuration, so the plugin finds its section when it boots. A file that already exists there is never overwritten - it is the administrator's, and an update of the package keeps their changes. A value in `webexpress.settings.json` overrides the plugin's file, which is where an administrator changes a default without touching the plugin's file.
 
 ## Plugin model
 
@@ -323,9 +391,7 @@ The plugin system can be used to extend both **WebExpress** and application func
 [Application<MyApplication>()]
 public sealed class MyPlugin : IPlugin
 {
-    public Initialization(IPluginContext) {}
-    public Run() {}
-    public Dispose() {}
+    public void Run() {}
 }
 ```
 
@@ -335,9 +401,9 @@ To provide clarity about the metadata specified in the code above, the following
 |------------|---------------|-------------|---------|--------------
 |Name        |String         |1            |Yes      |The name of the plugin. This can be a key to internationalization.
 |Description |String         |1            |Yes      |The description of the plugin. This can be a key to internationalization.
-|Icon        |String         |1            |Yes      |The icon that represents the plugin graphically.
+|Icon        |String         |1            |Yes      |The icon that represents the plugin graphically. The path refers to an embedded asset of the plugin. Without the attribute `IPluginContext.Icon` stays `null`, which is how a caller tells a plugin without an icon from one with it.
 |Dependency  |String         |n            |Yes      |Defines a dependency on another plugin and is specified via the PluginId.
-|Applcation  |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
+|Application |`IApplication` |n            |No       |A concrete class that implements IApplication or an interface that marks the application class that is to be extended.
 
 The implemented methods from the interface cover the life cycle of the plugin. Meta information about the plugin is stored in the `PluginContext` and is available globally via the `PluginManager`. Below is a UML diagram that highlights the structure and connections between the `PluginManager` and plugins.
 
@@ -374,8 +440,8 @@ The implemented methods from the interface cover the life cycle of the plugin. M
 ║                                                   ¦   │ Copyright:String        │    ║
 ║          ┌───────────────┐                        ¦   │ License:String          │    ║
 ║          │ <<Interface>> │                        ¦   │ Icon:IRoute             │    ║
-║          │ IComponent    │                        ¦   └─────────────────────────┘    ║
-║          ├───────────────┤                        ¦                                  ║
+║          │ IComponent    │                        ¦   │ Settings:IConfiguration │    ║
+║          ├───────────────┤                        ¦   └─────────────────────────┘    ║
 ║          └──────Δ────────┘                        ¦                                  ║
 ║                 ¦                                 ¦                                  ║
 ║                 ¦                                 ¦                                  ║
@@ -485,7 +551,7 @@ To add a new language, a new language file must be created in the Internationali
 </ItemGroup>
 ```
 
-The name of the language translation file must match the country code from ISO 3166 ALPHA-2. Each language translation file is structured as follows:
+The name of the language translation file must match the two-letter language code from ISO 639-1 (e.g. `de`, `en`). Each language translation file is structured as follows:
 
 ```csharp
 # Comment
@@ -506,27 +572,27 @@ When creating language files, it is important to pay attention to cultural diffe
 The translation of a text is done with the help of the `InternationalizationManager`, which provides the `I18N` function. The term i18n is a numeronym for "internationalization", where the number 18 stands for the 18 letters between the first "i" and the last "n" in the word. The following examples demonstrate how to use the `I18N` function for translating text:
 
 ```csharp
-// Language, PluginId, Key
-var text = I18N.Translate("de", "<PlginId>", "logout.button"); 
+// Culture, PluginId, Key
+var text = I18N.Translate(culture, "<PluginId>", "logout.button"); 
 
 // Culture, PluginId:key
-var text = I18N.Translate(culture, "<PlginId>:logout.button"); 
+var text = I18N.Translate(culture, "<PluginId>:logout.button"); 
 
-// Language, PluginId, Key, Placeholders for dynamic content in texts
+// Request, PluginId:key, placeholders for dynamic content in texts
 var user = "Max";
-var text = I18N.Translate("de", "<PlginId>:welcome.message", user); 
+var text = I18N.Translate(request, "<PluginId>:welcome.message", user); 
 ```
 
 The `I18N` function works as follows:
-- Language: Specifies the language code (e.g. "de" for German) or a CulturInfo object of the language.
-- PluginId: Identifies the plugin for which the translation is registered.
+- Culture: Specifies the culture of the language (a `CultureInfo` object). Overloads that take an `IRequest` or `IRenderContext` derive the culture from the request.
+- PluginId: Identifies the plugin for which the translation is registered. It is either passed as a separate argument or as a prefix of the key (`PluginId:key`).
 - Key: The key that corresponds to the text fragment to be translated.
 
-If a key is not found, the I18N function returns the key itself by default. This can be replaced with a custom error message:
+If a key is not found, the `I18N` function returns the key itself, so a missing translation never breaks the page. A custom fallback therefore compares the result against the key:
 
 ```csharp
-var text = I18N.Translate("en", "<PluginId>", "non.existent.key") ??
-    "Translation not found";
+var text = I18N.Translate(culture, "<PluginId>:non.existent.key");
+text = text == "non.existent.key" ? "Translation not found" : text;
 ```
 
 ## Application model
@@ -536,7 +602,7 @@ Each plugin can provide one or more applications. To define an application, a cl
 ```csharp
 [Name("Application")]
 [Description("example")]
-[Icon("/app.svg")]
+[Icon("/assets/img/app.svg")]
 [ContextPath("/app")]
 [AssetPath("/app")]
 public sealed class MyApplication : Application
@@ -550,11 +616,17 @@ To provide clarity about the metadata specified in the code above, the following
 |------------|----------------|-------------|---------|------------
 |Name        |String          |1            |Yes      |The name of the application. This can be a key to internationalization.
 |Description |String          |1            |Yes      |The description of the application. This can be a key to internationalization.
-|Icon        |String          |1            |Yes      |The icon that represents the application graphically.
-|IconTheme   |`TypeIconTheme` |1            |Yes      |The theme applied to the icon, defining its visual style (e.g., light).
+|Icon        |String          |1            |Yes      |The icon that represents the application graphically. The path refers to an embedded asset; see the *Asset model* section on how the served route is resolved.
 |AssetPath   |String          |1            |Yes      |The path where the assets are stored. This file path is mounted in the asset path of the web server.
 |DataPath    |String          |1            |Yes      |The path where the data is stored. This file path is mounted in the data path of the web server.
 |ContextPath |String          |1            |Yes      |The context path where the resources are stored. This path is mounted in the context path of the web server.
+|Theme       |`ITheme`        |1            |Yes      |Generic attribute `[Theme<TTheme>]` declaring the application's default theme. Surfaced through `IApplicationContext.DefaultTheme` (resolved lazily via the active `ThemeManager`). The visual tree picks this theme first, falls back to the first registered theme when no `[Theme<>]` is declared, and can be overridden per request via `VisualTreeControl.UseTheme<TTheme>()`.
+
+```csharp
+[Name("MyApplication")]
+[Theme<MyTheme>] // declares the default theme
+public sealed class MyApplication : IApplication { … }
+```
 
 The methods implemented from the interface cover the life cycle of the application. When the plugin is loaded, all the applications it contains are instantiated. These remain in place until the plugin is unloaded. Meta information about the application is stored in the `ApplicationContext` and managed by the `ApplicationManager`. To better understand the organization and lifecycle of applications in relation to the `ApplicationManager`, refer to the UML diagram below:
 
@@ -585,6 +657,8 @@ The methods implemented from the interface cover the life cycle of the applicati
 ║           ¦  │ RemoveApplication:Event                           │                   ║
 ║           ¦  ├───────────────────────────────────────────────────┤ 1                 ║
 ║           ¦  │ Applications:IEnumerable<IApplicationContext>     ├───┐               ║
+║           ¦  │ FailedApplications:                               │   │               ║
+║           ¦  │   IEnumerable<ApplicationFailure>                 │   │               ║
 ║           ¦  ├───────────────────────────────────────────────────┤   │               ║
 ║           ¦  │ GetApplication(ApplicationId):IApplicationContext │   │               ║
 ║           ¦  │ GetApplication(Type):IApplicationContext          │   │               ║
@@ -638,6 +712,8 @@ The methods implemented from the interface cover the life cycle of the applicati
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+An application whose constructor throws is not registered: it has no `ApplicationContext`, no routes, and no health bindings, and the remaining applications of the plugin are registered regardless. So that the failure does not disappear with the log line, the `ApplicationManager` keeps it in `FailedApplications` as an `ApplicationFailure` with the application identifier, the declaring plugin, and the exception thrown by the constructor (unwrapped from the reflection call). The entry remains until the plugin is removed or registered again. While it exists, the framework checks of the health endpoint fail (see *Health model*).
+
 ## Endpoint model
 
 Endpoints are (web) elements that can be accessed with a URI (Uniform Resource Identifier). When a plugin is loaded, all classes marked as resources are automatically determined from the assembly and included in a sitemap. For this purpose, the affected classes are provided with attributes. Endpoints are virtual and are implemented through specific derivations such as pages, resources, or REST APIs. Additionally, custom endpoints can also be defined. The following UML diagram illustrates the relationships and internal structure of the `EndpointManager` and the `Endpoint` it manages:
@@ -653,15 +729,15 @@ Endpoints are (web) elements that can be accessed with a URI (Uniform Resource I
 ║         ¦     ¦      ¦                                                               ║
 ║  ┌----- ¦-----┘      └----------------------┐                                        ║
 ║  ¦      ¦                                   ¦                                        ║
-║  ¦      ¦            ┌──────────────────────┴────────────────────────┐               ║
-║  ¦      ¦          * │ <<Interface>>                                 │               ║
-║  ¦      ¦      ┌─────► ISitemapManager                               │               ║
-║  ¦      ¦      │     ├───────────────────────────────────────────────┤ 1             ║
-║  ¦      ¦      │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────────┐   ║
-║  ¦      ¦      │     ├───────────────────────────────────────────────┤           │   ║
-║  ¦      ¦      │     │ Refresh()                                     ◄------┐    │   ║
-║  ¦      ¦      │     │ SearchResource(Uri,SearchContex):SearchResult │      ¦    │   ║
-║  ¦      ¦      │     └───────────────────────────────────────────────┘      ¦    │   ║
+║  ¦      ¦            ┌──────────────────────┴─────────────────────────┐              ║
+║  ¦      ¦          * │ <<Interface>>                                  │              ║
+║  ¦      ¦      ┌─────► ISitemapManager                                │              ║
+║  ¦      ¦      │     ├────────────────────────────────────────────────┤ 1            ║
+║  ¦      ¦      │     │ SiteMap:IEnumerable<IEndpointContext>          ├──────────┐   ║
+║  ¦      ¦      │     ├────────────────────────────────────────────────┤          │   ║
+║  ¦      ¦      │     │ Refresh()                                      ◄-----┐    │   ║
+║  ¦      ¦      │     │ SearchResource(Uri,SearchContext):SearchResult │     ¦    │   ║
+║  ¦      ¦      │     └────────────────────────────────────────────────┘     ¦    │   ║
 ║  ¦      ¦      │                                                            ¦    │   ║
 ║  ¦      ¦      │                                                            ¦    │   ║
 ║  ¦      ¦      │   ┌───────────────────────────────────┐                    ¦    │   ║
@@ -743,8 +819,8 @@ Parameters can be transferred to the endpoint to be executed in a URI or through
 
 |Origin       |Scope     |Description
 |-------------|----------|-------------------------
-|GET, DELETE  |Parameter |Parameter from the URI. Example: http://www.example.com?id=d9869404-6628-464b-8286-9685d4c4ff8b
-|POST, PATCH  |Parameter |Parameter from the content part of the request. 
+|Query string |Parameter |Parameter from the URI, regardless of the HTTP method. Example: http://www.example.com?id=d9869404-6628-464b-8286-9685d4c4ff8b
+|Request body |Parameter |Parameter from the content part of the request (e.g. POST, PUT, PATCH), parsed for form content types (url-encoded, multipart, text/plain).
 |Path segment |URI       |Parameters that are part of the URI path. Example: http://www.example.com/d9869404-6628-464b-8286-9685d4c4ff8b/edit
 |Session      |Session   |Parameters, which are stored in the session. 
 
@@ -762,7 +838,12 @@ To include additional resources such as CSS files in the project, they can be em
 </ItemGroup>
 ```
 
-Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/asset/<plugin>/x/y/z)` to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/asset/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
+Assets embedded in each plugin are converted into endpoints by the `AssetManager` and integrated into the application's sitemap. As a central component for managing static resources, the `AssetManager` collects and organizes embedded resources from plugins (such as `WebExpress.UI` and `WebExpress.WebApp`). When converting assets, if an asset comes from an external plugin, the `AssetManager` will attach the name of the plugin to the route (e.g. `/server/app/assets/<plugin>/x/y/z`) to ensure unique identification. However, if the asset comes from the plugin that hosts the application, the plugin's subdirectory will be omitted, resulting in a simplified route (e.g. `/server/app/assets/x/y/z`). This approach prevents naming conflicts and ensures consistent resource provisioning across the system.
+
+An asset is registered once per application the plugin belongs to, so its route always begins with an application route - never with the server route alone. Two consequences are easy to overlook:
+
+* The `Icon` of a plugin, an application or a theme records the path as it was declared, prefixed by the route the declaring manager knows at registration time. That value identifies the asset, but it is not necessarily the url the asset is served under. To obtain a reachable uri, look the asset up in the `AssetManager` instead of assembling the route a second time.
+* The last part of an asset route depends on how the project embeds its resources. A `LogicalName` that keeps the directory separator yields `assets/img/logo.svg`, the default naming yields `assets/img.logo.svg`. The `EndpointId` of the asset flattens both to the same dotted form and is therefore the stable key for a lookup.
 
 The following asset types are supported by the **WebExpress** system: 
 
@@ -779,7 +860,7 @@ The following asset types are supported by the **WebExpress** system:
 | .ico  | Icon file
 | .jpeg | JPEG image
 | .jpg  | JPEG image
-| .js   | Java script file
+| .js   | JavaScript file
 | .json | JSON file
 | .mp3  | MP3 audio
 | .mp4  | MP4 video
@@ -790,7 +871,8 @@ The following asset types are supported by the **WebExpress** system:
 | .txt  | Text file
 | .wav  | WAV audio
 | .xls  | Microsoft Excel
-| .xlx  | Microsoft Excel
+| .xlsx | Microsoft Excel
+| .xlx  | Microsoft Excel (legacy alias)
 | .xml  | XML file
 | .zip  | ZIP archive
 
@@ -807,15 +889,15 @@ All assets are placed under the "assets" path, which is located within the main 
 ║        ¦            ¦                                                                ║
 ║        ¦            └-----------------------------┐                                  ║
 ║        ¦                                          ¦                                  ║
-║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
-║        ¦                 * │ <<Interface>>                                 │         ║
-║        ¦             ┌─────► ISitemapManager                               │         ║
-║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
-║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║        ¦             │     ├───────────────────────────────────────────────┤   │     ║
-║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
-║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦                   ┌──────────────────────┴─────────────────────────┐        ║
+║        ¦                 * │ <<Interface>>                                  │        ║
+║        ¦             ┌─────► ISitemapManager                                │        ║
+║        ¦             │     ├────────────────────────────────────────────────┤ 1      ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║        ¦             │     ├────────────────────────────────────────────────┤  │     ║
+║        ¦             │     │ Refresh()                                      │  │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║        ¦             │     └────────────────────────────────────────────────┘  │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │   ┌────────────────────────────────┐                    │     ║
@@ -888,6 +970,10 @@ Resources are typically assets that can come in various forms, such as images, v
 [Policy<AuthenticatedAccessPolicy>]
 public sealed class MyResource : IResource
 {
+    public IResponse Process(IRequest request)
+    {
+        …
+    }
 }
 ```
 
@@ -902,7 +988,6 @@ To provide clarity about the metadata specified in the code above, the following
 |Policy          |`IIdentityPolicy` |n            |Yes      |Grants authority to a policy.
 |Condition       |`ICondition`      |n            |Yes      |Condition that must be met for the resource to be available.
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
-|Optional        |-                 |1            |Yes      |Marks a resource as optional. It only becomes active if the option has been activated in the application.
 
 A cached resource is created on the first call and persists until the associated plugin is unloaded. The `Initialize` method is called once at instantiation, while the `Process` method is called each time the resource is requested. For non-cached resources, a new instance is created each time they are called.
 
@@ -913,7 +998,7 @@ A cached resource is created on the first call and persists until the associated
 └────┬───┘ └────┬───┘ └────┬────┘ └────┬────┘              │ MyPlugin │
      ¦          ¦          ¦           ¦                   │          │
     ┌┴┐        ┌┴┐        ┌┴┐ Register┌┴┐                  └────┬─────┘
-    │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ ├─────────────────────>┌┴┐
     │ │        │ │        │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │        Initialization│ │
@@ -926,7 +1011,7 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │        │ │         │ │     └────┬────┘               │ MyApp │
     │ │        │ │        │ │         │ │          ¦                    │       │
     │ │        │ │        │ │         │ │AddPlugin┌┴┐                   └───┬───┘
-    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ │         │ ├─────────────────────>┌┴┐
     │ │        │ │        │ │         │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │         │ │        Initialization│ │
@@ -965,7 +1050,7 @@ A cached resource is created on the first call and persists until the associated
     │ │        │ │<------------------------------------------┤ │      │ │ │ MyResource │
     │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │            │
     │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
-    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
+    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instance 
     │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌┴┐
     │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
     │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
@@ -991,15 +1076,15 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║        ¦            ¦                                                                ║
 ║        ¦            └-----------------------------┐                                  ║
 ║        ¦                                          ¦                                  ║
-║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
-║        ¦                 * │ <<Interface>>                                 │         ║
-║        ¦             ┌─────► ISitemapManager                               │         ║
-║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
-║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║        ¦             │     ├───────────────────────────────────────────────┤   │     ║
-║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
-║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦                   ┌──────────────────────┴─────────────────────────┐        ║
+║        ¦                 * │ <<Interface>>                                  │        ║
+║        ¦             ┌─────► ISitemapManager                                │        ║
+║        ¦             │     ├────────────────────────────────────────────────┤ 1      ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║        ¦             │     ├────────────────────────────────────────────────┤  │     ║
+║        ¦             │     │ Refresh()                                      │  │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║        ¦             │     └────────────────────────────────────────────────┘  │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │   ┌──────────────────────────────────┐                  │     ║
@@ -1022,7 +1107,7 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ║   1 ├──────────────────────────────────────────────────────────────┤       ¦   │     ║
 ║  ┌──┤ Resources:IEnumerable<IResourceContext>                      │       ¦   │     ║
 ║  │  ├──────────────────────────────────────────────────────────────┤       ¦   │     ║
-║  │  │ GetResorces(IApplicationContext,ResourceId):IResourceContext │       ¦   │     ║
+║  │  │ GetResources(IApplicationContext,ResourceId):IResourceContext│       ¦   │     ║
 ║  │  └──────────────────────────────────────────────────────────────┘       ¦   │     ║
 ║  │                                                                         ¦   │     ║
 ║  │                        ┌────────────────┐                               ¦   │     ║
@@ -1087,12 +1172,12 @@ The `ResourceManager` manages all resources. However, these are only accessible 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### Include-Modell
+### Include model
 
 The include model describes the dynamic integration of client-side resources, such as JavaScript and CSS, into the HTML header. In contrast to the `AssetManager`, which provides static content directly, the `IncludeManager` manages references to scripts and stylesheets. It ensures the correct loading order, considers operating modes (debug and release), and handles the consistent registration and deregistration of resources when plugins are loaded or unloaded. In debug mode, JavaScript and CSS files are still delivered individually via the `AssetManager` to provide transparency and traceability during development. In release mode, however, the `IncludeManager` combines the resources for each plugin and provides two additional endpoints through which the minimized and bundled JavaScript and CSS files are delivered. This means it is responsible for efficient delivery, while the technical file serving relies on the existing infrastructure. The following example shows how to implement a JavaScript and a style sheet  include:
 
 ```csharp
-[Scope<ScopeGeneral>]
+[Scope<IScopeGeneral>]
 [Asset("myscript.js")]
 [Asset("mycss.css")]
 public sealed class MyInclude : IInclude
@@ -1117,7 +1202,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
 └────┬───┘ └────┬───┘ └────┬────┘ └────┬────┘              │ MyPlugin │
      ¦          ¦          ¦           ¦                   │          │
     ┌─┐        ┌─┐        ┌─┐ Register┌─┐                  └────┬─────┘
-    │ │        │ │        │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ ├─────────────────────>┌─┐
     │ │        │ │        │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │        Initialization│ │
@@ -1130,7 +1215,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
     │ │        │ │        │ │         │ │     └────┬────┘               │ MyApp │
     │ │        │ │        │ │         │ │          ¦                    │       │
     │ │        │ │        │ │         │ │AddPlugin┌─┐                   └───┬───┘
-    │ │        │ │        │ │         │ ├────────>│ │      Create Instacnce ¦
+    │ │        │ │        │ │         │ ├────────>│ │      Create Instance  ¦
     │ │        │ │        │ │         │ │         │ ├─────────────────────>┌─┐
     │ │        │ │        │ │         │ │         │ │<---------------------┤ │
     │ │        │ │        │ │         │ │         │ │        Initialization│ │
@@ -1147,7 +1232,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
     │ │        │ │        │ │         │ │         ┌─┐                 ┌─┐    │ My      │
     │ │        │ │        │ │         │ │         │ │                 │ │    │ Include │
     │ │        │ │        │ │         │ │         │ │                 │ │    └────┬────┘
-    │ │        │ │        │ │         │ │         │ │            Create Instacnce ¦
+    │ │        │ │        │ │         │ │         │ │            Create Instance  ¦
     │ │        │ │        │ │         │ │         │ │                 │ ├───────>┌─┐
     │ │        │ │        │ │         │ │         │ │Register         │ │<-------└─┘
     │ │        │ │        │ │         │ │         │ │<────────────────┤ │
@@ -1171,7 +1256,7 @@ The following sequence diagram illustrates the lifecycle of include resources in
     │ │        │ │<------------------------------------------┤ │      │ │ │ Include    │
     │ │        │ │        │ │         │ │  Process│ │        │ │      │ │ │ Endpoint   │
     │ │        │ ├───────────────────────────────>│ │          Process│ │ └─────┬──────┘
-    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instacnce
+    │ │        │ │        │ │         │ │         │ ├────────────────>│Create Instance 
     │ │        │ │        │ │         │ │         │ │        │ │      │ ├─────>┌─┐
     │ │        │ │        │ │         │ │         │ │        │ │      │ │<-----┤ │
     │ │        │ │        │ │         │ │         │ │        │ │      │ │      │ │
@@ -1197,14 +1282,14 @@ The following class diagram illustrates the architecture of the `IncludeManager`
 ║        ¦            ¦                                                                ║
 ║        ¦            └-----------------------------┐                                  ║
 ║        ¦                                          ¦                                  ║
-║        ¦                   ┌──────────────────────┴────────────────────────┐         ║
-║        ¦                 * │ <<Interface>>                                 │         ║
-║        ¦             ┌─────► ISitemapManager                               │         ║
-║        ¦             │     ├───────────────────────────────────────────────┤ 1       ║
-║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║        ¦             │     │ Refresh()                                     │   │     ║
-║        ¦             │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
-║        ¦             │     └───────────────────────────────────────────────┘   │     ║
+║        ¦                   ┌──────────────────────┴─────────────────────────┐        ║
+║        ¦                 * │ <<Interface>>                                  │        ║
+║        ¦             ┌─────► ISitemapManager                                │        ║
+║        ¦             │     ├────────────────────────────────────────────────┤ 1      ║
+║        ¦             │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║        ¦             │     │ Refresh()                                      │  │     ║
+║        ¦             │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║        ¦             │     └────────────────────────────────────────────────┘  │     ║
 ║        ¦             │                                                         │     ║
 ║        ¦             │   ┌──────────────────────────────────┐                  │     ║
 ║        ¦             │   │ <<Interface>>                    │                  │     ║
@@ -1302,7 +1387,7 @@ Pages are a fundamental component of web applications, serving as the primary in
 
 ```csharp
 [Title("my page")]
-[Scope<ScopeGeneral>]
+[Scope<IScopeGeneral>]
 [Policy<AuthenticatedAccessPolicy>]
 public sealed class MyPage : IPage
 {
@@ -1329,7 +1414,7 @@ To clearly illustrate the metadata described in the code above, the table below 
 |Cache           |-                 |1            |Yes      |Determines whether the resource is created once and reused each time it is called.
 |Domain          |`IDomain`         |n            |Yes      |Associates the page with one or more logical domains. Domains represent functional areas, modules or workspaces and can be used for routing, filtering or contextual grouping.
 
-Web pages are resources that are rendered in an HTML tree before delivery. The `ViualTree` class, which is available in the `RenderContext`, is responsible for the display of the page. The following UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
+Web pages are resources that are rendered in an HTML tree before delivery. The `VisualTree` class, which is available in the `RenderContext`, is responsible for the display of the page. The following UML diagram illustrates the relationships and internal structure between `Page` and the `PageManager`.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1342,15 +1427,15 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║         ¦             ¦                                                              ║
 ║         ¦             └------------------------┐                                     ║
 ║         ¦                                      ¦                                     ║
-║         ¦               ┌──────────────────────┴────────────────────────┐            ║
-║         ¦             * │ <<Interface>>                                 │            ║
-║         ¦         ┌─────► ISitemapManager                               │            ║
-║         ¦         │     ├───────────────────────────────────────────────┤ 1          ║
-║         ¦         │     │ SiteMap:IEnumerable<IEndpointContext>         ├───────┐    ║
-║         ¦         │     ├───────────────────────────────────────────────┤       │    ║
-║         ¦         │     │ Refresh()                                     │       │    ║
-║         ¦         │     │ SearchResource(Uri,SearchContex):SearchResult │       │    ║
-║         ¦         │     └───────────────────────────────────────────────┘       │    ║
+║         ¦               ┌──────────────────────┴─────────────────────────┐           ║
+║         ¦             * │ <<Interface>>                                  │           ║
+║         ¦         ┌─────► ISitemapManager                                │           ║
+║         ¦         │     ├────────────────────────────────────────────────┤ 1         ║
+║         ¦         │     │ SiteMap:IEnumerable<IEndpointContext>          ├──────┐    ║
+║         ¦         │     ├────────────────────────────────────────────────┤      │    ║
+║         ¦         │     │ Refresh()                                      │      │    ║
+║         ¦         │     │ SearchResource(Uri,SearchContext):SearchResult │      │    ║
+║         ¦         │     └────────────────────────────────────────────────┘      │    ║
 ║         ¦         │                                                             │    ║
 ║         ¦         └───────────────┐                                             │    ║
 ║         ¦                         │                                             │    ║
@@ -1372,9 +1457,9 @@ Web pages are resources that are rendered in an HTML tree before delivery. The `
 ║      │ AddPage:Event                                        │         ¦         │    ║
 ║      │ RemovePage:Event                                     │         ¦         │    ║
 ║    1 ├──────────────────────────────────────────────────────┤         ¦         │    ║
-║   ┌──┤ Resources:IEnumerable<IPageContext>                  │         ¦         │    ║
+║   ┌──┤ Pages:IEnumerable<IPageContext>                      │         ¦         │    ║
 ║   │  ├──────────────────────────────────────────────────────┤         ¦         │    ║
-║   │  │ GetResorces(IApplicationContext,PageId):IPageContext │         ¦         │    ║
+║   │  │ GetPage(IApplicationContext,PageId):IPageContext     │         ¦         │    ║
 ║   │  └──────────────────────────────────────────────────────┘         ¦         │    ║
 ║   │                                                                   ¦         │    ║
 ║   │                        ┌────────────────┐                         ¦         │    ║
@@ -1552,7 +1637,7 @@ By leveraging dependency injection, all required dependencies are automatically 
 
 ### Setting page model
 
-Setting page templates are utilized to manage and configure web applications. Each settings page is required to implement the `IPageSetting` interface. The following UML diagram illustrates the relationships and structures:
+Setting page templates are utilized to manage and configure web applications. Each settings page is required to implement the `ISettingPage` interface. The following UML diagram illustrates the relationships and structures:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -1827,8 +1912,9 @@ CRUD operations are mapped by the REST API by the following operations (RFC 7231
 
 The following code selection contains an example class called `MyRestApi` that implements a REST API in **WebExpress**:
 
+The version of a REST API is not declared through an attribute; it is derived from the namespace of the endpoint class. A namespace segment of the form `_1_` (e.g. `MyPlugin.WWW.Api._1_`) yields version `1` and surfaces as the `v1` segment of the route; without such a segment, version `1` is assumed.
+
 ```csharp
-[Version(1)]
 [Policy<SystemAccessPolicy>]
 public sealed class MyRestApi : IRestApiCrud
 {
@@ -1871,15 +1957,15 @@ The following diagram outlines how the class structure and interactions for the 
 ║         ¦                       ¦                                                    ║
 ║         ¦                       └-----------------┐                                  ║
 ║         ¦                                         ¦                                  ║
-║         ¦                * ┌──────────────────────┴────────────────────────┐         ║
-║         ¦                  │ <<Interface>>                                 │         ║
-║         ¦            ┌─────► ISitemapManager                               │         ║
-║         ¦            │     ├───────────────────────────────────────────────┤ 1       ║
-║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
-║         ¦            │     │ Refresh()                                     │   │     ║
-║         ¦            │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
-║         ¦            │     └───────────────────────────────────────────────┘   │     ║
+║         ¦                * ┌──────────────────────┴───────────────────── ───┐        ║
+║         ¦                  │ <<Interface>>                                  │        ║
+║         ¦            ┌─────► ISitemapManager                                │        ║
+║         ¦            │     ├────────────────────────────────────────────────┤ 1      ║
+║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║         ¦            │     ├────────────────────────────────────────────────┤  │     ║
+║         ¦            │     │ Refresh()                                      │  │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║         ¦            │     └────────────────────────────────────────────────┘  │     ║
 ║         ¦            │                                                         │     ║
 ║         ¦            └───────────────┐                                         │     ║
 ║         ¦                            │                                         │     ║
@@ -1903,8 +1989,8 @@ The following diagram outlines how the class structure and interactions for the 
 ║            1 ├─────────────────────────────────────────────┤              ¦    │     ║
 ║   ┌──────────┤ RestApis:IEnumerable<IRestApiContext>       │              ¦    │     ║
 ║   │          ├─────────────────────────────────────────────┤              ¦    │     ║
-║   │          │ GetResorces(IApplicationContext,RestApiId): │              ¦    │     ║
-║   │          │   :IResourceContext                         │              ¦    │     ║
+║   │          │ GetRestApi(IApplicationContext,RestApiId):  │              ¦    │     ║
+║   │          │   IRestApiContext                           │              ¦    │     ║
 ║   │          └─────────────────────────────────────────────┘              ¦    │     ║
 ║   │                                                                       ¦    │     ║
 ║   │                        ┌────────────────┐                             ¦    │     ║
@@ -1932,16 +2018,16 @@ The following diagram outlines how the class structure and interactions for the 
 ║   └───────────────► <<Interface>>                      │ *                ¦    │     ║
 ║                   │ IRestApiContext                    ◄───────────────────────┘     ║
 ║                   ├────────────────────────────────────┤                  ¦          ║
-║                   │ Version:String                     │ 1                ¦          ║
-║                   │ Methode:CrudMethode                ├─────┐            ¦          ║
+║                   │ Methods:                           │ 1                ¦          ║
+║                   │   IEnumerable<RequestMethod>       ├─────┐            ¦          ║
 ║                   │ Version:UInt                       │     │            ¦          ║
 ║                   └────────────────────────────────────┘     │            ¦          ║
 ║                                                              │            ¦          ║
 ║                            ┌───────────────┐                 │            ¦          ║
-║                            │ <<Interface>> │               1 │            ¦          ║
+║                            │ <<Interface>> │               * │            ¦          ║
 ║                            │ IComponent    │        ┌────────▼─────────┐  ¦          ║
 ║                            ├───────────────┤        │ <<Enumeration>>  │  ¦          ║
-║                            └───────Δ───────┘        │ CrudMethod       │  ¦          ║
+║                            └───────Δ───────┘        │ RequestMethod    │  ¦          ║
 ║                                    ¦                ├──────────────────┤  ¦          ║
 ║                                    ¦                │ POST             │  ¦          ║
 ║                            ┌───────┴───────┐        │ GET              │  ¦          ║
@@ -2118,14 +2204,14 @@ An established WebSocket connection is represented at runtime by a dedicated soc
 |---------------|-----------------------|-------------|---------|------------- 
 |Policy         |`IIdentityPolicy`      |n            |Yes      |Grants authority to a policy.
 |Condition      |`ICondition`           |n            |Yes      |Condition that must be met for the resource to be available. 
-|MessageType    |`MessageTypeAttribute` |1            |Yes      |Defines the message type and optionally the maximum allowed message size. 
+|MessageType    |`SocketMessageType`    |1            |Yes      |Defines the message type (`Text` or `Binary`). 
 |SubProtocol    |String                 |1            |Yes      |Specifies the sub‑protocol that the socket must use. 
 |MaxMessageSize |ULong                  |1            |Yes      |Sets the maximum allowed message size for incoming messages.
 
 The example implements the `ISocket` interface in the `MySocket` class, demonstrating how to accept a WebSocket connection, receive and send messages, and handle connection closure and errors:
 
-```
-[MessageType(MaxMessageSize.Text)]
+```csharp
+[MessageType(SocketMessageType.Text)]
 [SubProtocol("chat")]
 [MaxMessageSize(1024)]
 [Policy<PublicAccessPolicy>]
@@ -2154,15 +2240,15 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║         ¦                       ¦                                                    ║
 ║         ¦                       └-----------------┐                                  ║
 ║         ¦                                         ¦                                  ║
-║         ¦                * ┌──────────────────────┴────────────────────────┐         ║
-║         ¦                  │ <<Interface>>                                 │         ║
-║         ¦            ┌─────► ISitemapManager                               │         ║
-║         ¦            │     ├───────────────────────────────────────────────┤ 1       ║
-║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>         ├───┐     ║
-║         ¦            │     ├───────────────────────────────────────────────┤   │     ║
-║         ¦            │     │ Refresh()                                     │   │     ║
-║         ¦            │     │ SearchResource(Uri,SearchContex):SearchResult │   │     ║
-║         ¦            │     └───────────────────────────────────────────────┘   │     ║
+║         ¦                * ┌──────────────────────┴─────────────────────────┐        ║
+║         ¦                  │ <<Interface>>                                  │        ║
+║         ¦            ┌─────► ISitemapManager                                │        ║
+║         ¦            │     ├────────────────────────────────────────────────┤ 1      ║
+║         ¦            │     │ SiteMap:IEnumerable<IEndpointContext>          ├──┐     ║
+║         ¦            │     ├──────────────────────────────────────────v─────┤  │     ║
+║         ¦            │     │ Refresh()                                      │  │     ║
+║         ¦            │     │ SearchResource(Uri,SearchContext):SearchResult │  │     ║
+║         ¦            │     └────────────────────────────────────────────────┘  │     ║
 ║         ¦            │                                                         │     ║
 ║         ¦            └───────────────┐                                         │     ║
 ║         ¦                            │                                         │     ║
@@ -2241,8 +2327,8 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║                  │ <<Interface>>                   │                           ¦     ║
 ║                  │ ISocket                         │                           ¦     ║
 ║                  ├─────────────────────────────────┤                           ¦     ║
-║                  │ OnConnected(ISocketConnection): │                           ¦     ║
-║                  │   Task                          │                           ¦     ║
+║                  │ OnConnectedAsync(               │                           ¦     ║
+║                  │   ISocketConnection):Task       │                           ¦     ║
 ║                  └─────────────────Δ───────────────┘                           ¦     ║
 ║                                    ¦                                           ¦     ║
 ╚════════════════════════════════════¦═══════════════════════════════════════════¦═════╝
@@ -2252,8 +2338,8 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ║                  ┌─────────────────┴───────────────┐                    create ¦     ║
 ║                  │ MySocket                        ◄---------------------------┘     ║
 ║                  ├─────────────────────────────────┤                                 ║
-║                  │ OnConnected(ISocketConnection): │                                 ║
-║                  │   Task                          │                                 ║
+║                  │ OnConnectedAsync(               │                                 ║
+║                  │   ISocketConnection):Task       │                                 ║
 ║                  └─────────────────────────────────┘                                 ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -2265,9 +2351,9 @@ Because WebSocket connections are long-lived and stateful, the number of concurr
 
 In a sitemap, all endpoints are listed with their route path. When a web client calls a resource, the associated endpoint is determined from the sitemap and returned to the caller.
 
-The basic concept of the sitemap is based on mapping the physical file structure of the assembly directly as a routing hierarchy. Each folder corresponds to a segment of the route path, with the entire directory structure being converted into a namespace hierarchy during compilation. For example, a path such as `WWWW/Blog/Post` becomes the namespace `WWWW.Blog.Post`, which serves as the foundation for deriving the route path. Within these namespaces, the contained classes (such as `Index.cs`, `Add.cs`, or `Edit.cs`) define the specific endpoints of the corresponding segment. In this process, `Index.cs` functions as the default endpoint, meaning that this filename is not explicitly included in the URI. Thus, a class like `WWWW.Blog.Post.Index.cs` results in the route `/blog/post`.
+The basic concept of the sitemap is based on mapping the physical file structure of the assembly directly as a routing hierarchy. Each folder corresponds to a segment of the route path, with the entire directory structure being converted into a namespace hierarchy during compilation. For example, a path such as `WWW/Blog/Post` becomes the namespace `WWW.Blog.Post`, which serves as the foundation for deriving the route path. Within these namespaces, the contained classes (such as `Index.cs`, `Add.cs`, or `Edit.cs`) define the specific endpoints of the corresponding segment. In this process, `Index.cs` functions as the default endpoint, meaning that this filename is not explicitly included in the URI. Thus, a class like `WWW.Blog.Post.Index.cs` results in the route `/blog/post`.
 
-It is important to note that the algorithm removes certain prefixes from the route to ensure a simplified path structure. To help you understand the prefixes that are eliminated by the algorithm, the following table shows the prefixes and their conversion:
+It is important to note that the algorithm removes a leading namespace segment that matches one of the well-known web-root prefixes (case-insensitive), so the route starts at the content hierarchy. The following table shows the recognized prefixes and their conversion:
 
 |Prefix   |Full Class Name                 |Resulting Route
 |---------|--------------------------------|------------------
@@ -2275,16 +2361,14 @@ It is important to note that the algorithm removes certain prefixes from the rou
 |Web      |`Web.Products.List`             |`/products/list`
 |WebPage  |`WebPage.About`                 |`/about`
 |WebPages |`WebPages.Contact`              |`/contact`
-|Root     |`Root.Homepage.Index`           |`/homepage`
-|WebRoot  |`WebRoot.Products.Index`        |`/products`
-|WWWRoot  |`WWWRoot.Blog.Post.PostId.Edit` |`/blog/post/{postId}/edit`
-|Default  |`Default.Blog.Post`             |`/blog/post`
+|Page     |`Page.Homepage.Index`           |`/homepage`
+|Pages    |`Pages.Products.Index`          |`/products`
+|Website  |`Website.Blog.Post.Index`       |`/blog/post`
 
-In addition, the algorithm eliminates certain class name suffixes from the route to generate standardized route paths. If a class name contains one of these suffixes, only the essential part is used to form the path. The following is a summary table that lists the suffix identifiers and the corresponding transformation:
+In addition, the algorithm eliminates the class name suffix `Page` from the route to generate standardized route paths. If a class name ends with this suffix, only the essential part is used to form the path:
 
 |Suffix     |Full Class Name                 |Resulting Route
 |-----------|--------------------------------|------------------
-|Controller |`WWW.Blog.Post.IndexController` |`/blog/post`
 |Page       |`WWW.Products.ListPage`         |`/products/list`
 
 When converting endpoints into routes, the system checks whether an endpoint originates from the plugin that hosts the current application. If so, the plugin’s subdirectory is omitted, resulting in a simplified route (e.g., `/server/app/x/y/z`). In contrast, endpoints from external plugins retain the plugin’s name in the route (e.g., `/server/app/<plugin>/x/y/z`) to clearly indicate their source.
@@ -2301,7 +2385,7 @@ The `Index` classes in **WebExpress** can be equipped with type-defining attribu
 public class BlogPostParameter : Parameter
 {
     public BlogPostParameter(int value)
-        :base("postid", value, ParameterScope.Url)
+        : base("postid", value, ParameterScope.Url)
     {
     }
 }
@@ -2325,14 +2409,14 @@ The following table describes the attributes used in the `Index`:
 |Description     |String     |1            |Yes      |The description of the path segment. This can be a key to internationalization.
 |Icon            |IIcon      |1            |Yes      |The icon that represents the path segment graphically.
 
-This class is further decorated with a custom attribute (`SegmentAttribute`) that defines the name of the placeholder (`postId`). During routing, a reflection-based mechanism examines the namespace hierarchy and the set attributes to determine where a dynamic value is expected. The mechanism then extracts the corresponding value from the URL and passes it on to the appropriate endpoint.
+The `Index` class is decorated with the `SegmentInt<BlogPostParameter>` attribute; the parameter class defines the name of the placeholder (`postid`). During routing, a reflection-based mechanism examines the namespace hierarchy and the set attributes to determine where a dynamic value is expected. The mechanism then extracts the corresponding value from the URL and passes it on to the appropriate endpoint.
 
 When the application starts, the sitemap uses reflection to traverse all relevant classes that represent endpoints (all those that implement the `IEndpoint` interface) and automatically builds a routing tree from them. Below is an example of a typical website structure implemented with **WebExpress**:
 
 ```
    <> MyPlugin.csproj
    ├─...
-   └─📁 WWWW                 (web root)
+   └─📁 WWW                  (web root)
      ├─📁 Blog               (blog section)
      │ ├─📄 Index.cs         (blog overview)
      │ └─📁 Post             (blog post section)
@@ -2362,9 +2446,12 @@ Web queries can be answered with different status responses (see RFC 2616). If s
 Status pages are primarily used from the plugin in which the associated application is implemented. Status pages implement the `IStatusPage` interface. The example below demonstrates how to create a custom status page:
 
 ```csharp
-[WebExStatusCode(500)]
-public sealed class MyStatusPage : IStatusPage<RenderContext>
+[StatusCode(500)]
+public sealed class MyStatusPage : IStatusPage<VisualTree>
 {
+    public void Process(IRenderContext renderContext, VisualTree visualTree)
+    {
+    }
 }
 ```
 
@@ -2559,7 +2646,7 @@ Fragments are modular components that derive from the `IFragment` interface and 
 ```csharp
 [Order(0)]
 [Section("mysection")]
-[Scope<ScopeGeneral>]
+[Scope<IScopeGeneral>]
 [Permission<MyIdentityPermission>()]
 public sealed class MyFragment : IFragment<IRenderContext>
 {
@@ -2577,30 +2664,509 @@ To provide clarity about the metadata specified in the code above, the following
 |Condition     |`ICondition` |1            |Yes      |Condition that must be met for the fragment to be available.
 |Cache         |Bool         |1            |Yes      |Determines whether the fragment is created once and reused each time it is called. This attribute is active only if the associated page also has the cache attribute. 
 
-## Web icons
+## Health model
 
-Unlike components, web icons are not managed through a centralized manager like the `AssetManager`. Instead, each web icon is derived from the `IIcon` interface and used directly within the application. This approach provides a lightweight and flexible system for incorporating icons into the user interface without the need for additional management layers. To define a specific web icon, a class is created that inherits from a base Icon class or implements the `IIcon` interface. Below is an example of a class representing an information circle icon:
+Health components provide the availability of critical application dependencies for the global `/health` endpoint. While `WebCore` monitors the host lifecycle and general component registration, the applications themselves contribute specific checks. These include checks for databases, message queues, external services, or background workers, which are implemented via the `IHealth` interface. The `HealthManager` automatically discovers these components through plugin and application events and handles their registration. The following UML diagram illustrates the structure of the manager, its application bindings, and the structure of a health component:
+
+
+```
+╔WebExpress.WebCore════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║         ┌──────────────────────────────────┐                                         ║
+║         │ <<Interface>>                    │                                         ║
+║         │ IComponentHub                    │                                         ║
+║         ├──────────────────────────────────┤ 1                                       ║
+║         │ HealthManager:IHealthManager     ├─────┐                                   ║
+║         │ …                                │     │                                   ║
+║         └──────────────────────────────────┘     │                                   ║
+║                                                  │                                   ║
+║              ┌───────────────────┐               │                                   ║
+║              │ <<Interface>>     │               │                                   ║
+║              │ IComponentManager │               │                                   ║
+║              ├───────────────────┤               │                                   ║
+║              └────────Δ──────────┘               │                                   ║
+║                       ¦                        1 │                                   ║
+║             ┌─────────┴──────────────────────────▼────────┐                          ║
+║             │ <<Interface>>                               │                          ║
+║             │ IHealthManager                              ├----------------┐         ║
+║             ├─────────────────────────────────────────────┤                ¦         ║
+║             │ AddHealth:Event                             │                ¦         ║
+║             │ RemoveHealth:Event                          │                ¦         ║
+║             ├─────────────────────────────────────────────┤ 1              ¦         ║
+║             │ HealthChecks:IEnumerable<IHealthContext>    ├─────────┐      ¦         ║
+║             ├─────────────────────────────────────────────┤         │      ¦         ║
+║             │ GetHealthChecks(IApplicationContext)        │         │      ¦         ║
+║             │   :IEnumerable<IHealthContext>              │         │      ¦         ║
+║             │ CheckAsync(CancellationToken):Task<bool>    │         │      ¦         ║
+║             │ CheckLiveness():bool                        │         │      ¦         ║
+║             └─────────────────────────────────────────────┘         │      ¦         ║
+║                                                                     │      ¦         ║
+║                            ┌────────────────┐                       │      ¦         ║
+║                            │ <<Interface>>  │                       │      ¦         ║
+║                            │ IContext       │                       │      ¦         ║
+║                            ├────────────────┤                       │      ¦         ║
+║                            └───────Δ────────┘                       │      ¦         ║
+║                                    ¦                                │      ¦         ║
+║               ┌────────────────────┴───────────────────┐            │      ¦         ║
+║               │ <<Interface>>                          │ *          │      ¦         ║
+║               │ IHealthContext                         ◄────────────┘      ¦         ║
+║               ├────────────────────────────────────────┤                   ¦         ║
+║               │ PluginContext:IPluginContext           │                   ¦         ║
+║               │ ApplicationContext:IApplicationContext │                   ¦         ║
+║               │ HealthId:IComponentId                  │                   ¦         ║
+║               │ Timeout:TimeSpan                       │                   ¦         ║
+║               └────────────────────────────────────────┘                   ¦         ║
+║                                                                            ¦         ║
+║                            ┌────────────────┐                              ¦         ║
+║                            │ <<Interface>>  │                              ¦         ║
+║                            │ IComponent     │                              ¦         ║
+║                            ├────────────────┤                              ¦         ║
+║                            └───────Δ────────┘                              ¦         ║
+║                                    ¦                                       ¦         ║
+║             ┌──────────────────────┴────────────────────────┐              ¦         ║
+║             │ <<Interface>>                                 │              ¦         ║
+║             │ IHealth                                       │              ¦         ║
+║             ├───────────────────────────────────────────────┤              ¦         ║
+║             │ CheckAsync(CancellationToken)                 │              ¦         ║
+║             │   :Task<HealthCheckResult>                    │              ¦         ║
+║             └──────────────────────Δ────────────────────────┘              ¦         ║
+║                                    ¦                                       ¦         ║
+╚════════════════════════════════════¦═══════════════════════════════════════¦═════════╝
+                                     ¦                                       ¦
+╔MyPlugin════════════════════════════¦═══════════════════════════════════════¦═════════╗
+║                                    ¦                                       ¦         ║
+║             ┌──────────────────────┴────────────────────────┐       create ¦         ║
+║             │ MyDatabaseHealth                              ◄--------------┘         ║
+║             ├───────────────────────────────────────────────┤                        ║
+║             │ CheckAsync(CancellationToken)                 │                        ║
+║             │   :Task<HealthCheckResult>                    │                        ║
+║             └───────────────────────────────────────────────┘                        ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+Health components are defined as `public sealed` classes that implement the `IHealth` interface. A plugin provides its classes to its own applications as well as to those applications associated with it through its `Application` attributes. The manager registers each class exactly once per plugin and application. This also applies to applications that are added after the plugin has been loaded. The following example demonstrates how to check a configured database using a connection and a minimal test query:
 
 ```csharp
-public class IconInfoCircle : IIcon
+using Microsoft.Extensions.Configuration;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
+using WebExpress.WebCore.WebAttribute;
+using WebExpress.WebCore.WebHealth;
+
+/// <summary>
+/// Includes required database access in the application's health decision.
+/// </summary>
+[HealthTimeout(3000)]
+public sealed class MyDatabaseHealth : IHealth
 {
-    public IHtmlNode Render(IRenderContext renderContext, 
-        IVisualTree visualTree, 
-        string id = null, 
-        string description = null, 
-        string css = null, 
-        string style = null, 
-        string role = null)
+    private readonly IConfiguration _settings;
+
+    /// <summary>
+    /// Uses the contributing plugin's configuration without exposing credentials in probe responses.
+    /// </summary>
+    /// <param name="healthContext">The binding supplying the plugin and application configuration context.</param>
+    private MyDatabaseHealth(IHealthContext healthContext)
     {
-        return new HtmlElementTextSemanticsSpan()
-        {
-            Class = "fas fa-info-circle"
-        };
+        _settings = healthContext.PluginContext.Settings.GetSection("Database");
+    }
+
+    /// <summary>
+    /// Verifies a database round trip within the health component's cancellation budget.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token limiting the dependency operation.</param>
+    /// <returns>A successful result when the configured database accepts the query.</returns>
+    public async Task<HealthCheckResult> CheckAsync(CancellationToken cancellationToken)
+    {
+        var factory = DbProviderFactories.GetFactory(_settings["Provider"]);
+        await using var connection = factory.CreateConnection();
+        connection.ConnectionString = _settings["ConnectionString"];
+        await connection.OpenAsync(cancellationToken);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 1";
+        command.CommandTimeout = 2;
+        await command.ExecuteScalarAsync(cancellationToken);
+
+        return HealthCheckResult.Healthy();
     }
 }
 ```
 
-This implementation showcases the core functionality of the `IconInfoCircle` class. The render method generates an HTML span element (`HtmlElementTextSemanticsSpan`) with a CSS class (`fas fa-info-circle`) that defines the icon's appearance. In contrast to standard icons, which typically reference a file path to an external asset, web icons directly produce HTML code that can be embedded into the HTML document. Additional optional parameters, such as id, description, and css, provide flexibility in customizing the icon's rendering for various use cases.
+The database example reads `Database:Provider` and `Database:ConnectionString` from the configuration of the contributing plugin. The provider requires registration with `DbProviderFactories` during plugin initialization. The test query assumes that the database supports `SELECT 1`. If necessary, the equivalent read operation of the respective provider must be used. An exception or a return value of `HealthCheckResult.Unhealthy("diagnostic context")` sets the overall health status to failed, and the technical details are recorded exclusively in the server logs.
+
+The health attribute configures the execution budget of the respective application binding. The following table describes the available component metadata:
+
+|Attribute     |Type         |Multiplicity |Optional |Description
+|--------------|-------------|-------------|---------|-----------------
+|HealthTimeout |Int          |1            |Yes      |The positive execution budget in milliseconds. The default is 5000. A value of zero or less makes the component unhealthy.
+
+### Health component lifecycle
+
+The manager exposes discovered bindings through `HealthChecks` and `GetHealthChecks(IApplicationContext)`, and reports binding changes through `AddHealth` and `RemoveHealth`. Each `IHealthContext` contains the contributing plugin, associated application, diagnostic component identifier, and execution timeout. Consumers can obtain the manager through constructor injection or `IComponentHub.HealthManager`.
+
+Component activation is deferred until the first probe and uses the standard `ComponentActivator` mechanism. Constructors can receive `IHealthContext`, `IApplicationContext`, `IComponentHub`, `IHttpServerContext`, `IComponentId`, and registered component managers. A successfully created instance is reused for its application binding. Constructor failures remain registered as unhealthy checks and are retried by later probes.
+
+Component execution runs different bindings concurrently and waits for every result. Each check must perform a small, read-only operation, honor its cancellation token, and return unhealthy while a required dependency is still initializing. Missing tasks or results, unsuccessful results, exceptions, invalid timeout metadata, and exceeded budgets fail health. Completed results are not cached, so a later probe can observe recovery. Applications must supply checks for every dependency required to serve traffic; dependencies without a health component cannot affect the aggregate result.
+
+Concurrent probes share an unfinished invocation of the same binding. A timeout bounds each caller's wait even if component construction or synchronous application code blocks. Further probes cannot start overlapping invocations until that operation completes. A disconnected caller stops waiting without cancelling work shared with another caller. Code that ignores cooperative cancellation cannot be forcibly terminated by the manager.
+
+Component removal follows application and plugin ownership. Removing an application detaches all of its health bindings, and unloading a contributing plugin also removes bindings for applications owned by other plugins. Components may implement `IDisposable`; disposal occurs after any active invocation finishes.
+
+### Global health endpoint
+
+The endpoint is available at `/health` and `/health/` on every configured HTTP or HTTPS listener without authentication. The liveness variant `/health/live` (and `/health/live/`) evaluates only the framework checks and never invokes an application health component, so an outage of a dependency the process does not own cannot restart it. These paths are reserved by WebCore and are independent of `ContextPath`, application routes, and the public `ExternalUri`. Query parameters neither select checks nor enable diagnostic output. Health processing does not redirect to login pages or issue authentication or session cookies.
+
+The framework checks require completed HTTP server startup, an initialized component registry, and every declared application. An application whose constructor throws is not registered and therefore leaves no health bindings behind; the `ApplicationManager` records it in `FailedApplications` (identifier, plugin, and exception), and the framework checks fail for as long as the declaring plugin is loaded. The server log names the application and the exception on every probe. Startup becomes healthy after listener startup and all `Started` handlers complete. Beginning `HttpServer.Stop()` clears the running state before requests are drained. Framework state is evaluated again after dependency checks complete, so shutdown during a probe prevents a successful response.
+
+The successful response uses HTTP `200 OK` only when all framework and application checks pass. A host without application health components can report success when its framework checks pass. A `GET /health` response has the following body:
+
+```json
+{"status":"healthy"}
+```
+
+The failure response uses HTTP `503 Service Unavailable` with the following fixed summary. Application identifiers, component names, connection details, exception messages, and stack traces are excluded from the response:
+
+```json
+{"status":"unhealthy","message":"One or more critical components are unavailable."}
+```
+
+The HTTP contract sets `Content-Type: application/json; charset=utf-8` and `Cache-Control: no-store`. A `HEAD` request evaluates the same checks and returns the same status without a body. Other methods return `405 Method Not Allowed` and `Allow: GET, HEAD` without invoking checks. Failed request parsing also produces a fixed unhealthy response for the reserved health path.
+
+The server log provides diagnostic context for operators investigating `503` responses. Failed application checks record the application identifier, component identifier, and failure description. Exceptions include their technical context. Health components must not repair dependencies, mutate business data, or recursively invoke `/health`.
+
+### Docker health checks
+
+The Dockerfile example below probes aggregate health every thirty seconds. The image must contain `curl` and a shell, and the URL must match the container's configured listener. With the default five-second component budget, the command permits seven seconds for the request and Docker permits eight seconds for the command. Increase these values when a component uses a longer budget.
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=8s --start-period=30s --retries=3 \
+  CMD curl --fail --silent --show-error --max-time 7 http://127.0.0.1:8080/health || exit 1
+```
+
+Docker records health from the command's exit code. Health state alone does not restart a standalone Docker container. The interval, timeout, startup allowance, and retry count are deployment decisions described in the [Docker HEALTHCHECK reference](https://docs.docker.com/reference/dockerfile/#healthcheck).
+
+### Kubernetes probes
+
+The container specification below uses the aggregate endpoint for startup and readiness, and the liveness variant for liveness. Replace the image and port with the deployment's values and configure WebExpress to listen on the container interface at that port.
+
+```yaml
+containers:
+  - name: webexpress
+    image: your-registry/your-webexpress-app:your-version
+    ports:
+      - name: http
+        containerPort: 8080
+    startupProbe:
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 5
+      timeoutSeconds: 7
+      failureThreshold: 30
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 7
+      failureThreshold: 1
+    livenessProbe:
+      httpGet:
+        path: /health/live
+        port: http
+      periodSeconds: 30
+      timeoutSeconds: 7
+      failureThreshold: 3
+```
+
+The startup probe delays readiness and liveness probing until startup succeeds. Readiness failures remove the instance from normal Service traffic, while repeated liveness failures cause a container restart. These behaviors follow the [Kubernetes probe configuration](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/).
+
+A shared database outage fails `/health` and takes every instance out of the Service, but leaves `/health/live` healthy, so it restarts nothing that a restart could not fix. `/health/live` fails for a host stuck in startup or shutdown, a component manager that failed to initialize, and a declared application that could not be created. Applications whose own dependencies are cured by a restart - a database file on the pod's volume, for example - can point liveness at `/health` instead. Probe timeouts must exceed the longest component budget plus transport overhead, and startup allowances must cover the actual initialization duration.
+
+## Metrics model
+
+Metrics make the operating state of a host measurable over time. While the health endpoint answers a yes-or-no question for orchestration, the global `/metrics` endpoint publishes figures such as response times, error rates, memory use, logins, active users, database accesses or LDAP requests in the Prometheus text format. Monitoring systems such as Prometheus collect them periodically, Grafana visualizes trends over long periods, and alert rules report rising error rates, resource bottlenecks or unusual load peaks early. `WebCore` records the framework figures itself; applications contribute their own through the `MetricsManager` in the namespace `WebExpress.WebCore.WebMetrics`, analogous to the health model.
+
+```
+╔WebExpress.WebCore════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║   ┌──────────────────────────────────────────────────────────────┐                   ║
+║   │ <<Interface>>                                                │                   ║
+║   │ IMetricsManager                                              │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ AddMetric:Event                                              │                   ║
+║   │ RemoveMetric:Event                                           │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ Metrics:IEnumerable<IMetricContext>                          │                   ║
+║   │ Instruments:IEnumerable<MetricInstrument>                    │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ GetMetrics(IApplicationContext):IEnumerable<IMetricContext>  │                   ║
+║   │ CreateCounter(name, help, labelNames):MetricCounter          │                   ║
+║   │ CreateGauge(name, help, labelNames):MetricGauge              │                   ║
+║   │ CreateHistogram(name, help, buckets, labelNames)             │                   ║
+║   │   :MetricHistogram                                           │                   ║
+║   │ CollectAsync(CancellationToken)                              │                   ║
+║   │   :Task<IReadOnlyList<MetricFamily>>                         │                   ║
+║   └──────────────────────────────────────────────────────────────┘                   ║
+║                                                                                      ║
+║   ┌──────────────────────────────────────────────────────────────┐                   ║
+║   │ <<Interface>>                                                │                   ║
+║   │ IMetric                                                      │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ CollectAsync(IMetricCollector, CancellationToken):Task       │                   ║
+║   └──────────────────────────────────────────────────────────────┘                   ║
+║                                                                                      ║
+║   ┌──────────────────────────────────────────────────────────────┐                   ║
+║   │ <<Interface>>                                                │                   ║
+║   │ IMetricCollector                                             │                   ║
+║   ├──────────────────────────────────────────────────────────────┤                   ║
+║   │ Counter(name, help, value, labels)                           │                   ║
+║   │ Gauge(name, help, value, labels)                             │                   ║
+║   │ Add(MetricInstrument)                                        │                   ║
+║   └──────────────────────────────────────────────────────────────┘                   ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+Applications contribute metrics in two complementary ways:
+
+- **Instruments** record a value where it occurs. `MetricCounter` counts events such as LDAP queries or failed imports, `MetricGauge` tracks a value that rises and falls such as queued jobs, and `MetricHistogram` records a distribution such as query durations in buckets, from which Prometheus computes percentiles across all instances. Instruments are thread-safe and cheap to update on request threads.
+- **Metric components** implement `IMetric` and report values at scrape time, such as the size of a connection pool or the counters a client library keeps itself. Like health components, they are discovered as `public sealed` classes and bound once per plugin and application.
+
+An instrument created through `CreateCounter`, `CreateGauge` or `CreateHistogram` is registered with the manager and exported on every scrape. The methods return the existing instrument for a name that is already declared, so independent parts of an application can record into the same series without sharing a reference; a declaration with another type, other labels or other buckets is refused with an `InvalidOperationException`. The framework's own instruments are part of this registry, which lets an application with a login form of its own count into `webexpress_identity_logins_total`:
+
+```csharp
+var logins = WebEx.ComponentHub.MetricsManager.CreateCounter
+(
+    "webexpress_identity_logins_total", "Login attempts by result.", "result"
+);
+
+logins.Increment("failure");
+```
+
+A metric component receives the same constructor injection as a health component and reports its values through the collector. The collector adds the label `application` with the identifier of the bound application, so the same component in several applications yields distinct series. The following example reports LDAP requests counted by an instrument and the open connections of a pool read at scrape time:
+
+```csharp
+/// <summary>
+/// Makes LDAP load and latency visible per application.
+/// </summary>
+[MetricTimeout(1000)]
+public sealed class MyLdapMetrics : IMetric
+{
+    /// <summary>
+    /// Counts requests where they happen; the LDAP client of the application records into it.
+    /// </summary>
+    public static MetricCounter Requests { get; } = new("ldap_requests_total", "LDAP requests by result.", "result");
+
+    /// <summary>
+    /// Records request durations so that slow directory servers show up as a percentile.
+    /// </summary>
+    public static MetricHistogram Duration { get; } = new("ldap_request_duration_seconds", "LDAP request duration.", null);
+
+    /// <summary>
+    /// Reports the instruments and the pool state on every scrape.
+    /// </summary>
+    /// <param name="collector">The collector receiving the values.</param>
+    /// <param name="cancellationToken">The token that expires when the collection exceeds its budget.</param>
+    /// <returns>A task that completes once all values have been reported.</returns>
+    public Task CollectAsync(IMetricCollector collector, CancellationToken cancellationToken)
+    {
+        collector.Add(Requests);
+        collector.Add(Duration);
+        collector.Gauge("ldap_pool_connections", "Open LDAP connections.", MyLdapPool.OpenConnections);
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+The LDAP client of the application records `MyLdapMetrics.Requests.Increment("success")` and `MyLdapMetrics.Duration.Observe(elapsed.TotalSeconds)` around each request. Instruments held in static members are shared by every application the plugin serves; an instrument that must be told apart per application belongs in an instance member of the component.
+
+Every distinct label value creates a series of its own. Labels must therefore only carry values from a small, bounded set - a result, a status class, a server name - and never user names, identifiers, paths or query texts. Metric names follow the Prometheus conventions: lowercase words separated by underscores, a unit suffix such as `_seconds` or `_bytes`, and `_total` for counters.
+
+The metric attribute configures the execution budget of the respective application binding. The following table describes the available component metadata:
+
+|Attribute     |Type         |Multiplicity |Optional |Description
+|--------------|-------------|-------------|---------|-----------------
+|MetricTimeout |Int          |1            |Yes      |The positive execution budget in milliseconds. The default is 2000. A value of zero or less makes the component fail on every scrape.
+
+### Metric component lifecycle
+
+The manager exposes discovered bindings through `Metrics` and `GetMetrics(IApplicationContext)`, and reports binding changes through `AddMetric` and `RemoveMetric`. Each `IMetricContext` contains the contributing plugin, associated application, component identifier, and execution timeout. Consumers obtain the manager through constructor injection or `IComponentHub.MetricsManager`.
+
+Component activation is deferred until the first scrape. A successfully created instance is reused for its application binding; constructor failures are retried by later scrapes. All bindings are collected concurrently. A component that throws, exceeds its budget, reports an invalid name, uses the reserved label `application`, reports a series twice, or reports a name with a type that contradicts an earlier one loses all of its values for that scrape - the remaining sources are unaffected. The outcome of each binding is published as `webexpress_metric_collector_up{application, collector}` with the value `1` or `0`, and the cause is recorded in the server log. Concurrent scrapes share an unfinished collection, so several Prometheus replicas do not multiply the work.
+
+A collection must only read state the application already keeps. A value that is expensive to determine - a `COUNT(*)` over a large table, for example - belongs in a job whose last result the component reports. Component removal follows application and plugin ownership, as with health components; components may implement `IDisposable`.
+
+### Framework metrics
+
+`WebCore` publishes the following series without any application code. Process and runtime series use the names of the official Prometheus client libraries, so existing dashboards and alert rules apply unchanged.
+
+|Metric                                     |Type      |Description
+|-------------------------------------------|----------|-----------------
+|`webexpress_info{version}`                 |Gauge     |Always `1`; the label carries the framework version.
+|`webexpress_http_requests_total{method,code}` |Counter |Handled requests by method and status code. Health and metrics requests are excluded.
+|`webexpress_http_request_duration_seconds` |Histogram |Time from receiving a request until its response is ready to be sent.
+|`webexpress_http_requests_in_flight`       |Gauge     |Requests currently being processed, excluding open WebSocket connections.
+|`webexpress_identity_logins_total{result}` |Counter   |Login attempts by `success`, `failure` and `throttled`.
+|`webexpress_identity_logouts_total`        |Counter   |Explicit sign-outs.
+|`webexpress_identity_active_users`         |Gauge     |Distinct identities with an authenticated request within the active user window (default five minutes).
+|`webexpress_sessions`                      |Gauge     |Sessions held by the server, including idle ones not yet cleaned up.
+|`webexpress_plugins`, `webexpress_applications`, `webexpress_applications_failed` |Gauge |Loaded plugins, registered applications and declared applications whose creation failed.
+|`webexpress_metric_collector_up{application,collector}` |Gauge |Whether a metric component reported its values in the last scrape.
+|`process_cpu_seconds_total`                |Counter   |CPU time of the process.
+|`process_resident_memory_bytes`, `process_virtual_memory_bytes`, `process_private_memory_bytes` |Gauge |Memory of the process as accounted by the operating system.
+|`process_open_handles`, `process_num_threads`, `process_start_time_seconds` |Gauge |Handles, threads and start time of the process.
+|`dotnet_total_memory_bytes`, `dotnet_gc_heap_size_bytes` |Gauge |Managed heap.
+|`dotnet_collection_count_total{generation}`, `dotnet_gc_pause_seconds_total` |Counter |Garbage collections and the time paused for them.
+|`dotnet_threadpool_threads`, `dotnet_threadpool_queue_length`, `dotnet_threadpool_completed_items_total` |Gauge, Counter |Thread pool saturation.
+
+A labelled series appears once the first value has been recorded for it.
+
+### Global metrics endpoint
+
+Once enabled, the endpoint is available at `/metrics` and `/metrics/` on every configured listener, independent of `ContextPath` and application routes. It neither creates sessions nor issues cookies, and its requests are not counted as traffic. A `GET` request returns `200 OK` with `Content-Type: text/plain; version=0.0.4; charset=utf-8` and `Cache-Control: no-store`; a `HEAD` request returns the same status without a body; other methods return `405 Method Not Allowed` with `Allow: GET, HEAD`. While the host stops or the manager is unavailable, the endpoint returns `503 Service Unavailable` without details.
+
+The `Metrics` block of the server settings controls the endpoint (see the [configuration guide](config.md#monitoring--metrics)). Unlike `/health`, the endpoint is switched off by default: the series name no user, but they reveal load, login failures and the framework version, so a deployment publishes them only by setting `Enabled: true`. Until then the path is left to normal application routing and the framework metrics are still recorded, but not served. A deployment that exposes the listener beyond the cluster also sets `BearerToken`, after which every request without `Authorization: Bearer <token>` receives `401 Unauthorized`.
+
+### Prometheus and Kubernetes
+
+The scrape configuration below reads the token from a file, for example a mounted Kubernetes secret:
+
+```yaml
+scrape_configs:
+  - job_name: webexpress
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/secrets/webexpress-metrics-token
+    static_configs:
+      - targets: ["webexpress:8080"]
+```
+
+With the Prometheus Operator, a `ServiceMonitor` selects the Service of the application and refers to the secret holding the token, which the application receives as the environment variable `WEBEXPRESS_WebExpress__Metrics__BearerToken`; the endpoint itself is switched on with `WEBEXPRESS_WebExpress__Metrics__Enabled=true`:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: webexpress
+spec:
+  selector:
+    matchLabels:
+      app: webexpress
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      authorization:
+        type: Bearer
+        credentials:
+          name: webexpress-metrics
+          key: token
+```
+
+The following alert rules illustrate typical use: a share of server errors above five percent, a 95th percentile response time above one second, and a metric component that keeps failing.
+
+```yaml
+groups:
+  - name: webexpress
+    rules:
+      - alert: WebExpressHighErrorRate
+        expr: |
+          sum by (instance) (rate(webexpress_http_requests_total{code=~"5.."}[5m]))
+            / sum by (instance) (rate(webexpress_http_requests_total[5m])) > 0.05
+        for: 10m
+      - alert: WebExpressSlowResponses
+        expr: |
+          histogram_quantile(0.95, sum by (instance, le) (rate(webexpress_http_request_duration_seconds_bucket[5m]))) > 1
+        for: 10m
+      - alert: WebExpressMetricCollectorDown
+        expr: webexpress_metric_collector_up == 0
+        for: 15m
+```
+
+## Web icons
+
+The framework ships its own icon set. Every icon is a stroke drawing on a 21×21 grid, stored as an individual SVG file and applied to an `<i>` element as a CSS mask, so it takes the surrounding text colour through `currentColor` and scales with the font size. No third-party icon font is involved.
+
+There is deliberately no `IconManager` component. An icon is not a registered resource that has to be looked up at runtime — it is a name, and the mapping from that name to a drawing is expressed in three places that have to agree:
+
+|Part           |Location                                |Example
+|---------------|----------------------------------------|-------------------------------------------------------
+|The drawing    |`Assets/icons/<name>.svg`               |`Assets/icons/anchor.svg`
+|The mask rule  |`Assets/css/webexpress.webui.icon.css`  |`.wx-icon-light-anchor { mask-image: url("../icons/anchor.svg") }`
+|The C# class   |`WebIcon/Icon<Name>.cs`                 |`public class IconAnchor : Icon { public override string Symbol => "anchor"; }`
+
+That shared name is the **symbolic name**: the file name of the drawing without its extension, lowercase and hyphen-separated (`anchor`, `calendar-day`, `user-pen`).
+
+### The icon class
+
+An icon class contributes nothing but its symbolic name. The base class turns that into the class pair the browser needs, so no icon carries a hard-coded CSS class of its own:
+
+```csharp
+public class IconAnchor : Icon
+{
+    public override string Symbol => "anchor";
+}
+
+// new IconAnchor().Class  ->  "wx-icon-light wx-icon-light-anchor"
+```
+
+The first class carries the mask geometry and the sizing, the second selects the drawing. Keeping the class name out of the icon is what allows a drawing to be replaced, or the whole set to be swapped, without touching any caller.
+
+`ImageIcon` covers the other case: an icon that is a picture rather than a drawn glyph. It implements the same `IIcon` interface, returns no symbol and renders an `<img>`, so an image can stand in for a drawn icon anywhere an `IIcon` is accepted.
+
+### Using an icon
+
+Controls take a `Func<IRenderControlContext, IIcon>`:
+
+```csharp
+new ControlButton() { Icon = _ => new IconFloppyDisk(), Text = _ => "Save" };
+```
+
+Pages, setting categories and fragments declare theirs through an attribute:
+
+```csharp
+[WebIcon<IconGear>]
+public sealed class SettingsPage : IPage { }
+```
+
+On the client, controls resolve through the inherited helper rather than writing class names, and anything that builds a whole element goes through the factory:
+
+```javascript
+icon.className = this._iconClass("anchor");          // -> "wx-icon-light wx-icon-light-anchor"
+webexpress.webui.Icon.create("anchor");              // -> <i class="wx-icon-light …">
+webexpress.webui.Icon.create("/assets/img/a.png");   // -> <img class="wx-icon-img" …>
+```
+
+Assigning a bare name (`element.className = "anchor"`) is the failure mode to watch for: it yields an element no rule matches, so it renders as empty space rather than as an error.
+
+### Adding an icon
+
+1. Draw it against the contract in `Assets/icons/README.md`: a 21×21 canvas, `viewBox="0 0 21 21"`, strokes only, no fills, rounded caps and joins, no metadata or editor attributes.
+2. Name it after the subject rather than its use — `floppy-disk`, not `save` — and drop it into `Assets/icons/`.
+3. Add the mask rule to `Assets/css/webexpress.webui.icon.css`.
+4. Add the class under `WebIcon/`.
+
+Steps 3 and 4 are what make the drawing reachable. A file without a rule renders nothing at all, and a drawing without a class cannot be used from C#.
+
+### Reskinning through a theme
+
+Because an icon is selected by class and drawn by a mask, a **theme can repoint that class at a different drawing**. Every control that already asks for the class follows, without knowing the theme exists:
+
+```css
+.wx-icon-light-home {
+    -webkit-mask-image: url("../icons/monkeyisland/home.svg");
+    mask-image: url("../icons/monkeyisland/home.svg");
+}
+```
+
+```csharp
+[ThemeStyle("assets/css/monkeyisland.icon.css")]
+public sealed class MonkeyIslandTheme : IThemeWebApp { }
+```
 
 ## Controls
 
@@ -2622,7 +3188,7 @@ Controls are units of the web page that are translated into HTML source code by 
 ║                                          ¦                                           ║
 ╚══════════════════════════════════════════¦═══════════════════════════════════════════╝
                                            ¦
-╔WebExpress.UI═════════════════════════════¦═══════════════════════════════════════════╗
+╔WebExpress.WebUI══════════════════════════¦═══════════════════════════════════════════╗
 ║                                          ¦                                           ║
 ║            ┌─────────────────────────────┴──────────────────────────────┐            ║
 ║            │ <<Interface>>                                              │            ║
@@ -2694,7 +3260,7 @@ A control provides the following properties:
 A form in HTML is an interactive element that allows users to enter data and send it to the **WebExpress** server. Forms consist of various input elements such as text boxes, checkboxes, radio buttons, drop-down menus, and buttons. These form elements are organized into tabs and groups for better structure and usability. By grouping related elements together and using tabs to separate different sections, users can navigate and complete the form more efficiently. The following UML diagram illustrates the relationships and internal structure, serving as a schema for form designs:
 
 ```
-╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
 ║                                      ┌──────────┐                                    ║
 ║                                      │ IControl │                                    ║
@@ -3029,6 +3595,304 @@ The arrangement of the form contents can be controlled by the `ControlFormItemGr
 ╚═════════════════════════════════════════════════════════════════╝
 ```
 
+## Markdown model
+
+Text that is kept as plain text - a description field, an imported document, a README - is written in Markdown and rendered on the server. The model lives in `WebExpress.WebUI.WebMarkdown`: a parser turns the text into a tree of elements (`MarkdownDocument`), and renderers turn that tree into HTML, back into Markdown or into a PDF. Every consumer works on the same tree, so `ControlText` (`Format = TypeFormatText.Markdown`), `ControlContent` (`Format = TypeFormatContent.Markdown`) and the PDF renderer show one document the same way, and a value the WYSIWYG editor wrote can be brought into the format by reading its HTML into the same tree.
+
+```
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║  ┌──────────────────────────────┐   ┌─────────────────────────────────┐              ║
+║  │ MarkdownParser               │   │ MarkdownRendererHtmlToMarkdown  │              ║
+║  ├──────────────────────────────┤   ├─────────────────────────────────┤              ║
+║  │ Parse(String)                │   │ ConvertHtmlToMarkdown(String)   │              ║
+║  └──────┬───────────────┬───────┘   │ ConvertToDocument(IHtmlNode[])  │              ║
+║         ¦ internal      ¦ create    └──────────────┬──────────────────┘              ║
+║  ┌──────▼─────────────┐ ¦                          ¦ create                          ║
+║  │ MarkdownTokenizer  │ ¦                          ¦                                 ║
+║  │ MarkdownTokenStream│ ¦                          ¦                                 ║
+║  └────────────────────┘ ¦                          ¦                                 ║
+║  ┌──────────────────────▼──────────────────────────▼──────┐1  * ┌──────────────────┐ ║
+║  │ MarkdownDocument                                       ├────►│ <<interface>>    │ ║
+║  ├────────────────────────────────────────────────────────┤     │ IMarkdownElement │ ║
+║  │ Elements:IEnumerable<IMarkdownElement>                 │     ├──────────────────┤ ║
+║  ├────────────────────────────────────────────────────────┤     │ PlainText:String │ ║
+║  │ Add(IMarkdownElement[]):MarkdownDocument               │     └─────────Δ────────┘ ║
+║  │ GetPlainText():String                                  │               ¦          ║
+║  └───────────┬────────────────┬─────────────────┬─────────┘     ┌─────────┴────────┐ ║
+║              ¦ extension      ¦ extension       ¦ extension     │ MarkdownBlock-   │ ║
+║  ┌───────────▼──────────┐ ┌───▼──────────────┐ ┌▼─────────────┐ │   Element        │ ║
+║  │ MarkdownRendererHtml │ │ MarkdownRenderer-│ │ PdfRenderer- │ │ MarkdownInline-  │ ║
+║  ├──────────────────────┤ │   Markdown       │ │   Markdown   │ │   Element        │ ║
+║  │ ConvertToHtml(       │ ├──────────────────┤ ├──────────────┤ └──────────────────┘ ║
+║  │   IRenderControl-    │ │ ConvertTo-       │ │ ConvertToPdf │                      ║
+║  │   Context, Int?)     │ │   Markdown()     │ │   ()         │                      ║
+║  └──────────────────────┘ └──────────────────┘ └──────────────┘                      ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+The tree is built from two kinds of nodes. A `MarkdownBlockElement` occupies its own vertical space - a heading, a paragraph, a list, a table - and holds either inline elements or further blocks; a `MarkdownInlineElement` is a run of text inside a block and can nest (a bold run inside a link text inside an italic run). Every node offers `PlainText`, which is what the search index and the accessible names are built from.
+
+```csharp
+var document = MarkdownParser.Parse(record.Description);
+
+// as markup for a page; the headings continue the outline of the section the text sits in
+var html = document.ConvertToHtml(renderContext, headingLevel: 3);
+
+// normalized back to Markdown, for example after the tree was changed in code
+var markdown = document.ConvertToMarkdown();
+```
+
+### Syntax
+
+The parser reads the text line by line and decides on the first token of a line which block begins; a line that starts no other block continues the current paragraph. Indentation is counted in steps of two spaces or one tab.
+
+|Notation                                   |Element                              |Notes
+|-------------------------------------------|-------------------------------------|---------------------------------------------------------------
+|`#` to `######`                            |`MarkdownBlockElementHeader`         |`Level` 1-6.
+|`---`, `***`, `___`, `~~~` (three or more) |`MarkdownBlockElementHorizontalRule` |The line must contain nothing else.
+|`> `                                       |`MarkdownBlockElementQuote`          |The content is parsed as blocks again, so a quote can hold a list.
+|`>? `, `>! `, `>!! `, `>* `                |`MarkdownBlockElementCallout`        |`CalloutType` Hint, Warning, Danger, Success.
+|` ``` ` *language* ... ` ``` `             |`MarkdownBlockElementCode`           |`Language` and `Content` verbatim. Without a closing marker the line stays text.
+|`- `, `* `, `+ `                           |`MarkdownBlockElementList`           |Unordered. Indented items form a nested list in `Child`.
+|`1. `, `a. `, `A. `, `i. `, `I. `          |`MarkdownBlockElementList`           |Ordered; `MarkdownListType` and the start number come from the first marker.
+|Two leading spaces or a tab                |`MarkdownBlockElementIndent`         |Outside of a list.
+|`\|` at the start of a line                |`MarkdownBlockElementTable`          |See below.
+|`{{% name key="value" %}}` ... `{{% /name %}}`|`MarkdownBlockElementPlugin`      |`Name`, `Parameters`, the enclosed blocks as `Content`.
+|Any other line                             |`MarkdownBlockElementParagraph`      |Consecutive lines form one paragraph.
+
+|Notation                        |Element                                                 |Notes
+|--------------------------------|--------------------------------------------------------|----------------------------------------------
+|`*text*`                        |`MarkdownInlineElementItalic`                           |
+|`**text**`                      |`MarkdownInlineElementBold`                             |`***text***` is bold and italic.
+|`_text_`                        |`MarkdownInlineElementUnderline`                        |Underline, not italic. `__` adds bold, `___` bold and italic.
+|`~text~`, `~~text~~`            |`MarkdownInlineElementStrikethrough`                    |`~~~text~~~` adds bold.
+|`==text==`                      |`MarkdownInlineElementMarked`                           |
+|`` `code` ``                    |`MarkdownInlineElementCode`                             |
+|`[text](url)`                   |`MarkdownInlineElementLink`                             |
+|`![alt](url)`                   |`MarkdownInlineElementImage`                            |
+|`https://…`, `mailto:…`, …      |`MarkdownInlineElementUrl`                              |`http`, `https`, `ftp`, `ftps`, `ldap`, `ldaps`, `file`, `mailto`.
+|`[ ]`, `[x]`                    |`MarkdownInlineElementCheckbox`                         |Rendered as a disabled check box named by the text after it.
+|`[^1]`                          |`MarkdownInlineElementFootnote`                         |
+|`<tag>…</tag>`                  |`MarkdownInlineElementHtml`                             |Passed to the HTML output unescaped.
+|`{{name key="value"}}`          |`MarkdownInlineElementPlugin`                           |
+|Anything else                   |`MarkdownInlineElementPlainText`                        |
+
+An unmatched marker - a single `*` without its partner - stays in the text as it was written.
+
+Plugins are placeholders for content the text cannot carry itself. An add-on gives a plugin its look by a sealed class with a `Name` attribute: an `IMarkdownPlugin` for the page, registered by `MarkdownPluginManager`. Without one, the HTML renderer writes a `div` with the classes `wx-plugin wx-plugin-inline` or `wx-plugin wx-plugin-block`, the name in `data-plugin` and every parameter as `data-plugin-{key}`, for a script on the page to fill in; the PDF renderer keeps only the enclosed content of a block plugin.
+
+Inline HTML is handed to the HTML output as it stands. Markdown from a source that is not trusted - a field any user can write - therefore goes through the same review as any other markup taken from it.
+
+### Tables
+
+```
+| Item     | Count | State   |
+|:---------|------:|:-------:|
+| Screws   |   120 | ok      |
+| Washers  |     8 | low,    |>>
+|          |       | reorder |
+|----------|-------|---------|
+| Total    |   128 |         |
+```
+
+A table is a run of lines that start with `|`. The first delimiter row separates the header from the body, a second one separates the body from the footer (`Columns`, `Rows` and `Footers`). Without any delimiter row every line is a body row.
+
+- **Alignment** is declared per column in the first delimiter row: `:---` left, `---:` right, `:---:` centered, `---` the default (left). The parser hands it to every cell of the column - header, body and footer - as `MarkdownBlockElementTableCell.Align`, so a renderer can read it from the cell it is drawing.
+- **A delimiter cell** is two or more hyphens, or hyphens with a colon on one or both sides; blanks around it are allowed. A lone `-` does not qualify, because tables commonly use it for "not available", and a body row of such cells must stay a row.
+- **The closing pipe** is optional and ends the last cell; what follows it is no cell. A cell that is left empty on purpose (`| a | |`) is kept.
+- **A pipe inside a cell** is written `\|`. As in GitHub Flavored Markdown this also holds inside a code span in a cell (`` `a\|b` `` shows `a|b`); outside of tables `\|` is a literal pipe as well, while a code span keeps its text verbatim.
+- **A continued row** ends in `>>`, after or instead of the closing pipe. The next line belongs to the same row: its cells are joined to the cells above column by column, separated by a blank, so `low,` and `reorder` become the one cell `low, reorder`. A row can be continued over any number of lines; a marker on the last line of the table is ignored. Lines of the header and of the footer are always joined this way, without a marker.
+- **Ragged rows** are padded with empty cells to the widest line of the table, so every row has as many cells as there are columns.
+- **Cell content** is trimmed and read as inline elements only - a cell is one line of text, so `#12`, `- open` or `1. first` stay text instead of becoming a heading or a list. `MarkdownBlockElementTableCell.Content` holds them in one `MarkdownBlockElementParagraph`, not the inline elements themselves; an empty cell has no content. A renderer converts cells with its block converter, otherwise the text is lost.
+
+`MarkdownRendererMarkdown` writes the alignment back into the delimiter row, the footer after a second delimiter row and every row on a single line with its formatting and its pipes escaped, so a table survives a round trip, while continued rows come back joined. This also holds for a table that `MarkdownRendererHtmlToMarkdown` read from the editor, whose cells hold the inline elements directly.
+
+The HTML renderer builds a `ControlTable`. The alignment of a column reaches it as `ControlTableColumn.Align`, which aligns the header, every cell and the footer of the column, and the footer becomes the footer of the table (`ControlTable.AddFooter`), which stays below the rows and is neither sorted nor selected with them. A cell of plain text becomes a `ControlTableCell`; a cell with formatting - emphasis, links, code, a check box - becomes a `ControlTableCellMarkup`, which keeps the markup on one line and is still sorted by its text. A header with formatting becomes the `TitleContent` of its column and is shown as such; the column is then named by the text of that content wherever a plain name is needed - the column chooser, the accessible name - so a link in a header is named by its text, not by its address.
+
+### Renderers
+
+|Renderer                          |Direction                                 |Notes
+|----------------------------------|------------------------------------------|----------------------------------------------------------------
+|`MarkdownRendererHtml`            |`MarkdownDocument` → `IHtmlNode`          |Used by `ControlText` and `ControlContent`. `headingLevel` lets the headings of an embedded document continue the outline of the page (`aria-level`) while keeping their look.
+|`MarkdownRendererMarkdown`        |`MarkdownDocument` → Markdown             |Normalizes the notation: lists with `-`/`1.`, tables with leading and closing pipes.
+|`MarkdownRendererHtmlToMarkdown`  |HTML → `MarkdownDocument` or Markdown     |For values the WYSIWYG editor wrote (`EditorContent.ConvertToMarkdown`). Takes the first row as the header of a table that has none, because Markdown has no notation for a table without one.
+|`PdfRendererMarkdown`             |`MarkdownDocument` → `PdfDocument`        |See the PDF model.
+
+The tree can also be built in code, which is how a renderer is tested without depending on the parser:
+
+```csharp
+var document = new MarkdownDocument()
+    .Add(new MarkdownBlockElementHeader(1, [new MarkdownInlineElementPlainText("Inventory")]))
+    .Add(new MarkdownBlockElementTable()
+        .AddColumn(new MarkdownBlockElementTableCell(MarkdownCellAlign.Left, [new MarkdownInlineElementPlainText("Item")]))
+        .AddColumn(new MarkdownBlockElementTableCell(MarkdownCellAlign.Right, [new MarkdownInlineElementPlainText("Count")]))
+        .AddRow([
+            new MarkdownBlockElementTableCell(MarkdownCellAlign.Left, [new MarkdownInlineElementPlainText("Screws")]),
+            new MarkdownBlockElementTableCell(MarkdownCellAlign.Right, [new MarkdownInlineElementPlainText("120")])
+        ]));
+```
+
+## PDF model
+
+Stored text - a Markdown document or the value the WYSIWYG editor writes, which `ControlContent` shows as its reading view - can be turned into a PDF file on the server. The renderer lives in `WebExpress.WebUI.WebPdf` and is built the same way as `WebMarkdown`: a document model, renderers that fill it from a source format, and a writer that produces the output. It runs entirely in-process, without a browser, a headless print service or a third-party library, so a file can be produced wherever the server runs - in a REST endpoint, a job, a notification or a mail handler.
+
+The model is a flow of blocks, not a set of positioned shapes. Nothing is placed on a page until the document is written, so page size, margins, font and running texts can be changed after the content has been converted, and the same model can be set on A4 as well as on Letter.
+
+```
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║  ┌──────────────────────────────┐   ┌──────────────────────────────┐                 ║
+║  │ PdfRendererMarkdown          │   │ EditorContent (WebEditor)    │                 ║
+║  ├──────────────────────────────┤   ├──────────────────────────────┤                 ║
+║  │ ConvertToPdf(MarkdownDoc.)   │   │ ReadDocument(String)         │                 ║
+║  │ ConvertMarkdownToPdf(String) │   │ ConvertToMarkdown(String)    │                 ║
+║  └──────────────┬───────────────┘   │ ConvertToPdf(String)         │                 ║
+║                 ¦                   └───────────────────────┬──────┘                 ║
+║                 ¦                                           ¦ scaffolding removed    ║
+║                 ¦  ┌──────────────────────────────┐         ¦ by the reading view    ║
+║                 ¦  │ PdfRendererHtml              │◄--------┘ rules                  ║
+║                 ¦  ├──────────────────────────────┤                                  ║
+║                 ¦  │ ConvertToPdf(IHtmlNode[])    │                                  ║
+║                 ¦  │ ConvertHtmlToPdf(String)     │                                  ║
+║                 ¦  └──────────────┬───────────────┘                                  ║
+║                 ¦ create          ¦ create                                           ║
+║  ┌──────────────▼─────────────────▼───────────────┐1   * ┌─────────────────────────┐ ║
+║  │ PdfDocument                                    ├─────►│ <<abstract>>            │ ║
+║  ├────────────────────────────────────────────────┤      │ PdfBlockElement         │ ║
+║  │ Title, Author, Subject, Keywords, Language     │      ├─────────────────────────┤ ║
+║  │ CreationDate:DateTimeOffset?                   │      │ PlainText:String        │ ║
+║  │ PageSize:PdfPageSize                           │      └────────────Δ────────────┘ ║
+║  │ Margin:PdfMargin                               │                   ¦              ║
+║  │ FontFamily:PdfFontFamily                       │  Heading, Paragraph, Code, Rule, ║
+║  │ FontSize:Float                                 │  Image, PageBreak, List, Table,  ║
+║  │ Header, Footer:String                          │  Quote, Callout, ListItem,       ║
+║  │ Outline, Compress:Bool                         │  TableCell (PdfBlockElement...)  ║
+║  │ ImageResolver:Func<String, Byte[]>             │                                  ║
+║  ├────────────────────────────────────────────────┤      ┌─────────────────────────┐ ║
+║  │ Add(PdfBlockElement[]):PdfDocument             │      │ <<abstract>>            │ ║
+║  │ Save(Stream)                                   │      │ PdfInlineElement        │ ║
+║  │ ToArray():Byte[]                               │      └────────────Δ────────────┘ ║
+║  └───────────────────────┬────────────────────────┘                   ¦              ║
+║                          ¦ internal                    Text(Text, PdfTextStyle),     ║
+║  ┌───────────────────────▼────────────────────────┐    LineBreak, Checkbox           ║
+║  │ PdfLayout ──► PdfWriter (PdfFont, PdfImage)    │                                  ║
+║  └────────────────────────────────────────────────┘                                  ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Producing a file
+
+A file is made from the stored value, never from the control that shows it, so an export, a job or a mail handler needs no control, page or render context. The caller picks the entry point by the format the value is stored in:
+
+- a value the WYSIWYG editor wrote goes through `EditorContent.ConvertToPdf` (`WebExpress.WebUI.WebEditor`). It removes the editing scaffolding - add-on frames, column resizers, instruction texts, the guard paragraphs around non-editable blocks - by the same rules the reading view applies on the client, and hands the plain document to `PdfRendererHtml`. Both sides are held together by the shared fixture `Data/editor-content.fixture.json`.
+- a Markdown value goes through `PdfRendererMarkdown.ConvertMarkdownToPdf`, on the `MarkdownParser` that also backs `ControlText`.
+
+The PDF renderers themselves know nothing about the editor or the web layer; `EditorContent` depends on them, not the other way round. A REST endpoint that answers with the file looks like this:
+
+```csharp
+[Segment("article-pdf")]
+public sealed class ArticlePdf : IRestApi
+{
+    [Method(RequestMethod.GET)]
+    public IResponse Retrieve(Request request)
+    {
+        var article = Articles.Find(request.GetParameter("id")?.Value);
+        var document = EditorContent.ConvertToPdf(article.Description);
+
+        document.Title = article.Title;
+        document.Language = "de-DE";
+        document.Footer = "Seite {page} von {pages}";
+        document.ImageResolver = source => Attachments.Load(article, source);
+
+        var response = new ResponseOK { Content = document.ToArray() }
+            .AddHeaderContentType("application/pdf");
+
+        // inline opens the browser's viewer, attachment downloads the file
+        response.Header.ContentDisposition = $"inline; filename=\"{article.Id}.pdf\"";
+
+        return response;
+    }
+}
+```
+
+An empty value yields an empty document. A placeholder, as `ControlContent` shows one, is a decision of the page, so an export that wants one adds it itself.
+
+The renderers are also usable on their own:
+
+|Renderer              |Input                                                |Notes
+|----------------------|-----------------------------------------------------|----------------------------------------------------------------
+|`PdfRendererMarkdown` |`MarkdownDocument` or a Markdown string              |Counterpart of `MarkdownRendererHtml` on the same AST. Formatting inside table cells is kept; raw HTML in the text is formatted through `PdfRendererHtml`; plugins contribute their content only.
+|`PdfRendererHtml`     |`IEnumerable<IHtmlNode>` or HTML                     |Reads the inline `style` attribute (colors, font size and family, weight, alignment, indentation, widths) and a few well known classes (`wx-editor-row`/`wx-editor-region`, `alert-*`, `wx-callout-*`, `table-striped`). There is no style sheet. Scripts, styles, forms and embedded content are dropped. It does not remove editor scaffolding; use `EditorContent.ConvertToPdf` for anything the editor wrote.
+### Building a document by hand
+
+The model can be filled directly, for a report that is not stored text. Every container holds blocks, so a list item or a table cell can carry several paragraphs, a nested list or another table:
+
+```csharp
+var document = new PdfDocument { Title = "Inventory", PageSize = PdfPageSize.A4.Landscape(), Footer = "Page {page} of {pages}" }
+    .Add(new PdfBlockElementHeading(1, "Inventory"))
+    .Add(new PdfBlockElementParagraph()
+        .Add(new PdfInlineElementText("Counted on "), new PdfInlineElementText("1 October", new PdfTextStyle { Bold = true })))
+    .Add(new PdfBlockElementTable { Striped = true }
+        .Add(new PdfBlockElementTableRow([new PdfBlockElementTableCell("Item"), new PdfBlockElementTableCell("Count") { Align = PdfTextAlign.Right }]) { Header = true })
+        .Add(items.Select(i => new PdfBlockElementTableRow([new PdfBlockElementTableCell(i.Name), new PdfBlockElementTableCell(i.Count.ToString()) { Align = PdfTextAlign.Right }]))));
+
+File.WriteAllBytes("inventory.pdf", document.ToArray());
+```
+
+A `PdfTextStyle` is immutable and derived rather than changed (`style with { Italic = true }`), because the renderers build it while descending through nested markup: an emphasis inside a link inside a colored span adds to what its parents set and must not leak into the text that follows.
+
+### Elements
+
+|Element                    |Content          |Behaviour
+|---------------------------|-----------------|------------------------------------------------------------------------------
+|`PdfBlockElementHeading`   |Inline           |Levels 1-6, bold and larger; levels 1 and 2 are underlined. Becomes a bookmark. Kept on the page of what follows it: two lines of text, or a whole picture.
+|`PdfBlockElementParagraph` |Inline           |Broken into lines at spaces and across pages line by line. `Align` (left, center, right, justify; null inherits from the container), `Indent`, `Background`.
+|`PdfBlockElementCode`      |Text             |Monospaced on a shaded background; whitespace is kept, too long lines are wrapped at the last fitting character.
+|`PdfBlockElementQuote`     |Blocks           |Indented, muted, with a bar along the left edge on every page it spans.
+|`PdfBlockElementCallout`   |Blocks           |Tinted box with an accent bar; `Hint`, `Warning`, `Danger`, `Success`.
+|`PdfBlockElementList`      |`ListItem`s      |`Bullet` (shape changes with depth), `Numeric`, `LowerAlpha`, `UpperAlpha`, `LowerRoman`, `UpperRoman`, `None`; `Start`. A nested list is a block of its item.
+|`PdfBlockElementTable`     |Rows of cells    |See below.
+|`PdfBlockElementImage`     |Picture          |JPEG (embedded as is) and PNG (transparency kept as a soft mask); scaled into the content width; `Width`, `Height`, `Align`. Replaced by its alternative text when it cannot be read.
+|`PdfBlockElementRule`      |-                |A horizontal line.
+|`PdfBlockElementPageBreak` |-                |Starts a new page, unless the current one is still empty.
+|`PdfInlineElementText`     |Text and style   |Bold, italic, underline, strikethrough, superscript, subscript, font family, relative size, color, background, link.
+|`PdfInlineElementLineBreak`|-                |A forced line break.
+|`PdfInlineElementCheckbox` |State            |The drawn box of a task item.
+
+Tables size their columns the way a browser does with automatic layout: every column gets at least its longest word and the remaining width is shared by how much text a column would like to put on one line. `SetColumnWidths` fixes the widths instead - as proportions when every column has one, which is how the editor stores a resized table, or as lengths in points next to open columns (width zero), which then share what is left, as a `<col>` without a width does. Header rows at the top of a table are set bold on a shaded background and repeated on every page the table continues on. A row is moved to the next page as a whole when it fits on one; a row taller than a page is split, every cell continuing on the next page. A table with `Bordered = false` draws nothing of its own and serves as a column layout - the form the regions of an editor row are rendered in.
+
+### Layout and file format
+
+Writing a document runs two internal steps. `PdfLayout` sets the blocks on pages in a single pass from top to bottom. A container that draws behind its content - a code block, a callout, a table row - paints its background once its end is known, one segment per page it spans, into a background layer at the position it started at, so an outer box never covers the box of something nested in it. Table rows are measured before they are placed by running the same layout on an endless page. `PdfWriter` then writes the file: the catalog, the page tree, a content stream per page (compressed with FlateDecode unless `Compress` is off), the fonts, the images, the bookmarks, the link annotations and the cross-reference table.
+
+|Aspect        |Behaviour
+|--------------|-------------------------------------------------------------------------------------------
+|Fonts         |The standard fonts Helvetica, Times and Courier in four faces each, built into every reader and therefore not embedded. Line breaking uses their metrics.
+|Character set |WinAnsi (Windows-1252): the western European languages including umlauts, `€`, typographic quotes and dashes. A few characters outside of it have a stand-in (`→` becomes `->`); every other character is written as `?`. Document properties and bookmarks are written in UTF-16 and are not limited.
+|Links         |Only absolute `http`, `https`, `mailto` and `ftp` addresses become clickable; a relative path has no meaning in a file read away from the site, and a script address must not be followed.
+|Bookmarks     |One per heading, nested by level; `Outline = false` switches them off.
+|Running texts |`Header` and `Footer` are centered in the top and bottom margin; `{page}` and `{pages}` are replaced.
+|Determinism   |With a fixed `CreationDate` the output is identical byte for byte, which keeps generated files diffable and cacheable.
+
+### Pictures and security
+
+The document is generated on the server, and the text it is generated from is written by users. A renderer that followed every address a text names would let any author make the server issue requests on their behalf - to internal services, to the cloud metadata endpoint, to the file system. The PDF renderer therefore never fetches anything by itself. A picture is taken from `PdfBlockElementImage.Data`, from a `data:` address (which is what the editor stores for a pasted picture), or from `PdfDocument.ImageResolver`, a function the application provides and in which it decides which addresses are trustworthy - an asset of the application, an attachment of the record being printed. Without a resolver, any other picture is shown as its alternative text.
+
+```csharp
+document.ImageResolver = source =>
+{
+    // answer only paths of this site that name an attachment of the record
+    return source.StartsWith("/api/1/attachments/") && !source.Contains("..")
+        ? attachments.Read(record, source["/api/1/attachments/".Length..])
+        : null;
+};
+```
+
+The tutorial demonstrates the whole chain on the `Content` control page: the buttons in the *PDF* section call a REST endpoint (`WWW/Api/_1_/ContentPdf.cs`) that renders the rich text value, the same value as Markdown, and a showcase covering every element - long enough to show page breaks, the repeated table header, the footer and the bookmarks - and opens the file in the viewer of the browser.
+
 ## Session model
 
 A session establishes a state-based connection between the client and WebExpress using the otherwise stateless HTTP(S) protocol. The session is assigned to a cookie and is personalized. The cookie consists of a guid. Further data is not stored in the cookie, but on the server side in the `session` object. The following UML diagram illustrates the relationships and structure involved:
@@ -3174,10 +4038,10 @@ Events are notifications from the **WebExpress** API or web applications that ca
 An event handler is created by defining a class that implements the `IEventHandler` interface. This allows the system to respond to specific events and execute custom logic when those events are triggered. The example below demonstrates how to create a simple event handler:
 
 ```csharp
-[Event<Event>] 
+[Event<MyEvent>] 
 public sealed class MyEventHandler : IEventHandler
 {
-    public void Process(object sender)
+    public void Process(object sender, IEventArgument eventArgument)
     {
     }
 }
@@ -3234,7 +4098,9 @@ Jobs are tasks that are executed in a time-controlled and repetitive manner. Whe
 ║         │       ├────────────────────────────────────────┤                       ¦   ║
 ║         │       │ PluginContext:IPluginContext           │                       ¦   ║
 ║         │       │ ApplicationContext:IApplicationContext │                       ¦   ║
-║         │     1 │ JobId:String                           │                       ¦   ║
+║         │       │ JobId:String                           │                       ¦   ║
+║         │       │ JobName:String                         │                       ¦   ║
+║         │     1 │ Description:String                     │                       ¦   ║
 ║         │    ┌──┤ Cron:Cron                              │                       ¦   ║
 ║         │    │  └────────────────────────────────────────┘                       ¦   ║
 ║         │    │                                                                   ¦   ║
@@ -3281,25 +4147,26 @@ A job is created by a class that inherits from `Job`. The example below demonstr
 
 ```csharp
 [Job("30", "0", "1", "*", "*")] 
+[Name("myplugin:job.myjob.name")]
+[Description("myplugin:job.myjob.description")]
 public sealed class MyJob : Job
 {
-    public override void Initialization(JobContext context)
-    {
-        base. Initialization(context);
-    }
-
     public override void Process()
     {
-        base Process();
+        base.Process();
     }
 }
 ```
 
 To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details for defining jobs:
 
-|Attribute |Type      |Multiplicity |Optional |Description
-|----------|----------|-------------|---------|------------
-|Job       |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
+|Attribute   |Type      |Multiplicity |Optional |Description
+|------------|----------|-------------|---------|------------
+|Job         |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
+|Name        |String    |1            |Yes      |The name of the job. This can be a key to internationalization.
+|Description |String    |1            |Yes      |The description of the job, stating what it does. This can be a key to internationalization.
+
+A job runs unattended, so the only trace it leaves is what it writes to the log. `Name` and `Description` are what a surface that lists the schedules can show instead of the class name; without them only `JobId` identifies the job.
 
 ## Task model
 
@@ -3325,7 +4192,7 @@ Tasks are another form of concurrent code execution. In contrast to jobs, tasks 
 ║                       ¦                                 1 │                          ║
 ║              ┌────────┴───────────────────────────────────▼───────┐                  ║
 ║              │ <<Interface>>                                      │                  ║
-║              │ TaskManager                                        │                  ║
+║              │ ITaskManager                                       │                  ║
 ║              ├────────────────────────────────────────────────────┤                  ║
 ║              │ AddTask:Event                                      │                  ║
 ║              │ RemoveTask:Event                                   │                  ║
@@ -3391,11 +4258,11 @@ Tasks are another form of concurrent code execution. In contrast to jobs, tasks 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Tasks are created dynamically by instantiating a class derived from `Task` and starting it from the `TaskManager`. The tasks can take the following states:
+Tasks are created dynamically through the `TaskManager` (`CreateTask`), which instantiates and starts them. The tasks can take the following states:
 
 ```
 ╔══════════╗           ╔═══════════╗
-║ Created  ║           ║ Cancelled ║
+║ Created  ║           ║ Canceled  ║
 ╚══════════╝           ╚═════▲═════╝
      │                       │
      │                       │
@@ -3416,7 +4283,7 @@ Tasks are created dynamically by instantiating a class derived from `Task` and s
 Notifications are messages that are displayed to users as pop-up windows. The notifications are globally (visible to all), linked to a session (visible to current users) or to specific roles (visible to selected users). The notifications are displayed in the upper right corner and are retained when a page is changed. Notifications are closed by the user or at the end of the display period. Notifications that are visible to multiple users are removed by closing a user. To better understand the relationships and structure, refer to the UML diagram below:
 
 ```
-╔WebExpress.UI═════════════════════════════════════════════════════════════════════════╗
+╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
 ║  ┌──────────────────────────────────────────┐                                        ║
 ║  │ <<Interface>>                            │                                        ║
@@ -3493,28 +4360,23 @@ The `NotificationManager` is the central class for notifications. The `AddNotifi
 |Durability |Yes      |The display time in milliseconds. If the number is less than 0, the notification remains active until it is closed by the user.
 |Progress   |Yes      |Instead of the display duration, a progress value from 0 to 100 can be specified. A value less than zero means that no progress is calculated.
 |Icon       |Yes      |A URI that contains an icon.
-|Type       |Yes      |Is the notification type. The following values are supported: Primary, Secondary, Success, Info, Warning, Danger, Dark, Light, White
+|Type       |Yes      |Is the notification type. The following values are supported: Default, Primary, Secondary, Success, Info, Warning, Danger, Dark, Light, White, Transparent
 
 Here is an example to illustrate how the `NotificationManager` functions. Notifications can be added with specific properties such as heading, message, icon, and duration. The following snippet demonstrates how to create a simple welcome notification:
 
 ```csharp
 // Welcome notification
-NotificationManager.AddNotification
+notificationManager.AddNotification
 (
-    heading: I18N("inventoryexpress:app.notification.welcome.label"),
-    message: I18N("inventoryexpress:app.notification.welcome.description"),
-    icon: Context.Icon,
+    applicationContext,
+    message: I18N.Translate("inventoryexpress:app.notification.welcome.description"),
+    heading: I18N.Translate("inventoryexpress:app.notification.welcome.label"),
+    icon: applicationContext.Icon?.ToString(),
     durability: 30000
 );
 ```
 
-The functions of the `NotificationManager` can also be accessed via the REST API interface `{base path}/wxapp/api/v1/popupnotifications` can be accessed. The following methods are available:
-
-|Method |Parameter             |Description
-|-------|----------------------|----------------
-|Get    |None                  |Detects all notifications for the current user.
-|Post   |A notification object |Stores a notification.
-|Delete |The id                |Deletes an existing notification.
+Popup notifications are delivered to the clients over the message queue (see the *MessageQueue model* below): the `PopupNotificationHandler` of the `MessageQueueManager` pushes new notifications through the WebSocket connection and replays the still-open ones when a client reconnects, for example after a page change.
 
 
 ## MessageQueue model
@@ -3556,15 +4418,11 @@ public sealed class UriAddress : IAddress
 ```
 
 This structure allows the creation of additional address types such as tenant‑based routing, user‑based routing or combined conditions. The addressing model remains consistent and predictable across all implementations and ensures that server‑side messages reach exactly the clients that match the defined criteria.
-Type‑Safe Message Dispatch
 
 Based on the addressing model, the `MessageQueueManager` provides a type‑safe method for sending messages from the server to selected clients:
 
 ```csharp
-public async Task SendAsync(IEnvelope envelope, IAddress address, CancellationToken cancellationToken = default)
-{
-    // Serialization, selection of matching sessions and dispatch
-}
+Task<IMessageQueueManager> SendAsync(IAddress address, IMessage message, CancellationToken cancellationToken = default);
 ```
 
 The following overview illustrates how these components interact within the **WebExpress** architecture and how the `MessageQueueManager` integrates into the overall system structure.
@@ -3582,20 +4440,20 @@ The following overview illustrates how these components interact within the **We
                              ¦
 ╔WebExpress.WebApp═══════════¦═════════════════════════════════════════════════════════╗
 ║                            ¦                                                         ║
-║         ┌──────────────────┴────────────────────┐    ┌────────────────────┐          ║
-║         │ <<Interface>>                         │    │ <<Interface>>      │          ║
-║         │ IMessageQueueManager                  │    │ IEnvelope          │          ║
-║         ├───────────────────────────────────────┤    ├────────────────────┤          ║
-║         │ Register(Guid,IMessageQueueSocket)    │    │ Version:Int        │          ║
-║         │   IMessageQueueManager                │    │ Channel:String     │          ║
-║         │ Register(String,Action<IEnvelope>)    │    │ Type:String        │          ║
-║         │   IMessageQueueManager                │    │ MessageId:String   │          ║
-║         │ Unregister(Guid):                     │    │ ConnectionId:Guid  │          ║
-║         │   IMessageQueueManager                │    │ Sender:String      │          ║
-║         │ Unregister(String,Action<IEnvelope>): │    │ Timestamp:DateTime │          ║
-║         │   IMessageQueueManager                │    │ Payload:Object     │          ║
-║         │ SendAsync(IAddress,IEnvelope,         │    └────────────────────┘          ║
-║         │   CancellationToken):                 │                                    ║
+║         ┌──────────────────┴────────────────────┐    ┌─────────────────────────┐     ║
+║         │ <<Interface>>                         │    │ <<Interface>>           │     ║
+║         │ IMessageQueueManager                  │    │ IMessage                │     ║
+║         ├───────────────────────────────────────┤    ├─────────────────────────┤     ║
+║         │ Register(Guid,IMessageQueueSocket)    │    │ Type:String             │     ║
+║         │   IMessageQueueManager                │    │ MessageId:String        │     ║
+║         │ Register(String,Action<IMessage>)     │    │ ApplicationId:String    │     ║
+║         │   IMessageQueueManager                │    │ SocketId:String         │     ║
+║         │ Unregister(Guid):                     │    │ ConnectionId:String     │     ║
+║         │   IMessageQueueManager                │    │ Sender:String           │     ║
+║         │ Unregister(String,Action<IMessage>):  │    │ Timestamp:DateTime      │     ║
+║         │   IMessageQueueManager                │    │ Meta:IDictionary<String,│     ║
+║         │ SendAsync(IAddress,IMessage,          │    │   String>               │     ║
+║         │   CancellationToken):                 │    └─────────────────────────┘     ║
 ║         │   Task<IMessageQueueManager>          │                                    ║
 ║         └───────────────────────────────────────┘                                    ║
 ║                                                                                      ║
@@ -3616,29 +4474,25 @@ The following overview illustrates how these components interact within the **We
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-### Message Envelope Structure
+### Message structure
 
-The envelope is the standardized message container used by **WebExpress** to transport all real‑time communication through the `MessageQueueManager`. It defines a uniform structure for every message exchanged between client and server, independent of its purpose or origin. By encapsulating metadata and payload in a consistent format, the envelope enables reliable routing, type‑safe processing and predictable behavior across all WebSocket‑based features.
+The `IMessage` interface is the standardized message container used by **WebExpress** to transport all real‑time communication through the `MessageQueueManager`. It defines a uniform structure for every message exchanged between client and server, independent of its purpose or origin. By carrying consistent metadata, the message enables reliable routing, type‑safe processing and predictable behavior across all WebSocket‑based features.
 
-Each envelope consists of two parts: a metadata header and a payload section. The metadata describes how the message should be interpreted and routed. It contains the protocol version, the logical communication channel, the semantic message type, a unique message identifier, a timestamp and the sender information. These fields allow the `MessageQueueManager` to classify the message, apply the appropriate addressing rules and forward it to the correct recipients. The payload contains the domain‑specific data of the message. Its structure depends on the channel and the message type, for example notification content, progress updates, chat messages or WebRTC signaling information.
+Each message consists of shared metadata and message-specific data. The metadata describes how the message should be interpreted and routed: the semantic message type, a unique message identifier, the addressed application, socket and connection, the sender, a timestamp and an extensible metadata dictionary. These fields allow the `MessageQueueManager` to classify the message, apply the appropriate addressing rules and forward it to the correct recipients. The message-specific data is contributed by the concrete message class (e.g. `DataChangedMessage`, notification, progress or chat messages), whose additional properties are serialized alongside the metadata as camelCase JSON.
 
-A typical envelope has the following structure:
+A typical message (a data change notification) has the following wire structure:
 
 ```json
 {
-  "version": 1,
-  "channel": "notification",
-  "type": "event",
-  "messageId": "notif-42",
+  "type": "webexpress.webapp.data.changed",
+  "messageId": "9f2c4a1e5b6d4d0f8a7b3c2d1e0f9a8b",
+  "applicationId": "myapp",
+  "sender": "DataChangedNotifier",
   "timestamp": "2026-01-16T07:00:00Z",
-  "sender": "NotificationManager",
-  "payload": {
-    "title": "Import running",
-    "message": "The import process is currently at 35 percent.",
-    "severity": "info",
-    "notificationId": "import-2026",
-    "state": "open"
-  }
+  "meta": {},
+  "domain": "myplugin.model.incident",
+  "operation": "updated",
+  "itemId": "42"
 }
 ```
 
@@ -3646,7 +4500,7 @@ A typical envelope has the following structure:
 
 A client establishes a persistent connection to the WebExpress server through a WebSocket endpoint. After the handshake is completed, the session is recorded in the internal registry of the `MessageQueueManager`. This session contains the active WebSocket instance as well as metadata such as the current route, the user context, or other application‑specific values.
 
-When the server creates a notification, for example a status message or an indication of a running operation, the message is passed to the `MessageQueueManager` as a structured envelope object. The addressing process is performed using an appropriate address object that defines which sessions should receive the message. Since the client is actively connected and matches the selection criteria, the message is delivered to the client through the existing WebSocket connection.
+When the server creates a notification, for example a status message or an indication of a running operation, the message is passed to the `MessageQueueManager` as a structured message object. The addressing process is performed using an appropriate address object that defines which sessions should receive the message. Since the client is actively connected and matches the selection criteria, the message is delivered to the client through the existing WebSocket connection.
 
 On the client side, the message is displayed in the notification area of the user interface. The notification remains visible until the user closes it manually or until the server sends a completion message, for example when a task reaches 100 percent. As long as neither of these conditions occurs, the notification is considered open.
 
@@ -3694,6 +4548,11 @@ The client displays the notification again, regardless of the fact that the prev
     └─┘                      └─┘                      └─┘                      └─┘
 ```
 
+### Data change notifications
+
+The message queue also carries the live data update channel of the View, State and Service architecture (see `view-state-service.md`, section 2.2). When server side data of a logical domain changes — through the CRUD REST endpoints or through application code that calls `DataChangedNotifier` — the server sends a `webexpress.webapp.data.changed` message to every session that subscribed the domain. The message names the domain (the lower case full name of the changed `IDomain` type), the operation (`created`, `updated` or `deleted`) and optionally the id of the changed item; it deliberately carries no data, because the clients re-query through their declared services, which keeps the REST endpoint the single source of the data and its authorization.
+
+A session acquires its domains from two sources. The connect url carries the domains the page declared at render time through the `[Domain<TDomain>]` page attribute. In addition, a client extends its session at runtime with an inbound `webexpress.webapp.data.subscribe` message listing further domains — this is how a ViewState subscribes the domains its services derive from their endpoints after the page has rendered. The socket merges both sets, and the `AddressDomain` address selects the matching sessions when a change is announced. On the client, the scope ViewState re-queries the resources of the changed domain, so all subscribing controls re-render with the fresh data, including changes made by other users. The refreshed controls briefly play the `wx-data-changed` flash animation, so the user sees that the content changed because of an outside action.
 
 ## Index model
 
@@ -3755,10 +4614,11 @@ public class DataType : IIndexItem
     public string Text { get; set;}
 } 
 
-WebEx.ComponentHub.GetComponent<IndexManager>().Register<DataType>();
+var indexManager = WebEx.ComponentHub.GetComponentManager<IIndexManager>();
+indexManager.Create<DataType>(CultureInfo.GetCultureInfo("en"));
 ```
 
-The reverse index is built by using the `ReBuild` method for all objects or `Add` for an object. The following example demonstrates how to use the `ReIndex` method to rebuild the index for a collection of records:
+The reverse index is built by using the `ReIndex` method for all objects or `Insert` for a single object. The following example demonstrates how to use the `ReIndex` method to rebuild the index for a collection of records:
 
 ```csharp
 var records = new []
@@ -3767,14 +4627,13 @@ var records = new []
     new DataType(){ Id=1, Text="lorem scelerisque ornare" } 
 };
 
-WebEx.ComponentHub.GetComponent<IndexManager>().ReIndex(records);
+indexManager.ReIndex(records);
 ```
 
 To access the reverse index, WQL (see below) is used. The example below demonstrates how to execute a WQL query via the `IndexManager` to find entries matching specific criteria:
 
 ```csharp
-var wql = WebEx.ComponentHub.GetComponent<IndexManager>().ExecuteWql("Text ~ \"lorem\"");
-var res = wql?.Apply();
+var res = indexManager.Retrieve<DataType>("Text ~ \"lorem\"");
 ```
 
 ### WQL
@@ -3787,7 +4646,7 @@ Name ~ "WebExpress" and Create < now(-3d) orderby Create desc take 5
 
 The example returns the first five elements of the dataset that contain the value **WebExpress** in the Name attribute and that were created three days ago (Create attribute) or earlier. The result is sorted in descending order by creation date.
 
-For detailed information about `WebIndex`, see [concept](https://github.com/webexpress-framework/WebExpress.WebIndex/blob/main/doc/concept.md).
+For detailed information about `WebIndex`, see [concept](https://github.com/webexpress-framework/WebExpress.WebIndex/blob/main/docs/concept.md).
 
 ## Identity model
 
@@ -3855,60 +4714,54 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║         │ IdentityManager:IIdentityManager ├────┐  │   IEnumerable<IIdentity>      │ ║
 ║         │ …                                │    │  │ GetGroups:                    │ ║
 ║         └──────────────────────────────────┘    │  │   IEnumerable<IIdentityGroup> │ ║
-║                                                 │  │ CreateForbiddenPage(          │ ║
-║                                                 │  │   IRequest,IEndpointContext,  │ ║
+║                                                 │  │ CreateForbiddenResponse(      │ ║
+║                                                 │  │   IRequest,IPageContext,      │ ║
 ║                         ┌───────────────────┐   │  │   IIdentity):IResponse        │ ║
 ║                         │ <<Interface>>     │   │  │ CreateAuthenticationPrompt(   │ ║
-║                         │ IComponentManager │   │  │   IRequest,IEndpointContext,  │ ║
+║                         │ IComponentManager │   │  │   IRequest,IPageContext,      │ ║
 ║                         ├───────────────────┤   │  │   IIdentity):IResponse        │ ║
 ║                         └────────Δ──────────┘   │  └─────────────────────────▲─────┘ ║
 ║                                  ¦              │                          * │       ║
 ║                                  ¦            1 │                            │       ║
-║                         ┌────────┴──────────────▼───────────────────────┐ 1  │       ║
-║                         │ <<Interface>>                                 ├────┘       ║
-║ ┌-----------------------┤ IIdentityManager                              │            ║
-║ ¦                       ├───────────────────────────────────────────────┤            ║
-║ ¦                       │ Policies:IEnumerable<IIdentityPolicy>         │            ║
-║ ¦                       │ Permission:IEnumerable<IIdentityPermission>   │            ║
-║ ¦                       ├───────────────────────────────────────────────┤            ║
-║ ¦                       │ AddIdentity(IIdentity)                        │            ║
-║ ¦                       │ AddGroup(IIdentityGroup)                      │            ║
-║ ¦                       │ RemoveIdentity(IIdentity)                     │            ║
-║ ¦                       │ RemoveGroup(IIdentityGroup)                   │            ║
-║ ¦                       │ CreateForbiddenPage(IRequest,                 │            ║
-║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
-║ ¦                       │ CreateAuthenticationPrompt(IRequest,          │            ║
-║ ¦                       │   IEndpointContext,Identity):IResponse        │            ║
-║ ¦                       │ Login(IRequest,IIdentity):Bool                │            ║
-║ ¦                       │ Logout(IRequest)                              │            ║
-║ ¦                       │ ComputeHash(SecureString):String              │            ║
-║ ¦                       │ RegisterIdentityProvider(IIdentityProvider,   │            ║
-║ ¦                       │   IApplicationContext)                        │            ║
-║ ¦                       │ UnregisterIdentityProvider(IIdentityProvider, │            ║
-║ ¦                       │   IApplicationContext)                        │            ║
-║ ¦                       │ GetIdentities(IApplicationContext):           │            ║
-║ ¦                       │   IEnumerable<IIdentity>                      │            ║
-║ ¦                       │ GetGroups(IApplicationContext):               │            ║
-║ ¦                       │   IEnumerable<IIdentityGroup>                 │            ║
-║ ¦                       │ CheckAccess(IIdentity,IEndpointContext):Bool  │            ║
-║ ¦                       └──────┬──────────┬───────────┬──────────┬──────┘            ║
-║ ¦                            1 │        1 │         1 │        1 │                   ║
-║ ¦                 ┌────────────┘          │           │          └─────┐             ║
-║ ¦                 │                    ┌──┘           │                │             ║
-║ ¦               * │                    │              └──┐             │             ║
+║          ┌───────────────────────┴──────────────▼───────────────────────┐ 1  │       ║
+║          │ <<Interface>>                                                ├────┘       ║
+║ ┌--------┤ IIdentityManager                                             │            ║
+║ ¦        ├──────────────────────────────────────────────────────────────┤            ║
+║ ¦        │ Policies:IEnumerable<IIdentityPolicyContext>                 │            ║
+║ ¦        │ Permissions:IEnumerable<IIdentityPermissionContext>          │            ║
+║ ¦        ├──────────────────────────────────────────────────────────────┤            ║
+║ ¦        │ CreateAuthenticationPrompt(IRequest,IPageContext,IIdentity): │            ║
+║ ¦        │   IdentityTokenPair                                          │            ║
+║ ¦        │ CreateForbiddenResponse(IRequest,IPageContext,IIdentity):    │            ║
+║ ¦        │ Login(IIdentity,IRequest):IdentityTokenPair                  │            ║
+║ ¦        │ Logout(IRequest)                                             │            ║
+║ ¦        │ Refresh(IRequest):IdentityTokenPair                          │            ║
+║ ¦        │ CreatePersonalAccessToken(IIdentity,IApplicationContext,     │            ║
+║ ¦        │   TimeSpan,IEnumerable<String>):IdentityTokenPair            │            ║
+║ ¦        │ RevokePersonalAccessToken(String,IApplicationContext):Bool   │            ║
+║ ¦        │ ApplyAuthenticationCookies(IRequest,IResponse)               │            ║
+║ ¦        │ GetCurrentIdentity(IRequest):IIdentity                       │            ║
+║ ¦        │ CheckAccess(IIdentity,IEndpointContext):Bool                 │            ║
+║ ¦        │ CheckAccess(IIdentity,IIdentityPolicy):Bool                  │            ║
+║ ¦        │ CheckAccess<TPermission>(IApplicationContext):Bool           │            ║
+║ ¦        └────────┬────────────────────┬───────────┬─────────────┬──────┘            ║
+║ ¦               1 │                  1 │         1 │           1 │                   ║
+║ ¦                 │                    │           │             └─────┐             ║
+║ ¦                 │                    │           │                   │             ║
+║ ¦               * │                    │           └─────┐             │             ║
 ║ ¦  ┌──────────────▼────────────────┐   │                 │             │             ║
 ║ ¦  │ <<Interface>>                 │   │                 │             │             ║
 ║ ¦  │ IIdentity                     │   │                 │             │             ║
 ║ ¦  ├───────────────────────────────┤   │                 │             │             ║
 ║ ¦  │ Id:Guid                       │   │                 │             │             ║
 ║ ¦  │ Name:String                   │   │                 │             │             ║
-║ ¦  │ EMail:String                  │   │                 │             │             ║
-║ ¦  │ State:IdentityState           │   │                 │             │             ║
+║ ¦  │ Email:String                  │   │                 │             │             ║
+║ ¦  │ PasswordHash:String           │   │                 │             │             ║
 ║ ¦  │ Groups:                       │   │                 │             │             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   │                 │             │             ║
 ║ ¦  ├───────────────────────────────┤   │                 │             │             ║
-║ ¦  │ Login()                       │   │                 │             │             ║
-║ ¦  │ Logout()                      │   │                 │             │             ║
+║ ¦  │                               │   │                 │             │             ║
+║ ¦  │                               │   │                 │             │             ║
 ║ ¦  └───────────────────────────────┘   │                 │             │             ║
 ║ ¦              Δ                       │                 │             │             ║
 ║ ¦              ¦                     * │                 │             │             ║
@@ -3947,7 +4800,7 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦              ¦         └-------------┐        ¦          └─────────Δ───────────┘   ║
 ║ ¦              ¦                       ¦        ¦                    ¦               ║
 ╚═¦══════════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╝
-  ¦              ¦                       ¦        ¦                    ¦     
+  ¦              ¦                       ¦        ¦                    ¦
 ╔MyPlugin════════¦═══════════════════════¦════════¦════════════════════¦═══════════════╗
 ║ ¦              ¦                       ¦        ¦                    ¦               ║
 ║ ¦  ┌───────────┴───────────────────┐   ¦        ¦                    └-┐             ║
@@ -3955,13 +4808,13 @@ Identities and groups must be loaded from a persistent data source, which may be
 ║ ¦  ├───────────────────────────────┤   ¦        └------------┐         ¦             ║
 ║ ¦  │ Id:Guid                       │   ¦                     ¦         ¦             ║
 ║ ¦  │ Name:String                   │   ¦                     ¦         ¦             ║
-║ ¦  │ EMail:String                  │   ¦                     ¦         ¦             ║
-║ ¦  │ State:IdentityState           │1  ¦                     ¦         ¦             ║
+║ ¦  │ Email:String                  │   ¦                     ¦         ¦             ║
+║ ¦  │ PasswordHash:String           │1  ¦                     ¦         ¦             ║
 ║ ¦  │ Groups:                       ├───¦─────┐               ¦         ¦             ║
 ║ ¦  │   IEnumerable<IIdentityGroup> │   ¦     │               ¦         ¦             ║
 ║ ¦  ├───────────────────────────────┤   ¦     │               ¦         ¦             ║
-║ ¦  │ Login()                       │   ¦     │               ¦         ¦             ║
-║ ¦  │ Logout()                      │   ¦     │               ¦         ¦             ║
+║ ¦  │                               │   ¦     │               ¦         ¦             ║
+║ ¦  │                               │   ¦     │               ¦         ¦             ║
 ║ ¦  └───────────────────────────────┘   ¦     │               ¦         ¦             ║
 ║ ¦                                      ¦     │               ¦         ¦             ║
 ║ ¦                                    * ¦   * │               ¦         ¦             ║
@@ -4000,6 +4853,8 @@ Identities and groups must be loaded from a persistent data source, which may be
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+`IIdentityPolicy` and `IIdentityPermission` are marker interfaces: the id, name, description and the policy-permission relations shown in the diagram are declared through the `[Name]`, `[Description]`, `[Permission<>]` and `[Policy<>]` attributes on the definition classes and are surfaced at runtime through `IIdentityPolicyContext` and `IIdentityPermissionContext`.
+
 **WebExpress** provides the following default groups:
 
 |Group |Description
@@ -4008,11 +4863,11 @@ Identities and groups must be loaded from a persistent data source, which may be
 
 **WebExpress** provides the following policies:
 
-|Policy              |Description
-|--------------------|----------------------
-|PublicAccess        |Grants access to public resources without authentication.
-|AuthenticatedAccess |Grants general access to authenticated users.
-|SystemAccess        |Allows system-level operations like installing, updating, and maintaining the application.
+|Policy                    |Description
+|--------------------------|----------------------
+|PublicAccessPolicy        |Grants access to public resources without authentication.
+|AuthenticatedAccessPolicy |Grants general access to authenticated users.
+|SystemAccessPolicy        |Allows system-level operations like installing, updating, and maintaining the application.
 
 In addition to the predefined standard policies, custom policies can also be created by defining them in dedicated classes. The example below demonstrates how to define a custom policy using the `IIdentityPolicy` interface and associate it with a specific permission:
 
@@ -4050,7 +4905,7 @@ To provide clarity about the metadata specified in the code above, the following
 |Description |String            |1            |Yes      |The description of the permission. This can be a key to internationalization.
 |Policy      |`IIdentityPolicy` |n            |Yes      |Inherits the characteristics of the specified policy.
 
-In the case of an authorization check (can an identity be accessed by an identity resource (e.g. page)), it must be checked whether there is at least one transition (identity -> group -> policy -> permission). This is done by the function `CheckAccess: (Identity, Permission) > Bool ` of the `IdentityManager`. A return value of `true` means that access can be made.
+In the case of an authorization check (can an endpoint (e.g. a page) be accessed by an identity), it must be checked whether there is at least one transition (identity -> group -> policy -> permission). This is done by the function `CheckAccess(IIdentity, IEndpointContext): Bool` of the `IdentityManager`. A return value of `true` means that access can be made.
 
 ```
 ╔═══════════════════════════════════════════╗
@@ -4088,6 +4943,339 @@ In the case of an authorization check (can an identity be accessed by an identit
          ║ Grant access ║           ║ Status page 401  ║           ║ Hide component ║
          ╚══════════════╝           ╚══════════════════╝           ╚════════════════╝
 ```
+
+## Authentication
+
+WebCore authenticates requests using signed tokens rather than a user object in an in-memory session. Every source supplies `IIdentity`; `IdentityManager.Login` captures its subject, name, email, roles, policies, and effective permissions and issues the same `IdentityTokenPair`. Password hashes are never serialized. Application sessions remain available for optional application state and are created only when needed.
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║                            ┌──────────────────────────────┐                          ║
+║                            │ <<Interface>>                │                          ║
+║                            │ IComponentHub                │                          ║
+║                            ├──────────────────────────────┤   ┌───────────────────┐  ║
+║                            │ IdentityProviderManager:     │   │ <<Interface>>     │  ║
+║                            │   IIdentityProviderManager   │   │ IComponentManager │  ║
+║                            │ IdentityTokenStoreManager:   │   ├───────────────────┤  ║
+║                            │   IIdentityTokenStoreManager │   └────────Δ───────Δ──┘  ║
+║                            │ …                            │            ¦       ¦     ║
+║                            └───────────────┬──────────────┘            ¦       ¦     ║
+║                                            │ 1                         ¦       └---┐ ║
+║                                            │                           ¦           ¦ ║
+║  ┌──────────────────────────┐      ┌───────▼───────────────────────────┴─────┐     ¦ ║
+║  │ IdentityManager          │      │ <<Interface>>                           │     ¦ ║
+║  ├──────────────────────────┤      │ IIdentityProvider                       │     ¦ ║
+║  │ Issue(IIdentity,String): │      ├─────────────────────────────────────────┤     ¦ ║
+║  │  IdentityTokenPair       │      │ GetIdentities():IEnumerable<IIdentity>  │     ¦ ║
+║  │ ValidateAccessToken(...) │      │ GetGroups():IEnumerable<IIdentityGroup> │     ¦ ║
+║  │ ValidatePersonalAccess   │      │ CreateAuthenticationPrompt(IRequest,    │     ¦ ║
+║  │  Token(...)              │      │  IPageContext,IIdentity):IResponse      │     ¦ ║
+║  │ Refresh(...)             │      │ CreateForbiddenResponse(IRequest,       │     ¦ ║
+║  │ CreatePersonalAccess     │      │  IPageContext,IIdentity):IResponse      │     ¦ ║
+║  │  Token(...):String       │      └────────────────△────────────────────────┘     ¦ ║
+║  │ RevokePersonalAccess     │          ┌------------┴-----------┐                  ¦ ║
+║  │  Token(...):Bool         │          ¦                        ¦                  ¦ ║
+║  │ RevokeGrant(...)         │  ┌───────┴───────────┐ ┌──────────┴────────────────┐ ¦ ║
+║  │ ProtectChallenge(...)    │  │ LocalIdentity     │ │ OpenIdConnectIdentity     │ ¦ ║
+║  │ ValidateChallenge(...)   │  │  Provider         │ │  Provider                 │ ¦ ║
+║  │ ConsumeChallenge(...)    │  ├───────────────────┤ ├───────────────────────────┤ ¦ ║
+║  │ RevokeRefreshGrant(...)  │  ├───────────────────┤ │ ProviderId:String         │ ¦ ║
+║  │ IsAuthentication         │  │                   │ │                           │ ¦ ║
+║  │  Configured(...):Bool    │  │                   │ │                           │ ¦ ║
+║  └──────────┬───────────────┘  │ Authenticate(...) │ ├───────────────────────────┤ ¦ ║
+║             │1                 │  :IIdentity       │ │ CreateChallengeAsync(...) │ ¦ ║
+║             │                  │ GetIdentities()   │ │ AuthenticateCallbackAsync │ ¦ ║
+║  ┌──────────▼───────────────┐  │  (abstract)       │ │  (...):Task<IIdentity>    │ ¦ ║
+║  │ <<Interface>>            │  │ GetGroups()       │ │ MapIdentity(JsonWebToken) │ ¦ ║
+║  │ IIdentityTokenStore      │  └───────────────────┘ │  :IIdentity (virtual)     │ ¦ ║
+║  ├──────────────────────────┤                        │ ReadRoles(JsonWebToken)   │ ¦ ║
+║  │ TryConsume(...):Bool     │                        │  :IEnumerable<String>     │ ¦ ║
+║  │ Revoke(...)              │                        │  (virtual)                │ ¦ ║
+║  │ IsRevoked(...):Bool      │                        └────────────▲──────────────┘ ¦ ║
+║  └─▲──────────△─────────────┘                                     ¦                ¦ ║
+║  * │          ¦                                                   ¦                ¦ ║
+║    │   ┌------┴-----------┐                                       ¦                ¦ ║
+║    │   ¦                  ¦                                       ¦                ¦ ║
+║    │   ¦     ┌────────────┴───────────┐         ┌----------------------------------┘ ║
+║    │   ¦     │ FileIdentityTokenStore │         ¦                 ¦                  ║
+║    │   ¦     ├────────────────────────┤         ¦                 └--------------┐   ║
+║    │   ¦     └────────────────────────┘         ¦                                ¦   ║
+║    │   ¦                                        ¦                                ¦   ║
+║    │   ¦               ┌────────────────────────┴─────────────────────────────┐  ¦   ║
+║    │   ¦               │ <<Interface>>                                        │  ¦   ║
+║    │   ¦               │ IIdentityTokenStoreManager : IComponentManager       │  ¦   ║
+║    │   ¦               ├──────────────────────────────────────────────────────┤  ¦   ║
+║    └───────────────────┤ Stores:IEnumerable<IIdentityTokenStore>              │  ¦   ║
+║        ¦               ├──────────────────────────────────────────────────────┤  ¦   ║
+║        ¦               │ GetStore(IApplicationContext):IIdentityTokenStore    │  ¦   ║
+║        ¦               │ Register(IIdentityTokenStore,IApplicationContext)    │  ¦   ║
+║        ¦               │ Unregister(IIdentityTokenStore,IApplicationContext): │  ¦   ║
+║        ¦               │   Bool                                               │  ¦   ║
+║        ¦               └──────────────────────────────────────────────────────┘  ¦   ║
+║        ¦                                                                         ¦   ║
+║        ¦     ┌───────────────────────────────┐                                   ¦   ║
+║        ¦     │ IdentityTokenPair             │                                   ¦   ║
+║        ¦     ├───────────────────────────────┤                                   ¦   ║
+║        ¦     │ AccessToken:String            │                                   ¦   ║
+║        ¦     │ RefreshToken:String           │                                   ¦   ║
+║        ¦     │ AccessTokenExpiresAt:         │              ┌--------------------┘   ║
+║        ¦     │  DateTimeOffset               │              ¦                        ║
+║        ¦     │ RefreshTokenExpiresAt:        │              ¦                        ║
+║        ¦     │  DateTimeOffset               │              ¦                        ║
+║        ¦     └───────────────────────────────┘              ¦                        ║
+║        ¦                                                    ¦                        ║
+╚════════¦════════════════════════════════════════════════════¦════════════════════════╝
+         ¦                                                    ¦
+╔MyPlugin¦════════════════════════════════════════════════════¦════════════════════════╗
+║        ¦                                                    ¦                        ║
+║        └-------┐                           ┌────────────────┴────────────────┐       ║
+║                ¦                           │ MyOpenIdConnectIdentityProvider │       ║
+║     ┌──────────┴───────────┐               ├─────────────────────────────────┤       ║
+║     │ MyIdentityTokenStore │               ├─────────────────────────────────┤       ║
+║     ├──────────────────────┤               │ MapIdentity(...)                │       ║
+║     └──────────────────────┘               │ ReadRoles(...)                  │       ║
+║                                            └─────────────────────────────────┘       ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Deployment configuration
+
+The Authentication defines the deployment's trust boundary. The token issuer and audience, the shared signing key, transport requirements, the durable token-store location, and the credential lifetimes enforced for every application on this host. Configure this section through the existing configuration system:
+
+```json
+{
+  "WebExpress": {
+    "Authentication": {
+      "Issuer": "https://app.example.org",
+      "Audience": "webexpress-production",
+      "SigningKey": "<base64-encoded random key containing at least 32 bytes>",
+      "RequireHttps": true,
+      "TokenStorePath": "/data/shared/authentication",
+      "ApplicationId": "example.application",
+      "AccessTokenLifetime": "00:05:00",
+      "RefreshTokenLifetime": "7.00:00:00",
+      "MaximumPersonalAccessTokenLifetime": "90.00:00:00"
+    }
+  }
+}
+```
+
+Supply the production signing key through deployment secrets, never source control. Every replica needs the same issuer, audience, key, and durable token-store directory. Missing configuration disables authentication endpoints; there is no generated per-process signing key. Key replacement invalidates outstanding tokens. Internal JWTs use HS256, explicit token types, application-specific audiences, expiration, and unique identifiers. A deployment's signing key must not be reused by another service. Browser authentication endpoints require HTTPS by default as observed by WebCore.
+
+The configuration must be available to the executable host, including when login is implemented through WebApp's `RestApiSession`. A missing `WebExpress:Authentication` section causes central token issuance to reject login with `Configure WebExpress:Authentication before signing in.` Place deployment configuration in the host's active settings directory or provide environment variables such as `WEBEXPRESS_WebExpress__Authentication__SigningKey`. A configuration file in a plugin's source directory does not configure the running host unless it is deployed to that settings directory.
+
+Components that depend on sign-in - a health check, a setup page - ask `IIdentityManager.IsAuthenticationConfigured(applicationContext)` instead of restating these rules. It returns `true` only when the section yields a signing authority (issuer and audience set, a Base64 signing key of at least 256 bits, valid lifetimes) and the application has a token store, either a registered one or the default store under `TokenStorePath`. A missing section returns `false`; a section that exists but is unusable also returns `false` rather than throwing, and the reason is written to the server log without the key. Resolving the default store creates its directory, as the first sign-in would, so a directory that cannot be created surfaces as an exception. The authentication endpoints use the same question and answer `503` with `authentication_not_configured` when it returns `false`.
+
+```csharp
+[HealthTimeout(1000)]
+public sealed class MyAuthenticationHealth : IHealth
+{
+    private readonly IHealthContext _healthContext;
+    private readonly IComponentHub _componentHub;
+
+    private MyAuthenticationHealth(IHealthContext healthContext, IComponentHub componentHub)
+    {
+        _healthContext = healthContext;
+        _componentHub = componentHub;
+    }
+
+    public Task<HealthCheckResult> CheckAsync(CancellationToken cancellationToken)
+    {
+        return Task.FromResult(_componentHub.IdentityManager.IsAuthenticationConfigured(_healthContext.ApplicationContext)
+            ? HealthCheckResult.Healthy()
+            : HealthCheckResult.Unhealthy("WebExpress:Authentication cannot issue sign-in tokens."));
+    }
+}
+```
+
+The development host ships an `Authentication` section in `WebExpress.Develop/src/WebExpress.Develop.App/settings/webexpress.settings.json` with a public development signing key and `RequireHttps: false`. These initial values can be shared through Git and allow the hosted WebUI tutorial to log in at `http://localhost/webui` without a certificate. Rebuild and restart `WebExpress.Develop.App` after changing its settings. Before production use, replace the public key with a private random key, set `RequireHttps: true`, and configure valid HTTPS, deployment-specific issuer and audience values, and durable shared token storage. This host runs multiple applications, so root authentication endpoints require an explicit application selector unless a default `ApplicationId` is configured.
+
+Access-token validation is stateless. Refresh replay protection, OIDC challenge consumption, and PAT revocation use `IIdentityTokenStore`, resolved per application through `IIdentityTokenStoreManager`. `IdentityManager` holds no store instance of its own; each store lookup passes through `IComponentHub.IdentityTokenStoreManager.GetStore(applicationContext)`, which returns exactly one store for the given application. Applications requiring a store other than the default `FileIdentityTokenStore` — for example a distributed cache or database-backed store — supply it through `IdentityTokenStoreManager.Register(store, applicationContext)`; `Unregister` removes a specific binding again. The manager's `Stores` property exposes the complete set of currently bound stores across all applications, primarily for diagnostics and administration; it must not be used to select the store for a particular request. Plugin or application removal automatically deregisters and disposes the associated store. The default `FileIdentityTokenStore` stores hashed token identifiers and their expiration times, without passwords, raw tokens, or identity records. Its shared filesystem must support atomic exclusive file creation across nodes. Preserve it across restarts; restrict write access to the server. Markers may be removed after their recorded Unix expiration plus the deployment's maximum clock drift. Keep server clocks synchronized. An unavailable store must fail the affected operation.
+
+### HTTP interface
+
+The root endpoints are handled before application sitemap routing. Select the application with `?application=<ApplicationId>` or the configured default. JSON requests use `Content-Type: application/json`. Every POST/DELETE also requires `X-WebExpress-Auth: 1`; browser Origin headers must match the request origin. Use the frontend's `ServiceRegistry` to call these endpoints with credentials and the required header. Authentication responses carry `Cache-Control: no-store`.
+
+Local authentication uses `POST /api/auth/login` with a JSON object containing `username` and `password`. A successful directory verification produces the common protected token cookies. The endpoint does not accept passwords in query parameters.
+
+Credential renewal uses `POST /api/auth/refresh` with the refresh cookie and no credentials in the body. `POST /api/auth/logout` revokes renewal using the current access cookie, including a signed but expired one. `DELETE /api/auth/refresh` revokes the grant directly through the refresh cookie. Both logout operations expire the access and refresh cookies.
+
+External authentication starts at `GET /api/auth/authorize` with the `application` and `provider` query parameters. The endpoint redirects the browser to the selected plugin provider. `GET /api/auth/callback` receives the registered selectors, authorization code, and state, then issues local token cookies only after the external identity has been verified.
+
+Personal credential creation uses `POST /api/auth/pat` from an authenticated browser. A request such as `{"lifetimeSeconds":3600,"permissions":["Example.ReadPermission"]}` returns the newly created credential once in the `token` property. `DELETE /api/auth/pat` accepts `{"token":"..."}` and revokes that credential only when it belongs to the current browser identity.
+
+Login, refresh, and callback responses contain `authenticated` and `expiresAt`, never access or refresh token strings. Authentication failures use a generic 401; malformed requests use 400, origin/header failures 403, method errors 405, local login throttling 429, and unavailable external services 503. Local login permits ten attempts per minute per observed client IP and server instance. A multi-node deployment should also apply aggregate login throttling at its ingress.
+
+The access cookie is `__Host-wx-access`, scoped to `/`. The refresh cookie is `__Secure-wx-refresh`, scoped to `/api/auth/refresh`. Both are Secure, HttpOnly, host-only, and SameSite=Lax. The browser retains the access cookie until the refresh grant expires so logout can still identify an expired grant. This does **not** extend its signed access lifetime: expired access tokens cannot authenticate. One browser cookie pair represents one selected application on a host.
+
+The development override `RequireHttps: false` uses the separate cookie names `wx-access` and `wx-refresh` without the Secure attribute. HttpOnly, SameSite=Lax, refresh path restrictions, signatures, expiration, and browser-origin checks remain enforced. Production mode does not accept these development cookie names. HTTP exposes credentials and tokens on the network, so this override and any publicly shared development key must be replaced before production use. The generic OpenID Connect provider retains its HTTPS requirements for external authorities and callback URLs.
+
+Refresh rotation is single-use and preserves the original absolute grant deadline. Reusing a consumed refresh token revokes the grant, including its successor. Clients must serialize refresh requests, including across tabs; a lost refresh response or replay requires a new login. A refresh token is rejected in the access-cookie and Bearer channels. Logout prevents renewal immediately; existing access tokens remain valid until their short expiry. Roles and permissions are snapshots for the grant's lifetime; directory changes take effect after a new login. Immediate access-token revocation would require an additional online check and is not part of this model.
+
+### Local identity providers
+
+Derive a plugin provider from `LocalIdentityProvider` and implement `GetIdentities` against the application's user directory. The default verifier accepts ASP.NET Core Identity `PasswordHasher<IIdentity>` hashes (salted PBKDF2). Existing stores using a different password format must migrate their hashes or implement `Authenticate` against their own credential-verification service. Never issue a token before that verification succeeds. `GetGroups` supplies existing policy-bearing groups; effective permissions are captured by `IdentityManager` at login.
+
+`IdentityProviderManager` discovers public, concrete `IIdentityProvider` classes in loaded plugins, once per application and provider type. Constructors may receive `IComponentHub`, `IHttpServerContext`, `IApplicationContext`, and `IPluginContext`. Classes with other required dependencies are registered explicitly using `ComponentHub.IdentityProviderManager.Register(provider, application)`. Plugin/application removal deregisters its providers and disposes owned resources. Do not also manually register an automatically discovered provider.
+
+`IdentityTokenStoreManager` binds exactly one `IIdentityTokenStore` per application, in contrast to `IdentityProviderManager`, which permits several concurrent providers per application. `ComponentHub.IdentityTokenStoreManager.GetStore(applicationContext)` returns the store bound to that application, defaulting to a shared `FileIdentityTokenStore` when no application-specific store has been registered. An application that requires alternative durable storage — for example, a distributed cache or database-backed store such as `MyIdentityTokenStore` in a plugin — replaces the default binding through `Register(store, applicationContext)`; registering a second store for the same application replaces the previous binding rather than adding a second one. `Unregister` removes an explicit binding again, after which `GetStore` falls back to the default. A public, concrete `IIdentityTokenStore` class in a plugin is also discovered automatically and bound to the plugin's applications, provided its constructor only needs `IComponentHub`, `IHttpServerContext`, `IApplicationContext`, and `IPluginContext`; discovery never overrides an existing binding, so plugin load order cannot move an application's markers. Without a binding and without `TokenStorePath`, `GetStore` returns null: access tokens still validate, but refresh, PAT validation, challenge consumption, and revocation fail. Plugin or application removal unregisters and disposes the bound store automatically. Do not also manually register the automatically discovered default store.
+
+### External provider extensions
+
+The external authentication boundary uses the authorization code flow. The callback receives a code, and the shared OpenID Connect pipeline exchanges it at the configured authority using PKCE S256. A signed callback cookie binds state, nonce, verifier, provider, and application to the initiating browser. Each challenge expires after five minutes and can be consumed only once across server instances.
+
+The extension contract is the abstract `OpenIdConnectIdentityProvider` class. A future plugin derives its provider from this class and supplies `OpenIdConnectSettings` through its constructor. The plugin can override `ReadRoles` to translate provider-specific role claims and `MapIdentity` to normalize additional identity information after cryptographic validation. WebCore contains no Keycloak provider. A Keycloak integration belongs in a separate plugin and is outside this implementation.
+
+The provider configuration pins an exact HTTPS authority, client ID, optional confidential-client secret, and registered redirect URI. The redirect URI includes the application and provider selectors, for example `https://app.example.org/api/auth/callback?application=example.application&provider=external`. Discovery, signing-key retrieval, and code exchange use HTTPS. Accepted ID tokens require a valid asymmetric signature, the configured issuer and client audience, a valid lifetime, the expected nonce, and an authorized-party claim consistent with the client.
+
+The authorization mapping is explicit. The default `ReadRoles` implementation reads a `roles` array from the verified ID token. A plugin may translate another claim layout into those role labels. `RolePermissions` maps labels to full local permission class names, and `RolePolicies` maps labels to full local policy class names. An unmapped role grants no local rights. The issuer and external subject jointly determine the stable internal identity identifier.
+
+The lifecycle integration uses the existing plugin discovery contract. A public concrete provider with an injectable constructor is registered automatically for each associated application. Its constructor can read configuration from `IPluginContext.Settings`. A configured provider with additional dependencies can instead be registered through `IdentityProviderManager.Register`. Plugin and application removal also remove their provider bindings.
+
+### Personal access tokens
+
+Technical clients send `Authorization: Bearer <PAT>`. PATs are application-bound, expire at their explicit deadline, and are never refreshed. Requested permissions must be a subset of the owner's effective permissions. Roles and policy claims are omitted to prevent policy-based privilege escalation. PATs satisfy the framework's authenticated-access policy; permission-protected operations use `CheckAccess` with their specific permission type. Endpoints requiring additional role policies do not implicitly grant access to PATs. PAT creation/revocation HTTP endpoints require a browser identity, and revocation requires ownership.
+
+An explicit invalid Authorization header never falls back to a browser cookie. Access and refresh tokens are not accepted as PATs. Persist PATs in a secret store; after expiry or revocation the owner must explicitly create a replacement.
+
+## Certificate management
+
+For production HTTPS, **WebExpress** manages X.509 certificates centrally through `CertificateManager`. The service loads configured material, validates its suitability for TLS server authentication and resolves it by alias or hostname. Applications and hosting components use `ICertificateManager` instead of accessing certificate files. The host owns one manager and exposes the same instance through `IHttpServerContext.CertificateManager` and `IComponentHub.CertificateManager`.
+
+For environment separation, use **HTTP for development** and **HTTPS only for production**. The shipped development configuration remains HTTP only and requires no PFX file or trusted development certificate. Certificate deployment belongs in the production server configuration.
+
+For the object model, `CertificateManager` implements `ICertificateManager` and obtains material from `ICertificateStore`. The built-in `FileCertificateStore` provides local PFX support. `CertificateMaterial` carries the leaf and supplied chain for HTTPS consumers, while `CertificateInfo` provides metadata for diagnostics without exposing credentials or private keys.
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║              ┌────────────────────────────────────────┐                              ║
+║              │ <<Interface>>                          │                              ║
+║              │ IComponentHub                          │                              ║
+║              ├────────────────────────────────────────┤                              ║
+║              │ CertificateManager:ICertificateManager │                              ║
+║              └───────────────────┬────────────────────┘                              ║
+║                                  │                                                   ║
+║                                  │                                                   ║
+║    ┌─────────────────────────────▼─────────────────────────────┐                     ║
+║    │ <<Interface>>                                             │                     ║
+║    │ ICertificateManager : IDisposable                         │                     ║
+║    ├───────────────────────────────────────────────────────────┤                     ║
+║    │ RegisterStore(ICertificateStore)                          │                     ║
+║    │ Load(HttpServerSettings)                                  │                     ║
+║    │ Resolve(String):CertificateMaterial                       │                     ║
+║    │ Resolve(EndpointSettings):CertificateMaterial             │                     ║
+║    │ GetCertificates():IReadOnlyList<CertificateInfo>          │                     ║
+║    └─────────────────────────────┬─────────────────────────────┘                     ║
+║                                  │ *                                                 ║
+║                                  │                                                   ║
+║    ┌─────────────────────────────▼─────────────────────────────┐                     ║
+║    │ <<Interface>>                                             │                     ║
+║    │ ICertificateStore                                         │                     ║
+║    ├───────────────────────────────────────────────────────────┤                     ║
+║    │ Name:String                                               │                     ║
+║    │ Load(reference, password):CertificateMaterial             │                     ║
+║    └─────────────────────────────△─────────────────────────────┘                     ║
+║                                  ¦                                                   ║
+║                 ┌----------------┴-----------------------------┐                     ║
+║                 ¦                                              ¦                     ║
+║    ┌────────────┴─────────────┐                                ¦                     ║
+║    │ FileCertificateStore     │                                ¦                     ║
+║    ├──────────────────────────┤                                ¦                     ║
+║    │ Name = "file"            │                                ¦                     ║
+║    │ local PFX material       │                                ¦                     ║
+║    └──────────────────────────┘                                ¦                     ║
+║                                                                ¦                     ║
+║                                                                ¦                     ║
+╚════════════════════════════════════════════════════════════════¦═════════════════════╝
+                                                                 ¦
+╔MyPlugin════════════════════════════════════════════════════════¦═════════════════════╗
+║                                                                ¦                     ║
+║                                              ┌─────────────────┴─────────────────┐   ║
+║                                              │ MyCertificateStore                │   ║
+║                                              ├───────────────────────────────────┤   ║
+║                                              │ module-owned provider             │   ║
+║                                              └───────────────────────────────────┘   ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Certificate access
+
+For application access, obtain the shared manager from the component hub. `Resolve(string)` accepts a configured alias or concrete hostname with case-insensitive lookup. DNS names are normalized, including international names and trailing dots; IP addresses use their normalized representation. `Resolve(EndpointSettings)` also checks a concrete endpoint hostname against the certificate's subject alternative names. Unknown mappings throw `KeyNotFoundException`, and unusable material throws `InvalidOperationException`.
+
+```csharp
+using WebExpress.WebCore;
+using WebExpress.WebCore.WebCertificate;
+
+ICertificateManager manager = WebEx.ComponentHub.CertificateManager;
+CertificateMaterial material = manager.Resolve("public-site");
+var metadata = manager.GetCertificates();
+```
+
+For lifetime management, the host owns the manager and disposes it after its HTTPS listeners have stopped. A consumer borrows `CertificateMaterial` and must not dispose or modify its leaf certificate or chain. An explicit inventory reload retains earlier material until manager disposal because an existing listener may still hold it. This release requires a server restart to apply changed certificates to listeners.
+
+### Certificate configuration
+
+For production configuration, use the existing `WebExpress` settings section. The shared `Certificates` block contains `Directory`, `WarningThresholdDays` and `Items`. Each item supplies an `Alias`, optional concrete `HostNames`, a `Store` defaulting to `file`, a store-specific `Reference` and an optional `Password`. The file store resolves relative PFX references against `Directory`; a relative directory is based on the process working directory. Absolute paths are supported, and omitting the directory preserves existing relative endpoint PFX paths.
+
+```json
+{
+  "WebExpress": {
+    "Certificates": {
+      "Directory": "/opt/wx/ssl",
+      "WarningThresholdDays": [30, 14, 7],
+      "Items": [
+        {
+          "Alias": "public-site",
+          "HostNames": ["www.example.org"],
+          "Reference": "public-site.pfx"
+        }
+      ]
+    },
+    "Endpoints": [
+      { "Uri": "https://*:443/", "CertificateAlias": "public-site" }
+    ]
+  }
+}
+```
+
+For password delivery, supply `WEBEXPRESS_WebExpress__Certificates__Items__0__Password` through deployment secrets rather than source control. Existing endpoint definitions can also use `PfxFile`, `Password` and an optional `CertificateAlias`. When neither an alias nor an inline PFX is supplied, the endpoint resolves its hostname through the shared inventory. A wildcard listener requires an explicit alias or inline definition. Aliases and host mappings must identify exactly one certificate, and only configured files are loaded.
+
+For several hostnames, register separate inventory entries and select them through the endpoint configuration. Each listener uses one fixed certificate in this release, so distinct certificates require separate listening addresses or ports. Hostname mappings establish the basis for future SNI selection; configuring multiple hostnames on the same address and port does not currently enable SNI.
+
+### Validation and status
+
+For startup validation, the manager checks validity dates, private key presence, basic constraints, TLS server authentication EKU and digital signature key usage when those usage extensions are present, and subject alternative name coverage of configured hostnames. A CA certificate cannot serve as the leaf. Supplied intermediate certificates are handed to Kestrel with the leaf; client trust and revocation checks remain outside these local suitability checks. If an HTTPS endpoint cannot resolve usable material, startup fails before opening any listener.
+
+For diagnostics, `GetCertificates()` returns immutable `CertificateInfo` snapshots containing alias, hostnames, store, subject, issuer, thumbprint, UTC validity dates and combined `CertificateStatus` flags. Current validity is evaluated on every metadata read and resolution. The following flags describe whether material can be used:
+
+|Status              |Meaning                                                            |Usable for HTTPS
+|--------------------|-------------------------------------------------------------------|----------------
+|`Valid`             |The local suitability checks passed.                               |Yes.
+|`ExpiringSoon`      |The remaining lifetime reached a configured warning threshold.     |Yes, unless combined with a failure flag.
+|`Expired`           |The validity period has ended.                                     |No.
+|`NotYetValid`       |The validity period has not started.                               |No.
+|`MissingPrivateKey` |The leaf has no private key.                                       |No.
+|`InvalidUsage`      |The leaf or its usage extensions are unsuitable for server TLS.    |No.
+|`HostNameMismatch`  |A configured hostname is not covered by subject alternative names. |No.
+|`LoadFailed`        |The configured material could not be loaded.                       |No.
+
+For expiry warnings, omitted thresholds default to 30, 14 and 7 days. A nonnegative array replaces the defaults, and an empty array disables expiry warnings. Loading logs the nearest applicable threshold with the alias and UTC expiry time. Loading failures remain visible as inventory entries, while passwords and raw provider exceptions are excluded from logs. Periodic monitoring is not implemented in this version.
+
+For administrative inspection, WebApp exposes **Settings > System > Certificates** to identities with `SystemAccessPolicy`. The page reads the same manager metadata, displays summary counts and translated status labels, and prioritizes unusable and soon-expiring entries. It provides an overview and diagnostics; deployment changes remain in server configuration. Page refresh updates metadata without reading certificate files or replacing listener certificates.
+
+### Certificate provider extensions
+
+For custom storage, implement `ICertificateStore` in a separate module and call `RegisterStore` before `Load(HttpServerSettings)`. Configuration selects the provider by its case-insensitive name, with `file` reserved for the built-in store. The module retains ownership of the store. Each successful `Load(reference, password)` transfers newly owned `CertificateMaterial` to the manager; the provider must clean up its material on failure and must not return certificates already owned by another entry.
+
+For inventory replacement, `Load(HttpServerSettings)` validates the complete configuration before publishing the new inventory. Configuration errors preserve the previous inventory. Individual provider failures publish diagnostic failure entries. Provider registration, loading and resolution are serialized by the manager. Providers must supply private keys that work with the host platform; the file store uses temporary key containers on Windows and `EphemeralKeySet` on other platforms.
+
+For future automation, separate modules can add ACME acquisition, renewal scheduling, DNS and HTTP challenges, Azure Key Vault or other sources behind this contract. Applications continue using `ICertificateManager`. The Core currently provides no ACME implementation, challenge processor, file watcher, periodic monitor, automatic listener replacement or SNI selector.
+
+For deployment examples, see [HTTPS for production](installation_guide.md#https-for-production) and [Production certificate inventory](config.md#production-certificate-inventory).
 
 # WebApp template
 
@@ -4324,7 +5512,7 @@ The properties pane is used to display metadata and properties of the displayed 
 ╚═══════════════════╝
 ```
 
-### Notfications
+### Notifications
 
 There are three ways to display notifications in web applications. The first way is to display notifications in the `Notification` section of the header. Above all, personalized notifications are displayed here (e.g. new comments on subscribed content). The second way is to display notifications in an area below the header. This is intended for application-wide notifications (e.g. scheduled maintenance windows).
 
@@ -4699,7 +5887,7 @@ The example below demonstrates how a theme can define not only color properties 
 [Description("example")]
 [Image("/assets/img/mytheme.png")]
 [ThemeMode(ThemeMode.Dark)]
-[ThemeStyle("/assets/css/mytheme.css")]]
+[ThemeStyle("/assets/css/mytheme.css")]
 public sealed class MyTheme : IThemeWebApp
 {
     public static PropertyColorBackground HeaderBackground => 
@@ -4714,24 +5902,101 @@ public sealed class MyTheme : IThemeWebApp
 
 To provide clarity about the metadata specified in the code above, the following table presents the available attributes and their corresponding details:
 
-|Attribute   |Type      |Multiplicity |Optional |Description
-|------------|----------|-------------|---------|---------------------
-|Name        |String    |1            |Yes      |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
-|Description |String    |1            |Yes      |The description of the topic. This can be a key to internationalization.
-|Image       |String    |1            |Yes      |Link to an image that visually represents the topic.
-|ThemeMode   |ThemeMode |1            |Yes      |Indicates the theme mode (e.g., Light or Dark).
-|ThemeStyle  |String    |1            |Yes      |Link to an theme css style (e.g., material, flat, or skeuomorphic).
+|Attribute   |Type            |Multiplicity |Optional |Description
+|------------|----------------|-------------|---------|---------------------
+|Name        |String          |1            |Yes      |The name of the topic that can be displayed in the interface. This can be a key to internationalization.
+|Description |String          |1            |Yes      |The description of the topic. This can be a key to internationalization.
+|Image       |String          |1            |Yes      |Link to an image that visually represents the topic.
+|ThemeMode   |ThemeMode       |1            |Yes      |Indicates the theme mode (e.g., Light or Dark).
+|ThemeStyle  |String          |1            |Yes      |Link to an theme css style (e.g., material, flat, or skeuomorphic).
+
+### Picking a default per application and overriding it
+
+Each application can declare which theme it ships with via the generic
+`[Theme<TTheme>]` attribute on the application class. The application
+context surfaces the resolved theme through `IApplicationContext.DefaultTheme`
+(lazy lookup against the `ThemeManager`). `VisualTreeControl` picks that
+theme automatically; subclasses (e.g. `VisualTreeWebApp`) can override it
+on a per-request basis using the generic `UseTheme<TTheme>()` API.
+
+```csharp
+// Declare the default
+[Theme<MyTheme>]
+public sealed class MyApplication : IApplication { … }
+
+// Switch to a user-supplied theme on a specific page
+public class MyPage : Page<VisualTreeWebApp>
+{
+    public override void Process(IRenderContext renderContext, VisualTreeWebApp visualTree)
+    {
+        // user preference, A/B test, tenant skin, …
+        if (preferDark)
+        {
+            visualTree.UseTheme<MyDarkTheme>();
+        }
+    }
+}
+```
+
+The visual tree's theme-selection priority is:
+
+1. The theme passed via `UseTheme<TTheme>()` (typically called from the
+   page's `Process` override based on whatever the application stored).
+2. The application's declared default (`[Theme<TTheme>]`).
+3. The first theme registered for the application (legacy fallback).
+4. `null` (no active theme).
+
+The framework does NOT consult cookies, sessions, or identities - persistence
+is owned by the application.
+
+### Letting users pick a theme at runtime
+
+Drop a `ControlDataSelectionTheme` onto any page, derive
+`RestApiTheme` to plug into the application's own storage, and call
+`UseTheme<>()` from the page's `Process` override:
+
+```csharp
+// 1. derive RestApiTheme and route its persistence hooks to your store:
+[Title("Theme Selector")]
+public sealed class ThemeApi : RestApiTheme
+{
+    protected override string GetActiveThemeId(IQueryContext c, IRequest r)
+        => MyStore.Get(r);
+
+    protected override void PersistSelection(string v, IQueryContext c, IRequest r)
+        => MyStore.Set(r, v);
+}
+
+// 2. wire the selector to it - the control is a standalone dropdown
+//    (derives from ControlDropdown), no surrounding form is required:
+new ControlDataSelectionTheme("themeSelector")
+    .DataService<ThemeApi>();
+
+// 3. tell the visual tree which theme to use - the framework does not
+//    consult your store on its own:
+public override void Process(IRenderContext ctx, VisualTreeWebApp visualTree)
+{
+    if (MyStore.Get(ctx.Request) == typeof(LightModeTheme).FullName?.ToLower())
+        visualTree.UseTheme<LightModeTheme>();
+    base.Process(ctx, visualTree);
+}
+```
+
+The control is a thin C# wrapper around `webexpress.webapp.DropdownThemeCtrl`
+(itself an extension of `webexpress.webui.DropdownCtrl`); see the
+JavaScript guide for the REST data contract.
 
 # Example
 
 The classic 'Hello World' application serves as a fundamental starting point for understanding how the essential instructions and components come together to form a complete and functional application. The example below demonstrates the minimal setup required to implement an application using plugins, pages, and controls:
 
 ```csharp
-using WebExpress.Core.WebAttribute;
-using WebExpress.Core.WebApplication;
-using WebExpress.Core.WebPlugin;
-using WebExpress.Core.WebPage;
+using WebExpress.WebCore.WebAttribute;
+using WebExpress.WebCore.WebApplication;
+using WebExpress.WebCore.WebPlugin;
+using WebExpress.WebCore.WebPage;
 using WebExpress.WebUI.WebControl;
+using WebExpress.WebUI.WebPage;
 
 namespace Sample
 {
@@ -4746,9 +6011,9 @@ namespace Sample
         public void Run() {}
     }
 
-    public sealed class Index : IPage<VisualTree>
+    public sealed class Index : IPage<VisualTreeControl>
     {
-        public void Render(IRenderContext renderContext, VisualTree visualTree)
+        public void Process(IRenderContext renderContext, VisualTreeControl visualTree)
         {
             var control = new ControlText(){Text = _ => "Hello World!"};
 
@@ -4757,3 +6022,7 @@ namespace Sample
     }
 }
 ```
+
+---
+
+**Last updated**: 2026-07-11

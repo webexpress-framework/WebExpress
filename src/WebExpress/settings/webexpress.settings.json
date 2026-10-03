@@ -1,0 +1,74 @@
+{
+  // The settings of the web server. Every json file in this directory is merged into one
+  // configuration; this file is merged last, so its values win over those of the other files.
+  "WebExpress": {
+
+    // allow admitted work to drain before container termination releases its resources
+    "Shutdown": "graceful",
+    "ShutdownTimeoutSeconds": 30,
+
+    // Log file. Mode: Off (no file), Append (keep adding) or Override (start afresh).
+    "Log": {
+      "Mode": "Off",
+      "Debug": false,
+      "Path": "/var/log/",
+      "Encoding": "utf-8",
+      "FileName": "webexpress.log",
+      "TimePattern": "dd.MM.yyyy HH:mm:ss"
+    },
+
+    // Development environments use HTTP without TLS certificates.
+    // Configure HTTPS and provide the appropriate certificate references for production.
+    "Endpoints": [
+      { "Uri": "http://localhost/" }
+    ],
+
+    // Optional fine-tuning of the underlying Kestrel server. A value left out keeps its default.
+    // Https endpoints serve HTTP/3 (QUIC over UDP) next to HTTP/1.1 and HTTP/2 whenever the OS
+    // provides QUIC (Windows 11 / Server 2022, Linux with libmsquic); open the UDP port as well.
+    // "Protocols": "Http1AndHttp2" keeps them off UDP.
+    "Kestrel": {
+      "MaxConcurrentConnections": 300,
+      "MaxRequestBodySize": 3000000000,
+      "MaxRequestHeadersTotalSize": 65536
+    },
+
+    // Session and its cookie. Optional; leave the block out to keep the defaults (30-day sliding
+    // lifetime, Secure tracking the request scheme). A non-positive timeout disables expiry.
+    // Set "Secure": true behind a TLS-terminating proxy so the cookie is marked https-only even
+    // though the server sees plain http.
+    "Session": {
+      "TimeoutMinutes": 43200
+    },
+
+    // Security headers and cookie attributes. Optional; every response carries a strict content
+    // security policy (inline scripts need the per-response nonce the server renders), nosniff,
+    // SAMEORIGIN framing, a referrer policy and - over https only - one year of HSTS. Cookies
+    // default to SameSite=Lax. Loosen a protection explicitly, e.g.:
+    //   "ContentSecurityPolicy": "default-src 'self'; script-src 'self' 'nonce-{nonce}' https://cdn.example.org",
+    //   "ContentSecurityPolicyReportOnly": true,   // observe violations before enforcing
+    //   "HstsMaxAge": 0,                           // switch HSTS off
+    //   "HstsIncludeSubDomains": true,
+    //   "CookieSameSite": "Strict",
+    //   "Headers": { "X-Frame-Options": "", "Permissions-Policy": "camera=(self)" }, // "" removes a header
+    // State-changing requests (POST/PUT/PATCH/DELETE) and websockets that another site triggers
+    // in the browser are rejected with 403 (checked via Origin and Sec-Fetch-Site; requests with
+    // an Authorization header and non-browser clients are unaffected):
+    //   "CsrfProtection": false,                   // switch the check off
+    //   "TrustedOrigins": [ "https://portal.example.org" ]
+    "Security": {
+    },
+
+    "Culture": "en-US",
+
+    "PackagePath": "./packages",
+    "AssetPath": "./assets",
+    "DataPath": "./data",
+    "ContextPath": ""
+  },
+
+  // The settings of the installed plugins, one section per plugin id. A plugin ships its
+  // defaults in its own file next to this one; a value placed here overrides them.
+  "Plugins": {
+  }
+}
