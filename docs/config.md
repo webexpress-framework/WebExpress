@@ -209,18 +209,20 @@ request came in over https.
 
 WebExpress publishes operating figures such as response times, error rates, memory use, logins and
 active users at `/metrics`, in the text format that Prometheus reads. The optional `Metrics` block
-controls this endpoint. Leave it out and the endpoint is available without a password. The figures
-name no user, but they do show how busy the server is and how many logins fail, so set a token
-whenever the endpoint can be reached from outside your own network.
+controls this endpoint. The endpoint is switched off until you set `Enabled` to `true`; until then
+the path `/metrics` is free for an application of your own. The figures name no user, but they do
+show how busy the server is and how many logins fail, so also set a token whenever the endpoint can
+be reached from outside your own network.
 
 |Name                      |What it means
 |--------------------------|---------------------------------------------------------------------------
-|`Enabled`                 |Set to `false` to switch the endpoint off. The path `/metrics` is then free for an application of your own.
-|`BearerToken`             |A secret the monitoring system must send as `Authorization: Bearer <token>`. Without it, every request to `/metrics` is refused with `401`.
+|`Enabled`                 |Set to `true` to publish the endpoint. The default is `false`.
+|`BearerToken`             |A secret the monitoring system must send as `Authorization: Bearer <token>`. Without it, every request to `/metrics` is refused with `401`. Left unset, the switched-on endpoint needs no password.
 |`ActiveUserWindowMinutes` |How recently a signed-in user must have sent a request to count as active. The default is `5`.
 
 ```json
 "Metrics": {
+  "Enabled": true,
   "BearerToken": "a-long-random-secret"
 }
 ```

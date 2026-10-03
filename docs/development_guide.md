@@ -3026,9 +3026,9 @@ A labelled series appears once the first value has been recorded for it.
 
 ### Global metrics endpoint
 
-The endpoint is available at `/metrics` and `/metrics/` on every configured listener, independent of `ContextPath` and application routes. It neither creates sessions nor issues cookies, and its requests are not counted as traffic. A `GET` request returns `200 OK` with `Content-Type: text/plain; version=0.0.4; charset=utf-8` and `Cache-Control: no-store`; a `HEAD` request returns the same status without a body; other methods return `405 Method Not Allowed` with `Allow: GET, HEAD`. While the host stops or the manager is unavailable, the endpoint returns `503 Service Unavailable` without details.
+Once enabled, the endpoint is available at `/metrics` and `/metrics/` on every configured listener, independent of `ContextPath` and application routes. It neither creates sessions nor issues cookies, and its requests are not counted as traffic. A `GET` request returns `200 OK` with `Content-Type: text/plain; version=0.0.4; charset=utf-8` and `Cache-Control: no-store`; a `HEAD` request returns the same status without a body; other methods return `405 Method Not Allowed` with `Allow: GET, HEAD`. While the host stops or the manager is unavailable, the endpoint returns `503 Service Unavailable` without details.
 
-The `Metrics` block of the server settings controls the endpoint (see the [configuration guide](config.md#monitoring--metrics)). By default the endpoint is open, like `/health`. The series name no user, but they reveal load, login failures and the framework version; a deployment that exposes the listener beyond the cluster sets `BearerToken`, after which every request without `Authorization: Bearer <token>` receives `401 Unauthorized`. `Enabled: false` leaves the path to normal application routing.
+The `Metrics` block of the server settings controls the endpoint (see the [configuration guide](config.md#monitoring--metrics)). Unlike `/health`, the endpoint is switched off by default: the series name no user, but they reveal load, login failures and the framework version, so a deployment publishes them only by setting `Enabled: true`. Until then the path is left to normal application routing and the framework metrics are still recorded, but not served. A deployment that exposes the listener beyond the cluster also sets `BearerToken`, after which every request without `Authorization: Bearer <token>` receives `401 Unauthorized`.
 
 ### Prometheus and Kubernetes
 
@@ -3045,7 +3045,7 @@ scrape_configs:
       - targets: ["webexpress:8080"]
 ```
 
-With the Prometheus Operator, a `ServiceMonitor` selects the Service of the application and refers to the secret holding the token, which the application receives as the environment variable `WEBEXPRESS_WebExpress__Metrics__BearerToken`:
+With the Prometheus Operator, a `ServiceMonitor` selects the Service of the application and refers to the secret holding the token, which the application receives as the environment variable `WEBEXPRESS_WebExpress__Metrics__BearerToken`; the endpoint itself is switched on with `WEBEXPRESS_WebExpress__Metrics__Enabled=true`:
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
