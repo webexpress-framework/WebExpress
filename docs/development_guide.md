@@ -2345,7 +2345,7 @@ The UML diagram illustrates the class structure and interactions for web socket 
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-Because WebSocket connections are long-lived and stateful, the number of concurrently connected clients has a direct impact on resource consumption. In typical deployment scenarios, a single **WebExpress** instance can maintain several thousand simultaneous WebSocket connections. Each active WebSocket endpoint instance consumes memory for connection metadata, protocol buffers, and message queues. Under realistic workloads, this results in an estimated baseline footprint of approximately 20–60 KB per connection, depending on message frequency, enabled subprotocols, and application level state. CPU load scales primarily with message throughput rather than connection count, as idle connections impose minimal overhead due to the event driven processing model. To support high-traffic scenarios, **WebExpress** relies on asynchronous message handling within the ISocket implementation and efficient dispatching through the `ISocketManager`. This design avoids thread-per-connection models and enables the system to scale horizontally by running multiple application instances behind a load balancer. Backpressure handling is essential for preventing overload when clients produce messages faster than the server can process them. **WebExpress** enforces configurable message size limits and can reject or close connections that exceed throughput or buffer constraints. For applications with high message rates, batching, throttling, or protocol level compression may be applied to reduce CPU and network overhead.
+Because WebSocket connections are long-lived and stateful, the number of concurrently connected clients has a direct impact on resource consumption. In typical deployment scenarios, a single **WebExpress** instance can maintain several thousand simultaneous WebSocket connections. Each active WebSocket endpoint instance consumes memory for connection metadata, protocol buffers, and message queues. Under realistic workloads, this results in an estimated baseline footprint of approximately 20–60 KB per connection, depending on message frequency, enabled subprotocols, and application level state. CPU load scales primarily with message throughput rather than connection count, as idle connections impose minimal overhead due to the event driven processing model. To support high-traffic scenarios, **WebExpress** relies on asynchronous message handling within the ISocket implementation and efficient dispatching through the `ISocketManager`. This design avoids thread-per-connection models and enables the system to scale horizontally by running multiple application instances behind a load balancer; the [Cluster model](#cluster-model) describes how a message reaches clients connected to another instance. Backpressure handling is essential for preventing overload when clients produce messages faster than the server can process them. **WebExpress** enforces configurable message size limits and can reject or close connections that exceed throughput or buffer constraints. For applications with high message rates, batching, throttling, or protocol level compression may be applied to reduce CPU and network overhead.
 
 ## Sitemap model
 
@@ -3962,6 +3962,8 @@ A session establishes a state-based connection between the client and WebExpress
 
 The session manager delivers the currently used session based on the cookie stored in the request. The session, in turn, stores instances of the `ISessionProperty` interface in which the information (e.g. parameters) is stored. 
 
+When several instances serve one deployment, sessions are kept in the cluster store, so the next request may land on any instance (see [Cluster model](#cluster-model)). Session properties must then be serializable with `System.Text.Json`.
+
 ## Event model
 
 Events are notifications from the **WebExpress** API or web applications that can be subscribed to and evaluated. To explore the organization, refer to the UML diagram illustrating the structural relationships:
@@ -4165,6 +4167,7 @@ To provide clarity about the metadata specified in the code above, the following
 |Job         |String    |1            |No       |Time information about when the job should be executed. The parameters have the following meanings: Minute (0 - 59), Hour (0 - 23), Day of the month (1 - 31), Month (1 - 12), Weekday (0 - 6) for (Sunday - Saturday). The parameters can consist of single values, comma-separated lists (1, 3, 6, 9, ...), range (from-to) or * for all.
 |Name        |String    |1            |Yes      |The name of the job. This can be a key to internationalization.
 |Description |String    |1            |Yes      |The description of the job, stating what it does. This can be a key to internationalization.
+|JobScope    |JobScope  |1            |Yes      |Where the job runs when several instances form a cluster: `Cluster` (default) runs each due time once on whichever instance claims it, `Node` runs it on every instance. See [Cluster model](#cluster-model).
 
 A job runs unattended, so the only trace it leaves is what it writes to the log. `Name` and `Description` are what a surface that lists the schedules can show instead of the class name; without them only `JobId` identifies the job.
 
@@ -4554,6 +4557,10 @@ The message queue also carries the live data update channel of the View, State a
 
 A session acquires its domains from two sources. The connect url carries the domains the page declared at render time through the `[Domain<TDomain>]` page attribute. In addition, a client extends its session at runtime with an inbound `webexpress.webapp.data.subscribe` message listing further domains — this is how a ViewState subscribes the domains its services derive from their endpoints after the page has rendered. The socket merges both sets, and the `AddressDomain` address selects the matching sessions when a change is announced. On the client, the scope ViewState re-queries the resources of the changed domain, so all subscribing controls re-render with the fresh data, including changes made by other users. The refreshed controls briefly play the `wx-data-changed` flash animation, so the user sees that the content changed because of an outside action.
 
+### Delivery across instances
+
+When several instances serve one deployment, `SendAsync` also forwards the message to the other instances, which deliver it to their own matching clients. The built-in addresses describe their recipients as an `AddressDescriptor` for this purpose; a custom `IAddress` that does not implement `Describe()` reaches the local clients only. Chat history and the last state of every task are kept in the cluster store, so a client replays them whichever instance it connects to (see [Cluster model](#cluster-model)).
+
 ## Index model
 
 The index model provides a reverse index to enable fast and efficient searching. A reverse index can significantly speed up access to the data. However, creating and storing a reverse index requires additional storage space and Processing time. The storage requirement increases, especially with large amounts of data can be important. Therefore, it is important to weigh the pros and cons to achieve the best possible performance. The full-text search in **WebExpress** supports the following search options:
@@ -4635,6 +4642,8 @@ To access the reverse index, WQL (see below) is used. The example below demonstr
 ```csharp
 var res = indexManager.Retrieve<DataType>("Text ~ \"lorem\"");
 ```
+
+When several instances serve one deployment, each keeps its own copy of the index, and single-item changes made through the `IndexManager` are replayed on the other copies. A bulk `ReIndex` is not replayed, so the application re-indexes each copy from its primary data store at start (see [Cluster model](#cluster-model)).
 
 ### WQL
 
@@ -5062,7 +5071,7 @@ The Authentication defines the deployment's trust boundary. The token issuer and
 }
 ```
 
-Supply the production signing key through deployment secrets, never source control. Every replica needs the same issuer, audience, key, and durable token-store directory. Missing configuration disables authentication endpoints; there is no generated per-process signing key. Key replacement invalidates outstanding tokens. Internal JWTs use HS256, explicit token types, application-specific audiences, expiration, and unique identifiers. A deployment's signing key must not be reused by another service. Browser authentication endpoints require HTTPS by default as observed by WebCore.
+Supply the production signing key through deployment secrets, never source control. Every replica needs the same issuer, audience, key, and durable token store: the directory `TokenStorePath`, or - when it is left unset - a shared cluster store (see [Cluster model](#cluster-model)). Missing configuration disables authentication endpoints; there is no generated per-process signing key. Key replacement invalidates outstanding tokens. Internal JWTs use HS256, explicit token types, application-specific audiences, expiration, and unique identifiers. A deployment's signing key must not be reused by another service. Browser authentication endpoints require HTTPS by default as observed by WebCore.
 
 The configuration must be available to the executable host, including when login is implemented through WebApp's `RestApiSession`. A missing `WebExpress:Authentication` section causes central token issuance to reject login with `Configure WebExpress:Authentication before signing in.` Place deployment configuration in the host's active settings directory or provide environment variables such as `WEBEXPRESS_WebExpress__Authentication__SigningKey`. A configuration file in a plugin's source directory does not configure the running host unless it is deployed to that settings directory.
 
@@ -5120,7 +5129,7 @@ Derive a plugin provider from `LocalIdentityProvider` and implement `GetIdentiti
 
 `IdentityProviderManager` discovers public, concrete `IIdentityProvider` classes in loaded plugins, once per application and provider type. Constructors may receive `IComponentHub`, `IHttpServerContext`, `IApplicationContext`, and `IPluginContext`. Classes with other required dependencies are registered explicitly using `ComponentHub.IdentityProviderManager.Register(provider, application)`. Plugin/application removal deregisters its providers and disposes owned resources. Do not also manually register an automatically discovered provider.
 
-`IdentityTokenStoreManager` binds exactly one `IIdentityTokenStore` per application, in contrast to `IdentityProviderManager`, which permits several concurrent providers per application. `ComponentHub.IdentityTokenStoreManager.GetStore(applicationContext)` returns the store bound to that application, defaulting to a shared `FileIdentityTokenStore` when no application-specific store has been registered. An application that requires alternative durable storage — for example, a distributed cache or database-backed store such as `MyIdentityTokenStore` in a plugin — replaces the default binding through `Register(store, applicationContext)`; registering a second store for the same application replaces the previous binding rather than adding a second one. `Unregister` removes an explicit binding again, after which `GetStore` falls back to the default. A public, concrete `IIdentityTokenStore` class in a plugin is also discovered automatically and bound to the plugin's applications, provided its constructor only needs `IComponentHub`, `IHttpServerContext`, `IApplicationContext`, and `IPluginContext`; discovery never overrides an existing binding, so plugin load order cannot move an application's markers. Without a binding and without `TokenStorePath`, `GetStore` returns null: access tokens still validate, but refresh, PAT validation, challenge consumption, and revocation fail. Plugin or application removal unregisters and disposes the bound store automatically. Do not also manually register the automatically discovered default store.
+`IdentityTokenStoreManager` binds exactly one `IIdentityTokenStore` per application, in contrast to `IdentityProviderManager`, which permits several concurrent providers per application. `ComponentHub.IdentityTokenStoreManager.GetStore(applicationContext)` returns the store bound to that application, defaulting to a shared `FileIdentityTokenStore` when no application-specific store has been registered. Without `TokenStorePath`, the default is a `ClusterIdentityTokenStore`, which keeps the markers in the cluster store as soon as every instance shares it, so a cluster needs no token directory of its own for its authentication. It hashes every credential identifier before storing it, uses the atomic add of the cluster store for the single redemption of a refresh token, and refuses a store that only its own process sees. An application that requires alternative durable storage — for example, a distributed cache or database-backed store such as `MyIdentityTokenStore` in a plugin — replaces the default binding through `Register(store, applicationContext)`; registering a second store for the same application replaces the previous binding rather than adding a second one. `Unregister` removes an explicit binding again, after which `GetStore` falls back to the default. A public, concrete `IIdentityTokenStore` class in a plugin is also discovered automatically and bound to the plugin's applications, provided its constructor only needs `IComponentHub`, `IHttpServerContext`, `IApplicationContext`, and `IPluginContext`; discovery never overrides an existing binding, so plugin load order cannot move an application's markers. Without a binding, without `TokenStorePath` and without a shared cluster store, `GetStore` returns null: access tokens still validate, but refresh, PAT validation, challenge consumption, and revocation fail. Plugin or application removal unregisters and disposes the bound store automatically. Do not also manually register the automatically discovered default store.
 
 ### External provider extensions
 
@@ -5276,6 +5285,257 @@ For inventory replacement, `Load(HttpServerSettings)` validates the complete con
 For future automation, separate modules can add ACME acquisition, renewal scheduling, DNS and HTTP challenges, Azure Key Vault or other sources behind this contract. Applications continue using `ICertificateManager`. The Core currently provides no ACME implementation, challenge processor, file watcher, periodic monitor, automatic listener replacement or SNI selector.
 
 For deployment examples, see [HTTPS for production](installation_guide.md#https-for-production) and [Production certificate inventory](config.md#production-certificate-inventory).
+
+## Cluster model
+
+A **WebExpress** server can run as several identical instances behind one load balancer - several containers of one Docker Compose service, or the replicas of one Kubernetes deployment. Without further configuration every instance keeps its state to itself, which is only correct while there is exactly one instance. The cluster model makes the instances share what they must share, so that a request may land on any instance and an instance may be added, replaced or removed at any time.
+
+The `ClusterManager` in the namespace `WebExpress.WebCore.WebCluster` is the single place that knows whether the server runs alone or as one of many. It is built from the `WebExpress:Cluster` settings and hands two services to every subsystem: the `IClusterStore`, which holds the state all instances must agree on, and the `IClusterTransport`, which carries live messages to the other instances. Subsystems ask the manager instead of reading settings themselves, so a plugin can replace the store or the transport for all of them at once. Without the settings block, the manager provides an in-process store and no transport - exactly the behavior of a single instance. The following UML diagram illustrates the structure of the manager and its two services:
+
+```
+╔WebExpress.WebCore════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║         ┌──────────────────────────────────┐                                         ║
+║         │ <<Interface>>                    │                                         ║
+║         │ IComponentHub                    │                                         ║
+║         ├──────────────────────────────────┤ 1                                       ║
+║         │ ClusterManager:IClusterManager   ├─────┐                                   ║
+║         │ …                                │     │                                   ║
+║         └──────────────────────────────────┘     │                                   ║
+║                                                  │                                   ║
+║              ┌───────────────────┐               │                                   ║
+║              │ <<Interface>>     │               │                                   ║
+║              │ IComponentManager │               │                                   ║
+║              ├───────────────────┤               │                                   ║
+║              └────────Δ──────────┘               │                                   ║
+║                       ¦                          │                                   ║
+║                       ¦                        1 │                                   ║
+║             ┌─────────┴──────────────────────────▼────────┐                          ║
+║             │ <<Interface>>                               │                          ║
+║             │ IClusterManager                             │                          ║
+║             ├─────────────────────────────────────────────┤                          ║
+║             │ NodeId:String                               │                          ║
+║             │ IsClustered:Bool                            │                          ║
+║             │ Transport:IClusterTransport                 ├──────────────────────┐   ║
+║             │ Store:IClusterStore                         ├──────┐               │   ║
+║             │ ClockSkew:IReadOnlyDictionary               │      │               │   ║
+║             ├─────────────────────────────────────────────┤      │               │   ║
+║             │ UseStore(IClusterStore)                     │      │               │   ║
+║             │ UseTransport(IClusterTransport)             │      │               │   ║
+║             │ PublishAsync(Topic, Payload):Task           │      │               │   ║
+║             │ Subscribe(Topic, Handler):IDisposable       │      │               │   ║
+║             │ Lock(Name, Lifetime, Timeout):IDisposable   │      │               │   ║
+║             └─────────────────────────────────────────────┘      │               │   ║
+║                                                                1 │               │   ║
+║                                                       ┌──────────▼────────────┐  │   ║
+║                                                       │ <<Interface>>         │  │   ║
+║                                                       │ IClusterStore         │  │   ║
+║                                                       ├───────────────────────┤  │   ║
+║                                                       │ IsShared:Bool         │  │   ║
+║                                                       ├───────────────────────┤  │   ║
+║                                                       │ Get(Scope, Key)       │  │   ║
+║                                                       │ Set(Scope, Key, …)    │  │   ║
+║                                                       │ TryAdd(Scope, Key, …) │  │   ║
+║                                                       │ Remove(Scope, Key)    │  │   ║
+║                                                       │ List(Scope)           │  │   ║
+║                                                       │ Count(Scope)          │  │   ║
+║                                                       └──────────Δ────────────┘  │   ║
+║                                                                  ¦               │   ║
+║                                        ┌─────────────────────────┤               │   ║
+║                             ┌──────────┴──────────┐   ┌──────────┴──────────┐    │   ║
+║                             │ MemoryClusterStore  │   │ FileClusterStore    │    │   ║
+║                             └─────────────────────┘   └─────────────────────┘    │   ║
+║                                                                                  │   ║
+║                                                                                1 │   ║
+║                                                          ┌───────────────────────▼─┐ ║
+║                                                          │ <<Interface>>           │ ║
+║                                                          │ IClusterTransport       │ ║
+║                                                          ├─────────────────────────┤ ║
+║                                                          │ Received:Event          │ ║
+║                                                          ├─────────────────────────┤ ║
+║                                                          │ SendAsync(Topic, …)     │ ║
+║                                                          └─────────────Δ───────────┘ ║
+║                                                                        ¦             ║
+║                                                            ┌───────────┴───────────┐ ║
+║                                                            │ HttpClusterTransport  │ ║
+║                                                            └───────────────────────┘ ║
+║                                                                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+The `IClusterStore` groups its entries in scopes, and every entry expires on its own, because every user of the store holds state with a natural lifetime. An expired entry behaves exactly like an absent one. `TryAdd` creates an entry only when none exists - atomically across every instance - which is what lets exactly one instance claim a job run or a lock. `IsShared` tells the subsystems whether other instances see the entries; while it is false, every subsystem keeps its fast in-process path. WebCore provides two stores:
+
+- `MemoryClusterStore` keeps the entries in the process. It is the store of a single instance.
+- `FileClusterStore` keeps every entry as a file in a directory all instances mount. A file is written next to its target and then renamed into place, so a reader on another instance sees either the old or the new content. The file system must support atomic renames and renames that refuse to replace an existing file; local disks, NFS, SMB and the usual ReadWriteMany volumes do.
+
+The `IClusterTransport` sends a message to every other instance. Delivery is best effort: an instance that is starting, stopping or unreachable misses the message. Anything that must not get lost therefore belongs in the store or in the application's primary database, while the transport is reserved for what a client must learn about right away. `HttpClusterTransport` posts the messages to the endpoint `/_cluster/bus` of the other instances. Every message is signed with the shared cluster secret and carries its own time and id, so a forged message fails the signature and a captured one is refused once it is older than 60 seconds or was already seen. The endpoint answers before any routing, so neither an application route nor the session handling sees these requests. With `Cluster:Listen` the endpoint moves to a listener of its own, which answers nothing but the bus, while the public endpoints no longer know the path; a load balancer or ingress that forwards only the public port can then never reach it.
+
+Every message carries the time it was sent by the clock of its sender. The `ClusterManager` measures from it how far the clock of every other instance runs ahead or behind (`ClockSkew`), reports a difference of more than five seconds in the log at most every ten minutes, and publishes it as the metric `webexpress_cluster_clock_skew_seconds{peer}`. An http message that arrives outside its 60-second acceptance window is refused and reported the same way, since it almost always means a clock went astray.
+
+### Shared state
+
+The following table lists the places that kept a single instance from being replicated and how each behaves once the cluster is configured.
+
+|Subsystem                                       |Single instance                                                                                  |In a cluster
+|------------------------------------------------|-------------------------------------------------------------------------------------------------|------------
+|Sessions (`SessionManager`)                     |In memory.                                                                                       |In the cluster store. Every instance resolves the same session; the idle deadline is renewed at most once a minute, so page views do not turn into writes. Concurrent changes of one session on different instances are merged.
+|Scheduled jobs (`JobManager`)                   |Every job runs on its instance.                                                                  |Every due run is claimed atomically; exactly one instance runs it. Jobs marked `[JobScope(JobScope.Node)]` run on every instance.
+|Live messages (`MessageQueueManager`)           |Popups, data changes, task progress and chat reach the clients of the instance that raised them. |Forwarded to every other instance, which delivers them to its own matching clients.
+|Global notifications (`NotificationManager`)    |In memory.                                                                                       |In the cluster store.
+|Session notifications                           |Part of the session.                                                                             |Travel with the session.
+|Chat history (`ChatChannelStore`)               |In memory.                                                                                       |In the cluster store, trimmed to the channel capacity.
+|Task progress replay (`ProgressTaskDispatcher`) |Tasks of the instance the client connected to.                                                   |The last state of every task is kept in the cluster store and replayed on (re)connect.
+|Login lockout (`RestApiSession`)                |Counted per instance.                                                                            |Counted in the cluster store, so an attacker does not get the allowance once per instance.
+|Packages (`PackageManager`)                     |Extracted into the package directory.                                                            |Extracted into a directory of the instance itself; the catalog is replaced atomically under a cluster lock and every change is adopted by the other instances at once.
+|Reverse index (`IndexManager`)                  |Index files in the data directory, opened exclusively.                                           |Every instance keeps its own copy; single-item changes are replayed on the other copies.
+|Authentication tokens                           |Stateless, signed with `Authentication:SigningKey`.                                              |Unchanged; the signing key must be shared. Replay and revocation markers go to `Authentication:TokenStorePath` or, when it is unset, to the cluster store.
+|Log file, `/metrics`                            |Per instance.                                                                                    |Per instance by design: in a container the console is the log, and Prometheus scrapes every instance.
+
+### Configuration
+
+All of the following settings go inside the `"WebExpress"` block. Every key can also be set as an environment variable, e.g. `WEBEXPRESS_WebExpress__Cluster__StatePath`, `WEBEXPRESS_WebExpress__Cluster__Peers__0` and `WEBEXPRESS_WebExpress__Cluster__Secret`. Keep the secret - like `Authentication:SigningKey` - in a secret store, never in an image.
+
+```json
+"Cluster": {
+  "NodeId": "",
+  "StatePath": "/var/lib/webexpress/state",
+  "Peers": [ "dns://webexpress-peers:8080" ],
+  "Secret": "base64-encoded-32-random-bytes"
+},
+"ShutdownDelaySeconds": 10,
+"Shutdown": "graceful",
+"ShutdownTimeoutSeconds": 30
+```
+
+|Key                    |Description
+|-----------------------|------------
+|`Cluster:NodeId`       |The name of the instance. Defaults to the host name, which Docker and Kubernetes set to the container or pod name.
+|`Cluster:StatePath`    |The directory every instance mounts. It holds sessions, job claims, global notifications, chat history, task states, login lockouts and locks. Unset, the state stays in memory.
+|`Cluster:Peers`        |The other instances live messages are forwarded to. An entry is a base uri (`http://10.0.0.5:8080/`) or a dns name listing every instance: `dns://name:port` for http, `dnss://name:port` for https. Dns answers are refreshed every ten seconds, so scaled instances show up on their own. Unset, messages stay on their instance.
+|`Cluster:Secret`       |At least 256 random bits, Base64 encoded, e.g. from `openssl rand -base64 32`. Required as soon as `Peers` is set; the server refuses to start without it.
+|`Cluster:Listen`       |An additional listener reserved for the bus, e.g. `http://0.0.0.0:8081/`. It needs a fixed port no public endpoint uses; peers must then address that port. Unset, the bus shares the public listener and relies on its signature.
+|`ShutdownDelaySeconds` |Seconds the server keeps serving after the termination signal while `/health` already answers 503 and `/health/live` still 200. A load balancer stops routing to an instance only once its readiness probe failed or the orchestrator removed it from the endpoints, which happens concurrently with the signal. Set it to a little more than the readiness probe period. Default `0`, at most `3600`.
+
+All instances must additionally share the authentication settings (`Issuer`, `Audience`, `SigningKey`, and either the directory `TokenStorePath` or a shared cluster store, which then holds the markers), the `PackagePath` when packages are installed at runtime, and the application's own primary data store. The clocks of the instances should be synchronized (NTP). Job claims are keyed by the scheduled minute and tolerate any difference below their one-hour lifetime, but http messages between instances are only accepted within 60 seconds of their creation, and stored deadlines - sessions, locks, notifications - move by the difference. The metric `webexpress_cluster_clock_skew_seconds` makes a drift visible before it matters; alert on it above a few seconds.
+
+### Kubernetes
+
+A headless service lists every ready pod in dns and serves as the peer list. The shared volume must be ReadWriteMany. The `emptyDir` at `/tmp` receives the package extraction and the index copy of each pod, which also keeps them working with a read-only root file system.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: webexpress-peers
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: false
+  selector: { app: webexpress }
+  ports: [ { name: cluster, port: 8081 } ]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webexpress
+spec:
+  replicas: 3
+  selector: { matchLabels: { app: webexpress } }
+  template:
+    metadata: { labels: { app: webexpress } }
+    spec:
+      terminationGracePeriodSeconds: 50   # ShutdownDelaySeconds + ShutdownTimeoutSeconds + cleanup
+      containers:
+        - name: webexpress
+          image: your-registry/your-webexpress-app:your-version
+          ports: [ { name: http, containerPort: 8080 } ]
+          env:
+            - { name: WEBEXPRESS_WebExpress__Endpoints__0__Uri, value: "http://0.0.0.0:8080/" }
+            - { name: WEBEXPRESS_WebExpress__Cluster__StatePath, value: /var/lib/webexpress/state }
+            - { name: WEBEXPRESS_WebExpress__Cluster__Listen, value: "http://0.0.0.0:8081/" }
+            - { name: WEBEXPRESS_WebExpress__Cluster__Peers__0, value: "dns://webexpress-peers:8081" }
+            - { name: WEBEXPRESS_WebExpress__PackagePath, value: /var/lib/webexpress/packages }
+            - { name: WEBEXPRESS_WebExpress__ShutdownDelaySeconds, value: "10" }
+            - { name: WEBEXPRESS_WebExpress__Shutdown, value: graceful }
+            - name: WEBEXPRESS_WebExpress__Cluster__Secret
+              valueFrom: { secretKeyRef: { name: webexpress, key: cluster-secret } }
+            - name: WEBEXPRESS_WebExpress__Authentication__SigningKey
+              valueFrom: { secretKeyRef: { name: webexpress, key: signing-key } }
+          readinessProbe: { httpGet: { path: /health, port: http }, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 10 }
+          volumeMounts:
+            - { name: shared, mountPath: /var/lib/webexpress }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: shared
+          persistentVolumeClaim: { claimName: webexpress-shared }
+        - name: tmp
+          emptyDir: {}
+```
+
+The bus listens on port 8081, which only the headless service names; the regular service and the ingress forward port 8080 alone, where `/_cluster/bus` does not exist. A network policy restricting port 8081 to the pods of the deployment closes it to everything else in the cluster as well.
+
+With `TokenStorePath` left unset, the replay and revocation markers of the authentication go to the shared state directory as well.
+
+### Docker Compose
+
+The service name resolves to every replica of the service, so it serves as the peer list.
+
+```yaml
+services:
+  webexpress:
+    image: your-registry/your-webexpress-app:your-version
+    deploy: { replicas: 3 }
+    environment:
+      WEBEXPRESS_WebExpress__Endpoints__0__Uri: "http://0.0.0.0:8080/"
+      WEBEXPRESS_WebExpress__Cluster__StatePath: /state
+      WEBEXPRESS_WebExpress__Cluster__Peers__0: "dns://webexpress:8080"
+      WEBEXPRESS_WebExpress__Cluster__Secret: ${CLUSTER_SECRET}
+      WEBEXPRESS_WebExpress__Authentication__SigningKey: ${SIGNING_KEY}
+      WEBEXPRESS_WebExpress__ShutdownDelaySeconds: "5"
+    volumes: [ "state:/state" ]
+    stop_grace_period: 45s
+volumes:
+  state: {}
+```
+
+### Subsystems in a cluster
+
+**Sessions.** A session is serialized to the store once the request that used it is answered, and only when its properties changed or its idle deadline is due for renewal. Property types are stored by name and only recreated when they implement `ISessionProperty`, so a stored name cannot steer the deserializer towards an arbitrary type. A type unknown on the reading instance - a plugin not deployed there - is dropped while the session survives. Session properties must therefore be serializable with `System.Text.Json` (public properties, or `[JsonInclude]`); a property that is not stays on its instance, and the log names its type once. Two requests of one session may run at the same time on different instances - two tabs, a page and its background calls. Before writing, a request takes a short lock on its session, reads what another instance may have written meanwhile and merges both changes three-way against the state it started from: what only one side changed is taken from that side, objects are merged member by member and arrays as sets, so two notifications added at once both survive. Only where both sides changed the same value differently does the later write win. An id the cluster never issued is never adopted, as on a single instance.
+
+**Jobs.** `[JobScope(JobScope.Cluster)]` is the default: most jobs act on shared data and would repeat their effect on every instance. Mark a job `[JobScope(JobScope.Node)]` when it maintains something of the instance itself, such as an in-memory cache or a local file.
+
+**Live messages.** The built-in addresses (`AddressApplication`, `AddressSession`, `AddressDomain` and the collaborative broadcast) describe themselves as an `AddressDescriptor`, which the other instances evaluate against their own clients. A custom `IAddress` reaches other instances by implementing `Describe()`; without it, the message stays on its instance.
+
+**Packages.** Immutable images - the packages baked into the image, one image per release - are the simplest way to run a cluster. Installing packages at runtime works as well, provided `PackagePath` is shared: every change runs under a cluster lock, the catalog is replaced atomically, and the other instances follow at once, or with their next periodic scan if they missed the announcement. Each instance extracts into a directory below the system temp directory, so no instance overwrites assemblies another one has loaded. A settings file shipped with a package is deployed only when the settings directory is writable; a read-only config map is left alone.
+
+**Reverse index.** Each instance keeps its own copy below the system temp directory, and inserts, updates, deletes and clears are replayed on the other copies. A bulk `ReIndex` is not replayed - each instance rebuilds its copy from the primary store on its own. In a cluster the index must therefore be a projection of a primary data store that the application re-indexes from at start; using the index as the only persistence, as a single instance may, does not scale out.
+
+### Store and transport extensions
+
+Shared directory and http are built in. A plugin can supply another store (a database, a key-value server) or transport (a message broker) by implementing `IClusterStore` and `IClusterTransport`. The plugin swaps them in its constructor, which runs when the plugin is registered - before packages are extracted and before the first request is served:
+
+```csharp
+public sealed class DatabaseClusterPlugin : IPlugin
+{
+    private DatabaseClusterPlugin(IComponentHub componentHub)
+    {
+        var cluster = componentHub.ClusterManager;
+
+        cluster.UseStore(new DatabaseClusterStore("Host=db;Database=webexpress"));   // TryAdd: INSERT … ON CONFLICT DO NOTHING
+        cluster.UseTransport(new BrokerClusterTransport("amqp://broker", cluster.NodeId));
+    }
+
+    public void Run()
+    {
+    }
+
+    public void Dispose()
+    {
+    }
+}
+```
+
+`IClusterStore.TryAdd` must be atomic across all instances, since job claims and locks rely on it, and an expired entry must behave like an absent one. `IClusterTransport.SendAsync` must not deliver a message back to its sender.
 
 # WebApp template
 

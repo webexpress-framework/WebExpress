@@ -78,6 +78,32 @@ The shutdown policy enables controlled container termination when set to `"grace
 
 The container timeout must leave time for draining and cleanup. For example, use `terminationGracePeriodSeconds: 45` with a 30-second drain budget and increase it further if a Kubernetes `preStop` hook consumes part of that interval. The [Graceful shutdown guide](https://github.com/webexpress-framework/WebExpress.WebCore/blob/main/docs/graceful-shutdown.md) describes signals, environment overrides, application integration, and deployment verification.
 
+Behind a load balancer, `ShutdownDelaySeconds` keeps the server answering for a few more seconds after the termination signal while `/health` already reports it as not ready, so the requests still routed to it during that moment are not refused. Set it a little above the readiness probe period and add it to the container timeout. It defaults to 0 and accepts values up to 3600.
+
+```json
+"ShutdownDelaySeconds": 10
+```
+
+### Running several instances – `Cluster`
+
+Several instances of the same server can share the work behind one load balancer. They then need a folder they all can reach, for the state every instance must see (sign-in sessions, scheduled job runs, notifications), and a way to pass live messages to each other. Leave the block out for a single instance.
+
+```json
+"Cluster": {
+  "StatePath": "/var/lib/webexpress/state",
+  "Peers": [ "dns://webexpress-peers:8080" ],
+  "Secret": "base64-encoded-32-random-bytes"
+}
+```
+
+- `StatePath` – a folder on a volume every instance mounts.
+- `Peers` – the other instances, as addresses (`http://10.0.0.5:8080/`) or as a name that lists all of them (`dns://name:port`).
+- `Secret` – at least 32 random bytes in Base64 (`openssl rand -base64 32`); required as soon as `Peers` is set. Keep it out of the settings file and pass it as the environment variable `WEBEXPRESS_WebExpress__Cluster__Secret`.
+- `NodeId` – optional name of the instance; the host name is used when it is left out.
+- `Listen` – optional own address for the traffic between instances, e.g. `http://0.0.0.0:8081/`. Only the other instances need to reach it; visitors never do, so it should not be published through the load balancer.
+
+The [Cluster model](development_guide.md#cluster-model) in the Development Guide describes what each part of the server shares and shows complete Kubernetes and Docker Compose setups.
+
 ### Listening for visitors – `Endpoints`
 
 An **endpoint** is an address your server answers on: a protocol (`http` or `https`), a host name and
