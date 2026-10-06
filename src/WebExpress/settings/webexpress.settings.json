@@ -33,6 +33,11 @@
       "MaxRequestHeadersTotalSize": 65536
     },
 
+    // enable email administration in the tutorial host
+    "Email": {
+      "Enabled": true
+    },
+
     // Session and its cookie. Optional; leave the block out to keep the defaults (30-day sliding
     // lifetime, Secure tracking the request scheme). A non-positive timeout disables expiry.
     // Set "Secure": true behind a TLS-terminating proxy so the cookie is marked https-only even
@@ -57,6 +62,19 @@
     //   "CsrfProtection": false,                   // switch the check off
     //   "TrustedOrigins": [ "https://portal.example.org" ]
     "Security": {
+    },
+
+    // development only: this public signing key and HTTP setting are shared through git
+    // production must use a private random key, require HTTPS, and set deployment-specific values
+    "Authentication": {
+      "Issuer": "http://localhost",
+      "Audience": "webexpress-development",
+      "SigningKey": "V2ViRXhwcmVzcy1EZXZlbG9wbWVudC1Pbmx5LUtleSEh",
+      "RequireHttps": false,
+      "TokenStorePath": "./data/authentication",
+      "AccessTokenLifetime": "00:05:00",
+      "RefreshTokenLifetime": "7.00:00:00",
+      "MaximumPersonalAccessTokenLifetime": "90.00:00:00"
     },
 
     "Culture": "en-US",

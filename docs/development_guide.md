@@ -132,6 +132,7 @@ The components of **WebExpress** and its applications are centrally managed in t
 |ApplicationManager          |An application is the logical combination of functionalities into an application system. 
 |AssetManager                |Assets like static JavaScript files are delivered by **WebExpress**.
 |CertificateManager          |Loads and validates the shared X.509 certificate inventory, resolves production HTTPS certificates and provides status metadata through a replaceable store abstraction.
+|EmailManager                |Provides shared text and HTML mail delivery, attachments, configurable providers, cluster duplicate protection and consistent diagnostics.
 |EndpointManager             |Manages all endpoints (pages, resources, REST APIs, assets) that can be addressed with a URI.
 |EventManager                |Manages and triggers events triggered by specific actions in the system.
 |FragmentManager             |Are program parts that are integrated into defined areas of pages. The components extend the functionality or appearance of the page.
@@ -5286,6 +5287,136 @@ For future automation, separate modules can add ACME acquisition, renewal schedu
 
 For deployment examples, see [HTTPS for production](installation_guide.md#https-for-production) and [Production certificate inventory](config.md#production-certificate-inventory).
 
+## Email model
+
+For shared application delivery, the `EmailManager` in `WebExpress.WebCore.WebEmail` owns the validation, profile selection, MIME snapshot, duplicate protection and diagnostic policy for outgoing mail. `ComponentHub.EmailManager` exposes `IEmailManager`, includes the implementation in `Managers`, and makes the interface available through the existing component constructor injection. The manager is created after `ClusterManager` and before plugins register their provider extensions.
+
+For model structure, messages contain application content while profiles contain deployment configuration. The following diagram shows ownership and the dependencies used by a submission:
+
+```
+╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
+║                                                                                      ║
+║     ┌────────────────────────────┐                                                   ║
+║     │ <<Interface>>              │                                                   ║
+║     │ ComponentHub               │                                                   ║
+║     ├────────────────────────────┤                                                   ║
+║     │ EmailManager:IEmailManager │                                                   ║
+║     └──────────────┬─────────────┘                                                   ║
+║                    │                                                                 ║
+║                    │                                                                 ║
+║       ┌────────────▼─────────────┐       ┌─────────────────────────┐                 ║
+║       │ <<Interface>>            │       │ <<Interface>>           │                 ║
+║       │ IEmailManager            ◄───────│ IEmailMessage           │                 ║
+║       ├──────────────────────────┤       ├─────────────────────────┤                 ║
+║       │ RegisterProvider()       │       │ DeliveryId, From, To    │                 ║
+║       │ UnregisterProvider()     │       │ Cc, Bcc, ReplyTo        │                 ║
+║       │ SendAsync()              │       │ Subject, TextBody       │                 ║
+║       └──┬────────┬──────────┬───┘       │ HtmlBody, Attachments   │                 ║
+║          │        │          │           └───────────┬─────────────┘                 ║
+║          │        │          │                       │ contains                      ║
+║          │        │          │                       │                               ║
+║          │        │          │          ┌────────────▼─────────────┐                 ║
+║          │        │          │          │ <<Interface>>            │                 ║
+║          │        │          │          │ IEmailAttachment         │                 ║
+║          │        │          │          ├──────────────────────────┤                 ║
+║          │        │          │          │ FileName                 │                 ║
+║          │        │          │          │ ContentType              │                 ║
+║          │        │          │          │ Content: byte[]          │                 ║
+║          │        │          │          └──────────────────────────┘                 ║
+║          │        │          │                                                       ║
+║          │        │  ┌───────▼────────────────┐                                      ║
+║          │        │  │ <<Interface>>          │                                      ║
+║          │        │  │ IEmailProvider         │◄── SmtpEmailProvider                 ║
+║          │        │  ├────────────────────────┤                                      ║
+║          │        │  │ Name                   │                                      ║
+║          │        │  │ SendAsync()            │                                      ║
+║          │        │  └────────────────────────┘                                      ║
+║          │        │                                                                  ║
+║          │  ┌─────▼──────────────────┐                                               ║
+║          │  │ <<Interface>>          │                                               ║
+║          │  │ IClusterManager.Store  │                                               ║
+║          │  ├────────────────────────┤                                               ║
+║          │  │ IClusterStore.TryAdd() │                                               ║
+║          │  └────────────────────────┘                                               ║
+║          │                                                                           ║
+║       ┌──▼─────────────────┐                                                         ║
+║       │ <<Interface>>      │                                                         ║
+║       │ IHttpServerContext │                                                         ║
+║       ├────────────────────┤                                                         ║
+║       │ Configuration      │                                                         ║
+║       │ Log                │                                                         ║
+║       │ ServerLifetime     │                                                         ║
+║       └────────────────────┘                                                         ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+```
+
+For configuration binding, `HttpServerSettings.Email` uses `EmailSettings`, whose `Profiles` map holds `EmailProfileSettings` values. The manager reads `WebExpress:Email` once at construction and reserves the provider name `smtp`. Profile names and provider names are case insensitive. The settings and complete application example are documented in [Email delivery](https://github.com/webexpress-framework/WebExpress.WebCore/blob/main/docs/user-guide.md#email-delivery).
+
+For the public contract, `SendAsync(string applicationId, EmailMessage message, string profile, CancellationToken cancellationToken)` returns `Task<EmailSendResult>`. The application namespace should come from `IApplicationContext.ApplicationId.ToString()`. The message's `DeliveryId` identifies one logical business delivery within that namespace, independently of the selected profile. Its random default is suitable for a new one-off delivery; replica coordination requires the application to persist and reuse the same identifier.
+
+For administrative inspection, `GetStatus()` returns an `EmailStatus` snapshot with the active policy, cluster store sharing and credential-free `EmailProfileInfo` entries. The snapshot uses the settings bound at manager construction and current provider registrations, so subsequent configuration edits do not appear effective before restart. WebApp exposes these diagnostics under **Settings > System > Email** with `IScopeAdmin` and `SystemAccessPolicy`. `ConditionEmailEnabled` checks the running manager for both route resolution and settings navigation. With an omitted or disabled email block, the navigation entry is hidden and direct route resolution fails. The page performs no network operations and never exposes usernames, passwords or arbitrary provider options.
+
+For input validation, the manager rejects missing senders, missing recipients, malformed individual mailbox inputs, unsafe header characters, absent bodies, unsafe attachment names and excessive combined attachment sizes. Message recipients and attachment bytes are copied into an owned `MimeMessage` before asynchronous processing begins. Applications retain ownership of their source data. Text and HTML supplied together become alternative MIME parts, and attachments form the containing multipart message. The built-in SMTP provider uses Bcc addresses in the envelope while omitting them from delivered headers.
+
+For submission flow, the manager resolves the provider, validates the selected profile, constructs the MIME snapshot and asks `ServerLifetime.TryRun` to admit the operation. The worker obtains the current cluster store, atomically claims the delivery with `TryAdd`, invokes the provider once, logs the outcome and completes the caller's task. Resource disposal happens after the provider task finishes, including cancellation and exceptions. Shutdown stops admission and waits for admitted work within the host's configured drain budget.
+
+For provider configuration, `EmailProfileSettings` supplies `Provider`, `From`, `Host`, `Port`, `Security`, `UserName`, `Password`, `TimeoutSeconds` and `Options`. Each call receives a private copy so a custom provider cannot modify the configuration used by subsequent submissions. The built-in `SmtpEmailProvider` creates one MailKit SMTP client per operation and therefore supports concurrent callers without sharing protocol state. `StartTls` and `SslOnConnect` require TLS with normal certificate validation. `None` supports a deliberately selected development relay and cannot be combined with configured SMTP credentials. The implementation does not perform automatic TLS downgrade or transport retries.
+
+For provider extensions, implement `IEmailProvider` and register the instance with `componentHub.EmailManager.RegisterProvider(provider)` during plugin initialization. A profile selects the provider through its `Provider` name and can pass provider-specific string settings in `Options`. Duplicate registration, including replacement of `smtp`, is rejected. The following example adapts an application-owned delivery client without moving manager policy into the plugin:
+
+```csharp
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MimeKit;
+using WebExpress.WebCore.WebEmail;
+using WebExpress.WebCore.WebSetting;
+
+/// <summary>
+/// Adapts an external mail service while retaining framework delivery policy.
+/// </summary>
+public sealed class ProviderEmailAdapter : IEmailProvider
+{
+    private readonly Func<MimeMessage, EmailProfileSettings, CancellationToken, Task> _submit;
+
+    /// <summary>
+    /// Gets the name selected by deployment profiles.
+    /// </summary>
+    public string Name => "external";
+
+    /// <summary>
+    /// Connects the adapter to an application-owned provider client.
+    /// </summary>
+    /// <param name="submit">The concurrent, cancellation-aware provider submission.</param>
+    public ProviderEmailAdapter(Func<MimeMessage, EmailProfileSettings, CancellationToken, Task> submit)
+    {
+        _submit = submit ?? throw new ArgumentNullException(nameof(submit));
+    }
+
+    /// <summary>
+    /// Completes only when the external service confirms acceptance.
+    /// </summary>
+    /// <param name="message">The manager-owned MIME snapshot.</param>
+    /// <param name="profile">The private configuration for this submission.</param>
+    /// <param name="cancellationToken">The combined caller cancellation and delivery deadline.</param>
+    /// <returns>The provider acceptance task.</returns>
+    public Task SendAsync(MimeMessage message, EmailProfileSettings profile, CancellationToken cancellationToken)
+    {
+        return _submit(message, profile, cancellationToken);
+    }
+}
+```
+
+For extension lifecycle, the plugin retains ownership of the provider and its external clients. Call `UnregisterProvider(provider)` on unload to remove the exact instance from future submissions. Already admitted calls retain that provider reference and must finish before the plugin disposes its resources. Providers must be safe for concurrent calls, honor cancellation, preserve envelope-only Bcc recipients without emitting their header, and avoid internal retries. They must not retain or dispose the manager-owned MIME snapshot. A provider that ignores cancellation can exceed the configured deadline and the host drain budget.
+
+For cluster coordination, the claim key is the SHA-256 hash of the serialized application and delivery identifier pair. The `email-attempt` scope stores a single marker with the configured retention period and no recipient addresses, bodies or credentials. The store is resolved at submission time so a plugin can install a shared store before sending begins. A deployment with cluster peers but an unshared store rejects delivery instead of silently offering only local duplicate protection.
+
+For delivery semantics, `Accepted` reports provider acceptance and `AlreadyAttempted` reports an existing claim without asserting success. Claims remain after success, provider failure, timeout, cancellation and process interruption because an SMTP server may have accepted content before its acknowledgement was lost. A crash between claiming and submission can suppress an unsent message. Claims expire after `DeduplicationHours`, and the same identifier may then be attempted again. The default memory store loses claims on restart; a shared persistent store retains them. Clock synchronization and a retention window longer than the business retry window are deployment requirements. This direct submission model is not a durable queue and does not guarantee exactly-once delivery or automatic crash recovery.
+
+For reliable business workflows, persist the business event and its delivery identifier in the application's primary database before calling the manager. Reconcile unknown acceptance with the provider before deliberately submitting under a new identifier. Durable outbox scheduling and recovery remain application responsibilities. This separation prevents the shared cluster store from becoming an unbounded repository of mail bodies, attachments and recipient data.
+
+For failure contracts, `EmailException.Error` distinguishes `Disabled`, `Configuration`, `InvalidMessage`, `StoreUnavailable`, `DeliveryFailed`, `Timeout` and `Stopping`. Caller cancellation remains `OperationCanceledException`, and misuse of a disposed manager remains `ObjectDisposedException`. Provider exceptions are retained as inner diagnostic causes but not copied into the public error message or central log. The central logger emits fixed event names, an opaque correlation hash, a stable category and the cause type. SMTP partial acceptance can accompany an exception, so applications must not infer that every recipient failed or retry the complete recipient set automatically.
+
 ## Cluster model
 
 A **WebExpress** server can run as several identical instances behind one load balancer - several containers of one Docker Compose service, or the replicas of one Kubernetes deployment. Without further configuration every instance keeps its state to itself, which is only correct while there is exactly one instance. The cluster model makes the instances share what they must share, so that a request may land on any instance and an instance may be added, replaced or removed at any time.
@@ -5380,6 +5511,7 @@ The following table lists the places that kept a single instance from being repl
 |------------------------------------------------|-------------------------------------------------------------------------------------------------|------------
 |Sessions (`SessionManager`)                     |In memory.                                                                                       |In the cluster store. Every instance resolves the same session; the idle deadline is renewed at most once a minute, so page views do not turn into writes. Concurrent changes of one session on different instances are merged.
 |Scheduled jobs (`JobManager`)                   |Every job runs on its instance.                                                                  |Every due run is claimed atomically; exactly one instance runs it. Jobs marked `[JobScope(JobScope.Node)]` run on every instance.
+|Email submissions (`EmailManager`)              |Delivery claims remain in memory unless a persistent store is configured.                        |A shared atomic claim suppresses repeat attempts for the same application and delivery identifier during the retention window. See [Email model](#email-model).
 |Live messages (`MessageQueueManager`)           |Popups, data changes, task progress and chat reach the clients of the instance that raised them. |Forwarded to every other instance, which delivers them to its own matching clients.
 |Global notifications (`NotificationManager`)    |In memory.                                                                                       |In the cluster store.
 |Session notifications                           |Part of the session.                                                                             |Travel with the session.
@@ -6285,4 +6417,4 @@ namespace Sample
 
 ---
 
-**Last updated**: 2026-07-11
+**Last updated**: 2026-10-05
