@@ -5152,11 +5152,11 @@ An explicit invalid Authorization header never falls back to a browser cookie. A
 
 ## Certificate management
 
-For production HTTPS, **WebExpress** manages X.509 certificates centrally through `CertificateManager`. The service loads configured material, validates its suitability for TLS server authentication and resolves it by alias or hostname. Applications and hosting components use `ICertificateManager` instead of accessing certificate files. The host owns one manager and exposes the same instance through `IHttpServerContext.CertificateManager` and `IComponentHub.CertificateManager`.
+**WebExpress** manages X.509 certificates for production HTTPS through the central `CertificateManager`. The service loads configured material, validates its suitability for TLS server authentication and resolves it by alias or hostname. Applications and hosting components use `ICertificateManager` instead of accessing certificate files. The host owns one manager and exposes the same instance through `IHttpServerContext.CertificateManager` and `IComponentHub.CertificateManager`.
 
-For environment separation, use **HTTP for development** and **HTTPS only for production**. The shipped development configuration remains HTTP only and requires no PFX file or trusted development certificate. Certificate deployment belongs in the production server configuration.
+Development environments should use HTTP, while production deployments should use HTTPS exclusively. The shipped development configuration remains HTTP only and requires no PFX file or trusted development certificate. Certificate deployment belongs in the production server configuration.
 
-For the object model, `CertificateManager` implements `ICertificateManager` and obtains material from `ICertificateStore`. The built-in `FileCertificateStore` provides local PFX support. `CertificateMaterial` carries the leaf and supplied chain for HTTPS consumers, while `CertificateInfo` provides metadata for diagnostics without exposing credentials or private keys.
+The certificate model is centered around `CertificateManager`, which implements `ICertificateManager` and retrieves certificate material through `ICertificateStore`. The built-in `FileCertificateStore` provides local PFX support. `CertificateMaterial` carries the leaf and supplied chain for HTTPS consumers, while `CertificateInfo` provides metadata for diagnostics without exposing credentials or private keys.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -5171,7 +5171,7 @@ For the object model, `CertificateManager` implements `ICertificateManager` and 
 ║                                  │                                                   ║
 ║    ┌─────────────────────────────▼─────────────────────────────┐                     ║
 ║    │ <<Interface>>                                             │                     ║
-║    │ ICertificateManager : IDisposable                         │                     ║
+║    │ ICertificateManager:IDisposable                           │                     ║
 ║    ├───────────────────────────────────────────────────────────┤                     ║
 ║    │ RegisterStore(ICertificateStore)                          │                     ║
 ║    │ Load(HttpServerSettings)                                  │                     ║
@@ -5214,7 +5214,7 @@ For the object model, `CertificateManager` implements `ICertificateManager` and 
 
 ### Certificate access
 
-For application access, obtain the shared manager from the component hub. `Resolve(string)` accepts a configured alias or concrete hostname with case-insensitive lookup. DNS names are normalized, including international names and trailing dots; IP addresses use their normalized representation. `Resolve(EndpointSettings)` also checks a concrete endpoint hostname against the certificate's subject alternative names. Unknown mappings throw `KeyNotFoundException`, and unusable material throws `InvalidOperationException`.
+Applications access certificates through the shared manager exposed by the component hub. `Resolve(string)` accepts a configured alias or concrete hostname with case-insensitive lookup. DNS names are normalized, including international names and trailing dots; IP addresses use their normalized representation. `Resolve(EndpointSettings)` also checks a concrete endpoint hostname against the certificate's subject alternative names. Unknown mappings throw `KeyNotFoundException`, and unusable material throws `InvalidOperationException`.
 
 ```csharp
 using WebExpress.WebCore;
@@ -5225,11 +5225,11 @@ CertificateMaterial material = manager.Resolve("public-site");
 var metadata = manager.GetCertificates();
 ```
 
-For lifetime management, the host owns the manager and disposes it after its HTTPS listeners have stopped. A consumer borrows `CertificateMaterial` and must not dispose or modify its leaf certificate or chain. An explicit inventory reload retains earlier material until manager disposal because an existing listener may still hold it. This release requires a server restart to apply changed certificates to listeners.
+The host owns the manager instance and disposes it after all HTTPS listeners have stopped. A consumer borrows `CertificateMaterial` and must not dispose or modify its leaf certificate or chain. An explicit inventory reload retains earlier material until manager disposal because an existing listener may still hold it. This release requires a server restart to apply changed certificates to listeners.
 
 ### Certificate configuration
 
-For production configuration, use the existing `WebExpress` settings section. The shared `Certificates` block contains `Directory`, `WarningThresholdDays` and `Items`. Each item supplies an `Alias`, optional concrete `HostNames`, a `Store` defaulting to `file`, a store-specific `Reference` and an optional `Password`. The file store resolves relative PFX references against `Directory`; a relative directory is based on the process working directory. Absolute paths are supported, and omitting the directory preserves existing relative endpoint PFX paths.
+Production certificate settings are configured through the existing **WebExpress** configuration section. The shared `Certificates` block contains `Directory`, `WarningThresholdDays` and `Items`. Each item supplies an `Alias`, optional concrete `HostNames`, a `Store` defaulting to `file`, a store-specific `Reference` and an optional `Password`. The file store resolves relative PFX references against `Directory`; a relative directory is based on the process working directory. Absolute paths are supported, and omitting the directory preserves existing relative endpoint PFX paths.
 
 ```json
 {
@@ -5252,13 +5252,13 @@ For production configuration, use the existing `WebExpress` settings section. Th
 }
 ```
 
-For password delivery, supply `WEBEXPRESS_WebExpress__Certificates__Items__0__Password` through deployment secrets rather than source control. Existing endpoint definitions can also use `PfxFile`, `Password` and an optional `CertificateAlias`. When neither an alias nor an inline PFX is supplied, the endpoint resolves its hostname through the shared inventory. A wildcard listener requires an explicit alias or inline definition. Aliases and host mappings must identify exactly one certificate, and only configured files are loaded.
+Certificate passwords should be provided through deployment secrets such as `WEBEXPRESS_WebExpress__Certificates__Items__0__Password` rather than stored in source control. Existing endpoint definitions can also use `PfxFile`, `Password` and an optional `CertificateAlias`. When neither an alias nor an inline PFX is supplied, the endpoint resolves its hostname through the shared inventory. A wildcard listener requires an explicit alias or inline definition. Aliases and host mappings must identify exactly one certificate, and only configured files are loaded.
 
-For several hostnames, register separate inventory entries and select them through the endpoint configuration. Each listener uses one fixed certificate in this release, so distinct certificates require separate listening addresses or ports. Hostname mappings establish the basis for future SNI selection; configuring multiple hostnames on the same address and port does not currently enable SNI.
+Multiple hostnames require separate certificate inventory entries that are selected through endpoint configuration. Each listener uses one fixed certificate in this release, so distinct certificates require separate listening addresses or ports. Hostname mappings establish the basis for future SNI selection; configuring multiple hostnames on the same address and port does not currently enable SNI.
 
 ### Validation and status
 
-For startup validation, the manager checks validity dates, private key presence, basic constraints, TLS server authentication EKU and digital signature key usage when those usage extensions are present, and subject alternative name coverage of configured hostnames. A CA certificate cannot serve as the leaf. Supplied intermediate certificates are handed to Kestrel with the leaf; client trust and revocation checks remain outside these local suitability checks. If an HTTPS endpoint cannot resolve usable material, startup fails before opening any listener.
+During startup validation, the manager verifies validity dates, private key availability, basic constraints, TLS server authentication EKUs, digital signature key usage, and SAN coverage for configured hostnames. A CA certificate cannot serve as the leaf. Supplied intermediate certificates are handed to Kestrel with the leaf; client trust and revocation checks remain outside these local suitability checks. If an HTTPS endpoint cannot resolve usable material, startup fails before opening any listener.
 
 For diagnostics, `GetCertificates()` returns immutable `CertificateInfo` snapshots containing alias, hostnames, store, subject, issuer, thumbprint, UTC validity dates and combined `CertificateStatus` flags. Current validity is evaluated on every metadata read and resolution. The following flags describe whether material can be used:
 
@@ -5273,96 +5273,90 @@ For diagnostics, `GetCertificates()` returns immutable `CertificateInfo` snapsho
 |`HostNameMismatch`  |A configured hostname is not covered by subject alternative names. |No.
 |`LoadFailed`        |The configured material could not be loaded.                       |No.
 
-For expiry warnings, omitted thresholds default to 30, 14 and 7 days. A nonnegative array replaces the defaults, and an empty array disables expiry warnings. Loading logs the nearest applicable threshold with the alias and UTC expiry time. Loading failures remain visible as inventory entries, while passwords and raw provider exceptions are excluded from logs. Periodic monitoring is not implemented in this version.
+When no warning thresholds are configured, the manager uses default values of 30, 14, and 7 days before expiration. A nonnegative array replaces the defaults, and an empty array disables expiry warnings. Loading logs the nearest applicable threshold with the alias and UTC expiry time. Loading failures remain visible as inventory entries, while passwords and raw provider exceptions are excluded from logs. Periodic monitoring is not implemented in this version.
 
-For administrative inspection, WebApp exposes **Settings > System > Certificates** to identities with `SystemAccessPolicy`. The page reads the same manager metadata, displays summary counts and translated status labels, and prioritizes unusable and soon-expiring entries. It provides an overview and diagnostics; deployment changes remain in server configuration. Page refresh updates metadata without reading certificate files or replacing listener certificates.
+WebApp provides certificate diagnostics under **Settings > System > Certificates** for identities granted `SystemAccessPolicy`. The page reads the same manager metadata, displays summary counts and translated status labels, and prioritizes unusable and soon-expiring entries. It provides an overview and diagnostics; deployment changes remain in server configuration. Page refresh updates metadata without reading certificate files or replacing listener certificates.
 
 ### Certificate provider extensions
 
-For custom storage, implement `ICertificateStore` in a separate module and call `RegisterStore` before `Load(HttpServerSettings)`. Configuration selects the provider by its case-insensitive name, with `file` reserved for the built-in store. The module retains ownership of the store. Each successful `Load(reference, password)` transfers newly owned `CertificateMaterial` to the manager; the provider must clean up its material on failure and must not return certificates already owned by another entry.
+Custom certificate sources are integrated by implementing `ICertificateStore` in a separate module and registering the provider before calling `Load(HttpServerSettings)`. Configuration selects the provider by its case-insensitive name, with `file` reserved for the built-in store. The module retains ownership of the store. Each successful `Load(reference, password)` transfers newly owned `CertificateMaterial` to the manager; the provider must clean up its material on failure and must not return certificates already owned by another entry.
 
 For inventory replacement, `Load(HttpServerSettings)` validates the complete configuration before publishing the new inventory. Configuration errors preserve the previous inventory. Individual provider failures publish diagnostic failure entries. Provider registration, loading and resolution are serialized by the manager. Providers must supply private keys that work with the host platform; the file store uses temporary key containers on Windows and `EphemeralKeySet` on other platforms.
 
-For future automation, separate modules can add ACME acquisition, renewal scheduling, DNS and HTTP challenges, Azure Key Vault or other sources behind this contract. Applications continue using `ICertificateManager`. The Core currently provides no ACME implementation, challenge processor, file watcher, periodic monitor, automatic listener replacement or SNI selector.
-
-For deployment examples, see [HTTPS for production](installation_guide.md#https-for-production) and [Production certificate inventory](config.md#production-certificate-inventory).
+The provider abstraction allows future extensions such as ACME acquisition, automated renewals, DNS and HTTP challenges, Azure Key Vault integration, or other certificate sources. Applications continue using `ICertificateManager`. The Core currently provides no ACME implementation, challenge processor, file watcher, periodic monitor, automatic listener replacement or SNI selector.
 
 ## Email model
 
-For shared application delivery, the `EmailManager` in `WebExpress.WebCore.WebEmail` owns the validation, profile selection, MIME snapshot, duplicate protection and diagnostic policy for outgoing mail. `ComponentHub.EmailManager` exposes `IEmailManager`, includes the implementation in `Managers`, and makes the interface available through the existing component constructor injection. The manager is created after `ClusterManager` and before plugins register their provider extensions.
+The `EmailManager` centralizes validation, profile selection, MIME snapshot creation, duplicate protection, and diagnostic policy for outgoing email delivery. `ComponentHub.EmailManager` exposes `IEmailManager`, includes the implementation in `Managers`, and makes the interface available through the existing component constructor injection. The manager is created after `ClusterManager` and before plugins register their provider extensions.
 
-For model structure, messages contain application content while profiles contain deployment configuration. The following diagram shows ownership and the dependencies used by a submission:
+The email model separates application content from deployment configuration. Messages define the content to be delivered, while profiles define how delivery is performed. The following diagram shows ownership and the dependencies used by a submission:
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
 ║                                                                                      ║
-║     ┌────────────────────────────┐                                                   ║
-║     │ <<Interface>>              │                                                   ║
-║     │ ComponentHub               │                                                   ║
-║     ├────────────────────────────┤                                                   ║
-║     │ EmailManager:IEmailManager │                                                   ║
-║     └──────────────┬─────────────┘                                                   ║
-║                    │                                                                 ║
-║                    │                                                                 ║
-║       ┌────────────▼─────────────┐       ┌─────────────────────────┐                 ║
-║       │ <<Interface>>            │       │ <<Interface>>           │                 ║
-║       │ IEmailManager            ◄───────│ IEmailMessage           │                 ║
-║       ├──────────────────────────┤       ├─────────────────────────┤                 ║
-║       │ RegisterProvider()       │       │ DeliveryId, From, To    │                 ║
-║       │ UnregisterProvider()     │       │ Cc, Bcc, ReplyTo        │                 ║
-║       │ SendAsync()              │       │ Subject, TextBody       │                 ║
-║       └──┬────────┬──────────┬───┘       │ HtmlBody, Attachments   │                 ║
-║          │        │          │           └───────────┬─────────────┘                 ║
-║          │        │          │                       │ contains                      ║
-║          │        │          │                       │                               ║
-║          │        │          │          ┌────────────▼─────────────┐                 ║
-║          │        │          │          │ <<Interface>>            │                 ║
-║          │        │          │          │ IEmailAttachment         │                 ║
-║          │        │          │          ├──────────────────────────┤                 ║
-║          │        │          │          │ FileName                 │                 ║
-║          │        │          │          │ ContentType              │                 ║
-║          │        │          │          │ Content: byte[]          │                 ║
-║          │        │          │          └──────────────────────────┘                 ║
-║          │        │          │                                                       ║
-║          │        │  ┌───────▼────────────────┐                                      ║
-║          │        │  │ <<Interface>>          │                                      ║
-║          │        │  │ IEmailProvider         │◄── SmtpEmailProvider                 ║
-║          │        │  ├────────────────────────┤                                      ║
-║          │        │  │ Name                   │                                      ║
-║          │        │  │ SendAsync()            │                                      ║
-║          │        │  └────────────────────────┘                                      ║
-║          │        │                                                                  ║
-║          │  ┌─────▼──────────────────┐                                               ║
-║          │  │ <<Interface>>          │                                               ║
-║          │  │ IClusterManager.Store  │                                               ║
-║          │  ├────────────────────────┤                                               ║
-║          │  │ IClusterStore.TryAdd() │                                               ║
-║          │  └────────────────────────┘                                               ║
-║          │                                                                           ║
-║       ┌──▼─────────────────┐                                                         ║
-║       │ <<Interface>>      │                                                         ║
-║       │ IHttpServerContext │                                                         ║
-║       ├────────────────────┤                                                         ║
-║       │ Configuration      │                                                         ║
-║       │ Log                │                                                         ║
-║       │ ServerLifetime     │                                                         ║
-║       └────────────────────┘                                                         ║
+║                            ┌────────────────────────────┐                            ║
+║                            │ <<Interface>>              │                            ║
+║                            │ IComponentHub              │                            ║
+║                            ├────────────────────────────┤                            ║
+║                            │ EmailManager:IEmailManager │                            ║
+║                            └──────────────┬─────────────┘                            ║
+║                                           │                                          ║
+║                                           │                                          ║
+║         ┌─────────────────────────────────▼─────────────────────────────────┐        ║
+║         │ <<Interface>>                                                     │        ║
+║         │ IEmailManager:IComponentManager                                   │        ║
+║         ├───────────────────────────────────────────────────────────────────┤        ║
+║         │ GetStatus():EmailStatus                                           │        ║
+║         │ RegisterProvider(IEmailProvider)                                  │        ║
+║         │ UnregisterProvider(IEmailProvider):Boolean                        │        ║
+║         │ SendAsync(applicationId, message, profile):Task<EmailSendResult>  │        ║
+║         └─────────────┬─────────────────────────────────────────┬───────────┘        ║
+║                       │ *                                       │ uses               ║
+║                       │                                         │                    ║
+║  ┌────────────────────▼─────────────────┐  ┌────────────────────▼──────────────────┐ ║
+║  │ <<Interface>>                        │  │ <<Interface>>                         │ ║
+║  │ IEmailProvider                       │  │ IEmailMessage                         │ ║
+║  ├──────────────────────────────────────┤  ├───────────────────────────────────────┤ ║
+║  │ Name:String                          │  │ DeliveryId, From, To, Cc, Bcc         │ ║
+║  │ SendAsync(MimeMessage, profile):Task │  │ ReplyTo, Subject, TextBody            │ ║
+║  └────────────────────△─────────────────┘  │ HtmlBody, Attachments                 │ ║
+║                       ¦                    └────────────────────┬──────────────────┘ ║
+║               ┌-------┴--------------------┐                    │ contains           ║
+║               ¦                            ¦                    │                    ║
+║ ┌─────────────┴─────────────┐              ¦           ┌────────▼─────────┐          ║
+║ │ SmtpEmailProvider         │              ¦           │ <<Interface>>    │          ║
+║ ├───────────────────────────┤              ¦           │ IEmailAttachment │          ║
+║ │ Name = "smtp"             │              ¦           ├──────────────────┤          ║
+║ │ MailKit SMTP delivery     │              ¦           │ FileName         │          ║
+║ └───────────────────────────┘              ¦           │ ContentType      │          ║
+║                                            ¦           │ Content:byte[]   │          ║
+║                                            ¦           └──────────────────┘          ║
+╚════════════════════════════════════════════¦═════════════════════════════════════════╝
+                                             ¦
+╔MyPlugin════════════════════════════════════¦═════════════════════════════════════════╗
+║                                            ¦                                         ║
+║                         ┌──────────────────┴──────────────────┐                      ║
+║                         │ MyEmailProvider                     │                      ║
+║                         ├─────────────────────────────────────┤                      ║
+║                         │ module-owned provider               │                      ║
+║                         └─────────────────────────────────────┘                      ║
+║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
-For configuration binding, `HttpServerSettings.Email` uses `EmailSettings`, whose `Profiles` map holds `EmailProfileSettings` values. The manager reads `WebExpress:Email` once at construction and reserves the provider name `smtp`. Profile names and provider names are case insensitive. The settings and complete application example are documented in [Email delivery](https://github.com/webexpress-framework/WebExpress.WebCore/blob/main/docs/user-guide.md#email-delivery).
+Email configuration is bound through `HttpServerSettings.Email`, which uses `EmailSettings` and stores profile definitions in the `Profiles` collection. The manager reads `WebExpress:Email` once at construction and reserves the provider name `smtp`. Profile names and provider names are case insensitive. 
 
-For the public contract, `SendAsync(string applicationId, EmailMessage message, string profile, CancellationToken cancellationToken)` returns `Task<EmailSendResult>`. The application namespace should come from `IApplicationContext.ApplicationId.ToString()`. The message's `DeliveryId` identifies one logical business delivery within that namespace, independently of the selected profile. Its random default is suitable for a new one-off delivery; replica coordination requires the application to persist and reuse the same identifier.
+The primary delivery API is exposed through `SendAsync(string applicationId, EmailMessage message, string profile, CancellationToken cancellationToken)`, which returns `Task<EmailSendResult>`. The application namespace should come from `IApplicationContext.ApplicationId.ToString()`. The message's `DeliveryId` identifies one logical business delivery within that namespace, independently of the selected profile. Its random default is suitable for a new one-off delivery; replica coordination requires the application to persist and reuse the same identifier.
 
 For administrative inspection, `GetStatus()` returns an `EmailStatus` snapshot with the active policy, cluster store sharing and credential-free `EmailProfileInfo` entries. The snapshot uses the settings bound at manager construction and current provider registrations, so subsequent configuration edits do not appear effective before restart. WebApp exposes these diagnostics under **Settings > System > Email** with `IScopeAdmin` and `SystemAccessPolicy`. `ConditionEmailEnabled` checks the running manager for both route resolution and settings navigation. With an omitted or disabled email block, the navigation entry is hidden and direct route resolution fails. The page performs no network operations and never exposes usernames, passwords or arbitrary provider options.
 
-For input validation, the manager rejects missing senders, missing recipients, malformed individual mailbox inputs, unsafe header characters, absent bodies, unsafe attachment names and excessive combined attachment sizes. Message recipients and attachment bytes are copied into an owned `MimeMessage` before asynchronous processing begins. Applications retain ownership of their source data. Text and HTML supplied together become alternative MIME parts, and attachments form the containing multipart message. The built-in SMTP provider uses Bcc addresses in the envelope while omitting them from delivered headers.
+The manager validates all submissions before delivery and rejects missing senders, missing recipients, malformed mailbox addresses, unsafe headers, missing message bodies, invalid attachment names, and excessive attachment sizes. Message recipients and attachment bytes are copied into an owned `MimeMessage` before asynchronous processing begins. Applications retain ownership of their source data. Text and HTML supplied together become alternative MIME parts, and attachments form the containing multipart message. The built-in SMTP provider uses Bcc addresses in the envelope while omitting them from delivered headers.
 
-For submission flow, the manager resolves the provider, validates the selected profile, constructs the MIME snapshot and asks `ServerLifetime.TryRun` to admit the operation. The worker obtains the current cluster store, atomically claims the delivery with `TryAdd`, invokes the provider once, logs the outcome and completes the caller's task. Resource disposal happens after the provider task finishes, including cancellation and exceptions. Shutdown stops admission and waits for admitted work within the host's configured drain budget.
+Message submission follows a deterministic workflow. The manager resolves the provider, validates the selected profile, creates a MIME snapshot, and requests execution through `ServerLifetime.TryRun`. The worker obtains the current cluster store, atomically claims the delivery with `TryAdd`, invokes the provider once, logs the outcome and completes the caller's task. Resource disposal happens after the provider task finishes, including cancellation and exceptions. Shutdown stops admission and waits for admitted work within the host's configured drain budget.
 
-For provider configuration, `EmailProfileSettings` supplies `Provider`, `From`, `Host`, `Port`, `Security`, `UserName`, `Password`, `TimeoutSeconds` and `Options`. Each call receives a private copy so a custom provider cannot modify the configuration used by subsequent submissions. The built-in `SmtpEmailProvider` creates one MailKit SMTP client per operation and therefore supports concurrent callers without sharing protocol state. `StartTls` and `SslOnConnect` require TLS with normal certificate validation. `None` supports a deliberately selected development relay and cannot be combined with configured SMTP credentials. The implementation does not perform automatic TLS downgrade or transport retries.
+`EmailProfileSettings` defines the provider-specific configuration, including `Provider`, `Host,` `Port`, `Security`, authentication settings, and optional custom parameters. Each call receives a private copy so a custom provider cannot modify the configuration used by subsequent submissions. The built-in `SmtpEmailProvider` creates one MailKit SMTP client per operation and therefore supports concurrent callers without sharing protocol state. `StartTls` and `SslOnConnect` require TLS with normal certificate validation. `None` supports a deliberately selected development relay and cannot be combined with configured SMTP credentials. The implementation does not perform automatic TLS downgrade or transport retries.
 
-For provider extensions, implement `IEmailProvider` and register the instance with `componentHub.EmailManager.RegisterProvider(provider)` during plugin initialization. A profile selects the provider through its `Provider` name and can pass provider-specific string settings in `Options`. Duplicate registration, including replacement of `smtp`, is rejected. The following example adapts an application-owned delivery client without moving manager policy into the plugin:
+Custom delivery providers are integrated by implementing `IEmailProvider` and registering the implementation through `componentHub.EmailManager.RegisterProvider(provider)`. A profile selects the provider through its `Provider` name and can pass provider-specific string settings in `Options`. Duplicate registration, including replacement of `smtp`, is rejected. The following example adapts an application-owned delivery client without moving manager policy into the plugin:
 
 ```csharp
 using System;
@@ -5407,15 +5401,15 @@ public sealed class ProviderEmailAdapter : IEmailProvider
 }
 ```
 
-For extension lifecycle, the plugin retains ownership of the provider and its external clients. Call `UnregisterProvider(provider)` on unload to remove the exact instance from future submissions. Already admitted calls retain that provider reference and must finish before the plugin disposes its resources. Providers must be safe for concurrent calls, honor cancellation, preserve envelope-only Bcc recipients without emitting their header, and avoid internal retries. They must not retain or dispose the manager-owned MIME snapshot. A provider that ignores cancellation can exceed the configured deadline and the host drain budget.
+Provider instances remain owned by the hosting plugin throughout their lifetime. Call `UnregisterProvider(provider)` on unload to remove the exact instance from future submissions. Already admitted calls retain that provider reference and must finish before the plugin disposes its resources. Providers must be safe for concurrent calls, honor cancellation, preserve envelope-only Bcc recipients without emitting their header, and avoid internal retries. They must not retain or dispose the manager-owned MIME snapshot. A provider that ignores cancellation can exceed the configured deadline and the host drain budget.
 
-For cluster coordination, the claim key is the SHA-256 hash of the serialized application and delivery identifier pair. The `email-attempt` scope stores a single marker with the configured retention period and no recipient addresses, bodies or credentials. The store is resolved at submission time so a plugin can install a shared store before sending begins. A deployment with cluster peers but an unshared store rejects delivery instead of silently offering only local duplicate protection.
+FCluster-wide duplicate protection uses a SHA-256 hash of the serialized application identifier and delivery identifier pair as the claim key. The `email-attempt` scope stores a single marker with the configured retention period and no recipient addresses, bodies or credentials. The store is resolved at submission time so a plugin can install a shared store before sending begins. A deployment with cluster peers but an unshared store rejects delivery instead of silently offering only local duplicate protection.
 
-For delivery semantics, `Accepted` reports provider acceptance and `AlreadyAttempted` reports an existing claim without asserting success. Claims remain after success, provider failure, timeout, cancellation and process interruption because an SMTP server may have accepted content before its acknowledgement was lost. A crash between claiming and submission can suppress an unsent message. Claims expire after `DeduplicationHours`, and the same identifier may then be attempted again. The default memory store loses claims on restart; a shared persistent store retains them. Clock synchronization and a retention window longer than the business retry window are deployment requirements. This direct submission model is not a durable queue and does not guarantee exactly-once delivery or automatic crash recovery.
+Delivery results distinguish between provider acceptance and duplicate detection. `Accepted` indicates successful provider acceptance, while `AlreadyAttempte`d indicates that a claim already exists. Claims remain after success, provider failure, timeout, cancellation and process interruption because an SMTP server may have accepted content before its acknowledgement was lost. A crash between claiming and submission can suppress an unsent message. Claims expire after `DeduplicationHours`, and the same identifier may then be attempted again. The default memory store loses claims on restart; a shared persistent store retains them. Clock synchronization and a retention window longer than the business retry window are deployment requirements. This direct submission model is not a durable queue and does not guarantee exactly-once delivery or automatic crash recovery.
 
-For reliable business workflows, persist the business event and its delivery identifier in the application's primary database before calling the manager. Reconcile unknown acceptance with the provider before deliberately submitting under a new identifier. Durable outbox scheduling and recovery remain application responsibilities. This separation prevents the shared cluster store from becoming an unbounded repository of mail bodies, attachments and recipient data.
+Applications that require reliable delivery tracking should store the business event and delivery identifier in durable application storage before calling the manager. Reconcile unknown acceptance with the provider before deliberately submitting under a new identifier. Durable outbox scheduling and recovery remain application responsibilities. This separation prevents the shared cluster store from becoming an unbounded repository of mail bodies, attachments and recipient data.
 
-For failure contracts, `EmailException.Error` distinguishes `Disabled`, `Configuration`, `InvalidMessage`, `StoreUnavailable`, `DeliveryFailed`, `Timeout` and `Stopping`. Caller cancellation remains `OperationCanceledException`, and misuse of a disposed manager remains `ObjectDisposedException`. Provider exceptions are retained as inner diagnostic causes but not copied into the public error message or central log. The central logger emits fixed event names, an opaque correlation hash, a stable category and the cause type. SMTP partial acceptance can accompany an exception, so applications must not infer that every recipient failed or retry the complete recipient set automatically.
+Error classification is exposed through `EmailException.Error`, which distinguishes `Disabled`, `Configuration`, `InvalidMessage`, `StoreUnavailable`, `DeliveryFailed`, `Timeout`, and `Stopping`. Caller cancellation remains `OperationCanceledException`, and misuse of a disposed manager remains `ObjectDisposedException`. Provider exceptions are retained as inner diagnostic causes but not copied into the public error message or central log. The central logger emits fixed event names, an opaque correlation hash, a stable category and the cause type. SMTP partial acceptance can accompany an exception, so applications must not infer that every recipient failed or retry the complete recipient set automatically.
 
 ## Cluster model
 
@@ -6417,4 +6411,4 @@ namespace Sample
 
 ---
 
-**Last updated**: 2026-10-05
+**Last updated**: 2026-10-07
