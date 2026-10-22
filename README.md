@@ -20,7 +20,6 @@ The WebExpress family includes the following projects:
 
 # Libraries used
 - https://github.com/dotnet/core (MIT)
-- https://www.chartjs.org (MIT)
 
 # Download 
 The current binaries are available for download [here](https://github.com/webexpress-framework/WebExpress/releases).
