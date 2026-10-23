@@ -5317,7 +5317,7 @@ The email model separates application content from deployment configuration. Mes
 ║  │ IEmailProvider                       │  │ IEmailMessage                         │ ║
 ║  ├──────────────────────────────────────┤  ├───────────────────────────────────────┤ ║
 ║  │ Name:String                          │  │ DeliveryId, From, To, Cc, Bcc         │ ║
-║  │ SendAsync(MimeMessage, profile):Task │  │ ReplyTo, Subject, TextBody            │ ║
+║  │ SendAsync(MailMessage, profile):Task │  │ ReplyTo, Subject, TextBody            │ ║
 ║  └────────────────────△─────────────────┘  │ HtmlBody, Attachments                 │ ║
 ║                       ¦                    └────────────────────┬──────────────────┘ ║
 ║               ┌-------┴--------------------┐                    │ contains           ║
@@ -5326,7 +5326,7 @@ The email model separates application content from deployment configuration. Mes
 ║ │ SmtpEmailProvider         │              ¦           │ <<Interface>>    │          ║
 ║ ├───────────────────────────┤              ¦           │ IEmailAttachment │          ║
 ║ │ Name = "smtp"             │              ¦           ├──────────────────┤          ║
-║ │ MailKit SMTP delivery     │              ¦           │ FileName         │          ║
+║ │ .NET SMTP delivery        │              ¦           │ FileName         │          ║
 ║ └───────────────────────────┘              ¦           │ ContentType      │          ║
 ║                                            ¦           │ Content:byte[]   │          ║
 ║                                            ¦           └──────────────────┘          ║
@@ -5349,11 +5349,11 @@ The primary delivery API is exposed through `SendAsync(string applicationId, Ema
 
 For administrative inspection, `GetStatus()` returns an `EmailStatus` snapshot with the active policy, cluster store sharing and credential-free `EmailProfileInfo` entries. The snapshot uses the settings bound at manager construction and current provider registrations, so subsequent configuration edits do not appear effective before restart. WebApp exposes these diagnostics under **Settings > System > Email** with `IScopeAdmin` and `SystemAccessPolicy`. `ConditionEmailEnabled` checks the running manager for both route resolution and settings navigation. With an omitted or disabled email block, the navigation entry is hidden and direct route resolution fails. The page performs no network operations and never exposes usernames, passwords or arbitrary provider options.
 
-The manager validates all submissions before delivery and rejects missing senders, missing recipients, malformed mailbox addresses, unsafe headers, missing message bodies, invalid attachment names, and excessive attachment sizes. Message recipients and attachment bytes are copied into an owned `MimeMessage` before asynchronous processing begins. Applications retain ownership of their source data. Text and HTML supplied together become alternative MIME parts, and attachments form the containing multipart message. The built-in SMTP provider uses Bcc addresses in the envelope while omitting them from delivered headers.
+The manager validates all submissions before delivery and rejects missing senders, missing recipients, malformed mailbox addresses, unsafe headers, missing message bodies, invalid attachment names, and excessive attachment sizes. Message recipients and attachment bytes are copied into an owned `MailMessage` before asynchronous processing begins. Applications retain ownership of their source data. Text and HTML supplied together become alternative MIME parts, and attachments form the containing multipart message. The built-in SMTP provider uses Bcc addresses in the envelope while omitting them from delivered headers.
 
 Message submission follows a deterministic workflow. The manager resolves the provider, validates the selected profile, creates a MIME snapshot, and requests execution through `ServerLifetime.TryRun`. The worker obtains the current cluster store, atomically claims the delivery with `TryAdd`, invokes the provider once, logs the outcome and completes the caller's task. Resource disposal happens after the provider task finishes, including cancellation and exceptions. Shutdown stops admission and waits for admitted work within the host's configured drain budget.
 
-`EmailProfileSettings` defines the provider-specific configuration, including `Provider`, `Host,` `Port`, `Security`, authentication settings, and optional custom parameters. Each call receives a private copy so a custom provider cannot modify the configuration used by subsequent submissions. The built-in `SmtpEmailProvider` creates one MailKit SMTP client per operation and therefore supports concurrent callers without sharing protocol state. `StartTls` and `SslOnConnect` require TLS with normal certificate validation. `None` supports a deliberately selected development relay and cannot be combined with configured SMTP credentials. The implementation does not perform automatic TLS downgrade or transport retries.
+`EmailProfileSettings` defines the provider-specific configuration, including `Provider`, `Host,` `Port`, `Security`, authentication settings, and optional custom parameters. Each call receives a private copy so a custom provider cannot modify the configuration used by subsequent submissions. The built-in `SmtpEmailProvider` creates one isolated SMTP connection per operation using .NET sockets and TLS streams and therefore supports concurrent callers without sharing protocol state. `StartTls` and `SslOnConnect` require TLS with normal certificate validation. `None` supports a deliberately selected development relay and cannot be combined with configured SMTP credentials. The implementation does not perform automatic TLS downgrade or transport retries. SMTP authentication supports the advertised PLAIN and LOGIN mechanisms over TLS. MIME serialization uses UTF-8 headers, base64 bodies and attachments, and extended filename parameters without additional packages.
 
 Custom delivery providers are integrated by implementing `IEmailProvider` and registering the implementation through `componentHub.EmailManager.RegisterProvider(provider)`. A profile selects the provider through its `Provider` name and can pass provider-specific string settings in `Options`. Duplicate registration, including replacement of `smtp`, is rejected. The following example adapts an application-owned delivery client without moving manager policy into the plugin:
 
@@ -5361,7 +5361,7 @@ Custom delivery providers are integrated by implementing `IEmailProvider` and re
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using MimeKit;
+using System.Net.Mail;
 using WebExpress.WebCore.WebEmail;
 using WebExpress.WebCore.WebSetting;
 
@@ -5370,7 +5370,7 @@ using WebExpress.WebCore.WebSetting;
 /// </summary>
 public sealed class ProviderEmailAdapter : IEmailProvider
 {
-    private readonly Func<MimeMessage, EmailProfileSettings, CancellationToken, Task> _submit;
+    private readonly Func<MailMessage, EmailProfileSettings, CancellationToken, Task> _submit;
 
     /// <summary>
     /// Gets the name selected by deployment profiles.
@@ -5381,7 +5381,7 @@ public sealed class ProviderEmailAdapter : IEmailProvider
     /// Connects the adapter to an application-owned provider client.
     /// </summary>
     /// <param name="submit">The concurrent, cancellation-aware provider submission.</param>
-    public ProviderEmailAdapter(Func<MimeMessage, EmailProfileSettings, CancellationToken, Task> submit)
+    public ProviderEmailAdapter(Func<MailMessage, EmailProfileSettings, CancellationToken, Task> submit)
     {
         _submit = submit ?? throw new ArgumentNullException(nameof(submit));
     }
@@ -5393,7 +5393,7 @@ public sealed class ProviderEmailAdapter : IEmailProvider
     /// <param name="profile">The private configuration for this submission.</param>
     /// <param name="cancellationToken">The combined caller cancellation and delivery deadline.</param>
     /// <returns>The provider acceptance task.</returns>
-    public Task SendAsync(MimeMessage message, EmailProfileSettings profile, CancellationToken cancellationToken)
+    public Task SendAsync(MailMessage message, EmailProfileSettings profile, CancellationToken cancellationToken)
     {
         return _submit(message, profile, cancellationToken);
     }
