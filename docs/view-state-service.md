@@ -6,18 +6,18 @@ This document describes the architecture of the JavaScript control model of WebE
 
 A central constraint is that WebExpress applications are authored entirely in C#. State initialization, service definitions and data provisioning originate in the C# layer, and JavaScript is the dynamic user interface engine and nothing more.
 
-## 0. Where to start
+## Where to start
 
 This section is the entry point: which files make up the engine, what each one is responsible for, which words this document uses for them, and how far the controls have been moved onto the model. The sections that follow explain the design behind it. What every control promises on top of the model - towards a form, a bind and an application - is the control contract in `WebExpress.WebUI/docs/js/contract.md`: the value and its change event, validation, dirty state, saving, failures and lifecycle.
 
-### 0.1 The modules
+### The modules
 
 The view layer lives in WebExpress.WebUI, because rendering from state is not tied to data: `webexpress.webui.renderer.js` (the node factory `webexpress.webui.h` and the keyed reconciler `webexpress.webui.Renderer` that patches a virtual node tree into the DOM while keeping focus and nested control instances) and `webexpress.webui.state.js` (`LocalState`, a plain observable state container, and `StateCtrl`, the base of a control whose markup is `render(state)`, with the `mount`, `onMount`, `onUpdate`, `onUnmount` lifecycle and an exchangeable state container). WebUI includes both right after `webexpress.webui.js`, so a WebUI control can render from state as well; their tests are `renderer.test.mjs` and `state.test.mjs` in `WebExpress.WebUI.Test/JsTest`.
 
 Everything else lives in `WebExpress.WebApp/src/WebExpress.WebApp/Assets/js`. The engine is five modules, included in this order right after `webexpress.webapp.js` (see `WebInclude/IncludeJavaScript.cs`), followed by the defaults the controls consume at construction time:
 
-|Module                        |Responsibility
-|------------------------------|-----------------------------------------------------------------------------
+|Module                          |Responsibility
+|--------------------------------|-----------------------------------------------------------------------------
 |`webexpress.webapp.service.js`  |`ServiceResult`, the `ErrorChannel`, the `Service` base, the `RestService` (query, create, update, remove, request; cancellation per channel, retry, abort), the `ServiceRegistry` with the `wx-service` island parser, and `DataChangeSubscription` for the live update channel. Also installs the service layer as the transport of the WebUI controls.
 |`webexpress.webapp.template.js` |The `Templates` registry of render functions a C# authored `data-wx-template` refers to.
 |`webexpress.webapp.intent.js`   |The `Intents` registry: a reducer (pure state transition) and an effect (service call, follow-up dispatch) per intent name.
@@ -29,32 +29,7 @@ A control is one file, `webexpress.webapp.<name>.js`; where its pure logic is wo
 
 The headless tests are in `WebExpress.WebApp/src/WebExpress.WebApp.Test/JsTest` (see its README): `engine.test.mjs`, `viewstate.test.mjs`, `viewstate.resources.test.mjs` and `bind.viewstate.test.mjs` cover the engine, the `*.model.test.mjs` files the control logic, and the `control.*.test.mjs` files the controls on a DOM stub. `UnitTestEngineAssets` in the .NET suite guards that the modules are embedded and included in the order above.
 
-### 0.2 The words
-
-The names in the code are the ones this document uses. Two older names still appear in comments and in the option names of a few constructors, and they map as follows:
-
-|Current name                                  |Older name    |What it is
-|----------------------------------------------|--------------|-----------------------------------------------------------
-|`webexpress.webapp.ViewState`                 |Store         |The observable state container. Hosted (a `wx-webapp-viewstate` element with resources) or standalone (`{ standalone: true }`, the private state of a `Data` control). There is no separate store type; `store` in an intent context or a bind is always a `ViewState`.
-|`webexpress.webapp.Data`                      |Component     |The base class of a control that owns state and services. A class name still ends in `Ctrl`; `component` in an intent context is the dispatching `Data` instance.
-|the engine                                    |phase zero engine |The six modules above. There are no phases any more; what remains open is listed under 0.3.
-|`webexpress.webui.Transport`                  |-             |The door of the WebUI controls to the network, an adapter WebApp replaces with its service layer.
-
-### 0.3 Migration state
-
-The controls stand on three tiers. The tiers are not a sequence every control has to walk; a control is on the tier its data needs.
-
-**ViewState-bound** - the control renders a resource slice the ViewState loads centrally and subscribes to it through `viewState.slice(resource)`; its writes go through the service its resource declares: avatar dropdown, comment, dashboard, dropdown, file view, gantt, graph viewer, kanban, list, relation view, schedule, scrum backlog, scrum sprint, scrum team, scrum velocity, tab, table, tag, tile, traffic light, watcher, workflow editor. Each of these also runs standalone with its own islands when no ViewState hosts it.
-
-**Data base** - the control extends `webexpress.webapp.Data` and keeps a standalone ViewState of its own: comment, comment composer, gantt, relation editor, relation view, rest form, scrum backlog, scrum sprint, scrum team, scrum velocity, watcher.
-
-**Service only** - the control extends `Ctrl`, keeps its state imperatively and reaches the network through the service layer (`ServiceRegistry.request` or the services of its islands): dnf, dropdown theme, editor form, feed, input cascading, input dnf, input selection, input tile, input unique, like, login, permission, quickfilter, rest form editor, rest wizard, search, search suggestion, selection, sidebar, sla, status task, wql prompt. Nothing in WebApp calls `fetch` itself.
-
-**Rendering** - orthogonal to the tiers above is the form of the view (section 2). On the reconciler form, the control's markup is `render(state)`, a pure function of its state that returns a virtual node tree the render loop of `webexpress.webui.StateCtrl` (which the Data base extends) patches into the host; handlers change the state or call a service, and imperative work the tree cannot express (focus, measuring) runs in `onUpdate` against nodes captured through `ref`: comment, comment composer, file view, gantt, relation editor, relation view, rest form, rest wizard, scrum backlog, scrum team, scrum velocity, tab, table, data table, permission, graph viewer, graph editor, data graph viewer, workflow editor, watcher. The form is not tied to the Data base: a WebUI control renders on `webexpress.webui.StateCtrl` as well (the tab control, the table and the reorderable table, the graph viewer and the graph editor), and a WebApp control that extends such a WebUI control hands it a standalone ViewState of its own (the tab; the data table, which keeps the contract of the Data base by hand - its store, its intents and the announcement of its mount - because it derives from the WebUI table). It keeps that one even inside a region, because the region's ViewState holds the resource slices, and the view keys of every control living there (tabs, menu, rename) would collide in it. What a control shares with its region is its query: a data control bound to a resource (the file view) keeps its view state local, but its query state (search, filter, page) lives in the region's ViewState, which its `store`, binds and intents address and whose central query reads it. A control whose changes span many items (the backlog's moves and rankings) works on a copy of its sprints and items and commits the copy, so a rendered state is never changed afterwards. A nested control (the composer's editor, the velocity slider, the relation graph viewer, the output of a table cell template) lives on a node with the keep flag; a node the view did not create (a server rendered pane, the element of the view switch) is placed into the tree with `Renderer.adopt`. A control that decorates server markup (the rest form and wizard) renders into the host as well: the server rendered children are adopted unchanged, and a container it adds to (the dialog body, the dialog footer) is adopted with the children the view describes, so its own nodes sit among the server's; what only the server markup can carry (the marks of invalid fields, the lock of the fields) is applied in `onUpdate`. Transient interaction state such as a drag in progress is state too, so its marks are rendered rather than toggled; the gantt puts the previewed geometry of a dragged bar into its state, so the connectors follow the bar through the same render, and an open cell editor with its draft is state as well. Widths only the layout decides (the gantt's host and grid pane, the graph canvas) are measured by a ResizeObserver and enter the state like any other change. A control whose state changes at pointer or simulation rate (the graph viewer and editor) renders on a `FrameState`, once per animation frame; its simulation records are working memory that publishes positions into the state, and a discrete action still renders at once. Every other Data control still renders imperatively from its state (the first form). The WQL prompt keeps a view class of its own (`WqlPromptView`), because a contenteditable surface with caret mapping cannot be expressed as a reconciled tree.
-
-The WebUI controls that talk to a server (frame, login, modal form, modal page, sla, smart edit, upload) go through `webexpress.webui.Transport`; on a WebApp page that transport is the service layer, so they report on the same error channel. Open items are the writing surfaces that still keep a private store rather than the enclosing ViewState in standalone mode, and the imperative rendering of most controls, which the reconciler (section 6) would replace only where a control is rewritten anyway.
-
-## 1. Scope and Goals
+## Scope and Goals
 
 The scope and goals defined here describe what the conceptual architecture achieves and where its boundaries lie, so that later implementation decisions can be measured against a fixed intent. The scope covers the client-side component layer of WebExpress.WebApp together with the C# control layer that emits it, as well as the shared primitives that already exist in WebExpress.WebUI and are inherited by WebExpress.WebApp.
 
@@ -66,7 +41,7 @@ A third goal is architectural compatibility with the existing WebExpress control
 
 Out of scope are a third-party reactive framework, a change to the routing model and a change to the REST endpoint contracts on the server. A JavaScript bundler or minifier is optional infrastructure and not part of the architecture itself.
 
-## 2. Target Architecture (View, State and Service)
+## Architecture (View, State and Service)
 
 The target architecture is a small unidirectional loop layered on top of the existing WebExpress primitives.
 
@@ -92,7 +67,7 @@ The ViewState notifies, and the view renders again.
 
 Side effects exist only in services and in the effect part of intents, never in the view and never in a reducer.
 
-## 2.1 The ViewState and Central Resources
+## The ViewState and Central Resources
 
 The ViewState is the concrete, page-near realization of the loop above. Instead of every data control owning a private store and loading itself, a region of the page is wrapped in a single ViewState that owns the state, the services and the resources of that region. The page is simply the outermost ViewState; ViewStates nest, and a control resolves the nearest enclosing ViewState, or an explicit one by id. The motivation is direct: resources are loaded once and centrally, every control in the ViewState re-renders when the shared state changes, and any control can trigger a re-query without knowing how the data is fetched.
 
@@ -108,7 +83,7 @@ Authoring is type-safe. The ViewState is `ControlViewState<TState>`, where the s
 
 The asymmetry between `Resource<TResource>()` and `UsersService<TEndpoint>()` is deliberate, because a resource and a service are two different kinds of ViewState member. A resource is a central, reactive query that the ViewState loads once and reduces into a slice of the ViewState state; a control binds the resource it renders and re-renders when the ViewState re-queries it. A service is an endpoint a control calls directly, for a mutation or an on-demand lookup such as the assignee picker, and its result is not reduced into a reactive slice. The primary data service is therefore implicit, declared by the resource and reached through `serviceForResource`, while only an additional, role-specific service such as the users lookup is bound explicitly. The rule is: a control binds a resource for the shared data it renders, and a service for an endpoint it calls directly. A small, preloaded set of candidate users could be modelled as a resource instead, but an on-demand, parameterized lookup is a service.
 
-## 2.2 Live Data Updates over the Message Queue
+## Live Data Updates over the Message Queue
 
 A resource that was loaded once is stale the moment another user changes the data behind it. The live update channel closes this gap: when server side data of a logical domain changes, the server pushes a small change notification over the existing message queue WebSocket, and every ViewState whose services serve that domain re-queries the affected resources, so all subscribing controls re-render from the fresh result. The unidirectional loop stays intact, because the notification does not carry data; it merely triggers the same central re-query that a user interaction would, so the REST endpoint remains the single source of the data, its authorization and its projection.
 
@@ -122,11 +97,11 @@ The reacting side is a coalesced re-query. An incoming change message whose doma
 
 An externally triggered refresh is made visible. Once the fresh data has been reduced, every control bound to the re-queried resource (found by its `data-wx-resource` binding and resolving to the re-querying ViewState, since a resource name is not unique across ViewStates) briefly plays the change flash: the engine puts the `wx-data-changed` class on the control host for the duration of its css animation, so the user sees that the content changed because of an outside action rather than an own one. A standalone data control (a list, table, tile panel, tab, kanban board, dashboard, backlog or gantt that owns its islands) reloads through its own service and flashes its host the same way, wired through the shared `DataChangeSubscription.attachReload`. The flash respects `prefers-reduced-motion`, and no control has to opt in individually, because in ViewState mode the binding attribute that resolves the ViewState is also what locates the flash targets.
 
-## 3. New Artifacts and Responsibilities
+## Artifacts and Responsibilities
 
 The following artifact overview enumerates every architectural artifact, on both the JavaScript side and the C# side, and assigns each a single clear responsibility. The artifacts follow the register, get and unregister shape that the Actions and Binds registries already use, so that the surface stays uniform and open to plugins.
 
-### 3.1 JavaScript artifacts
+### JavaScript artifacts
 
 All core artifacts live in the webexpress.webapp namespace, because the dynamic concept belongs to WebExpress.WebApp; WebExpress.WebUI stays a control library that knows nothing of it. The one seam between the two is `webexpress.webui.Transport`: the WebUI controls that talk to a server ask it, and WebApp installs its service layer as the transport's adapter, so those requests share the result contract and the error channel of the data controls without the WebUI depending on WebApp. The core engine is small and free of framework dependencies.
 
@@ -138,7 +113,7 @@ The Renderer module provides a node factory and a keyed patch function. Its resp
 
 The Data class extends Ctrl and ties these pieces together. Its responsibility is to own a standalone ViewState as its state, to resolve the services it needs, to expose a dispatch method for intents, to provide setState and a state accessor, and to run lifecycle hooks named onMount, onUpdate and onUnmount. Controls with view logic, local state or remote data access extend Data, while Ctrl remains the base of a control that keeps its state imperatively and reaches the network through the service layer only.
 
-### 3.2 C# artifacts
+### C# artifacts
 
 The introduction to this part is that the C# artifacts exist so that an author declares the entire client behavior in typed C# and never writes JavaScript. They render their declarations into hidden island elements at the start of the host element that the JavaScript engine consumes.
 
@@ -146,7 +121,7 @@ The DataState C# type provides a fluent way (Create and Set, plus typed helpers 
 
 The IDataIsland C# interface, together with the DataIslandExtensions.EmitDataIslands extension, lets a control emit the state island and the service islands beside its existing marker class, optional template identifier, actions and binds. A control opts in by implementing IDataIsland, namely its StateFactory, ServiceFactories and TemplateFactory members, and calling EmitDataIslands during render, so it gains the new capabilities without losing its current surface or changing its base class, which keeps WebExpress.WebUI untouched. The IControlView abstraction and an optional server-rendered template element let a view be authored in C# with the existing HtmlElement builders and reused on the client through the Templates registry. Stable identifiers derived from the control id let actions and binds target a specific ViewState or service, so the markup contract is generated by C# rather than written by hand.
 
-### 3.3 Route parameters in service base addresses
+### Route parameters in service base addresses
 
 A service endpoint may be keyed by a route parameter, for example a table that lists the fields of one class behind `/api/1/fields/{classid}/table`. When the endpoint is resolved through the sitemap for a control on a page, the path variable of the route has no bound value yet, so the resolved base address carries the variable name as a `${classid}` placeholder rather than a concrete segment (a variable segment renders itself as `${VariableName}` when it has no value; see `UriPathSegmentVariable.ToString`). Emitting that placeholder verbatim would leave the client with an address it cannot resolve, so the table, quickfilter or search that binds such an endpoint would load nothing.
 
@@ -158,7 +133,7 @@ The expansion therefore depends on the page route and the service route sharing 
 
 The behavior can be reproduced with `WebExpress.Tutorial.WebUI`, which already ships the pieces of the page side of this shape. `WebUI/WebParamter/CharacterIdParameter.cs` declares a route parameter with `Key => "character"`, and `WebUI/WWW/Characters/Index.cs` is a page keyed by `[SegmentGuid<CharacterIdParameter>]`, so a request to `/characters/{guid}` binds the request parameter `character`. To exercise the service side, add a REST endpoint keyed by the same parameter, for example `WWW/Api/_1_/Characters/_character_/Table.cs` annotated with `[SegmentGuid<CharacterIdParameter>]`, and render a `new ControlDataTable("characters").DataService<Characters._character_.Table>()` on the character page. Before the fix the page emits `<wx-service base-uri="/.../api/1/characters/${character}/table">` and the table stays empty; with the fix the island carries `/.../api/1/characters/<guid>/table` and the table loads. A service whose endpoint route has no path variable, such as the existing character list, is unaffected because its base address never contains a placeholder.
 
-## 4. Lifecycle Concept
+## Lifecycle Concept
 
 The lifecycle definition below explains when controls, ViewStates and services are created and destroyed, because a reactive model is only safe when teardown is deterministic. The lifecycle extends the existing controller behavior rather than replacing it.
 
@@ -166,7 +141,7 @@ The controller continues to own instantiation through the MutationObserver. When
 
 Teardown is made deterministic by a small addition to the controller. The MutationObserver already reports removed nodes, and the controller calls destroy on the control of a removed element and then drops it from the instance map. The destroy of a Data control runs onUnmount, unsubscribes from the ViewState it observes and aborts in-flight service requests. Shared state lives in ViewStates whose lifetime is the lifetime of their host element: when the ViewState host is removed, the ViewState unsubscribes its listeners, aborts its services and unregisters itself, so no reference counting is needed. This model prevents the leaks that ad hoc event listeners can cause today and gives every subscription a clear owner.
 
-## 5. Data Flow
+## Data Flow
 
 The following data-flow description presents the single direction in which data moves and renders it as a diagram, so that the loop is unambiguous. The diagram reads from the C# render at the top to the re-render at the bottom, and the loop closes when a user interaction produces a new intent.
 
@@ -206,7 +181,7 @@ The following data-flow description presents the single direction in which data 
 
 The reading of this diagram is that the only writers of the ViewState are intents, and the only reader that produces DOM is the view. Actions and binds never touch the DOM of a control directly and never call a service directly. They translate a user gesture into an intent. This keeps the flow testable, because a test can dispatch an intent and assert the resulting state, and it can render a state and assert the resulting DOM, without involving the network.
 
-## 6. Dynamic State Updates and Re-Rendering
+## Dynamic State Updates and Re-Rendering
 
 The rules below define how state changes and how the view reacts, because predictable updates are the core promise of the architecture. The rules favor batching, purity and the preservation of nested controls.
 
@@ -214,7 +189,7 @@ A patch is a shallow merge into the current state. Deep changes flow through exp
 
 Selection and memoization keep renders cheap. A subscriber selects the slice of state it depends on, and the ViewState compares the selected slice with shallow equality before it notifies, so an unrelated change does not trigger a render. Derived values are computed in pure selector functions rather than stored, which avoids stale duplicates. Concurrency is handled in the service through an abort controller per channel, where a new query aborts the request that is in flight on the same channel, and in the ViewState through a load ticket per resource and the loading flag of the slice, which let a stale response be ignored. For controls that use imperative DOM updates, a patch calls the update method, which reads the state and patches the DOM imperatively while still following the same state contract.
 
-## 7. Bindings and Actions in the State Concept
+## Bindings and Actions in the State Concept
 
 The following explanation shows how the existing declarative bindings and imperative actions are folded into the unidirectional loop, because preserving this surface is what keeps applications authored in C#. The markup contract stays the same, and only the implementation behind it changes.
 
@@ -222,7 +197,7 @@ Bindings become state-oriented. The current binds, which are search, paging, fil
 
 Actions become intent dispatchers. The Actions registry stays, and the imperative actions such as modal, frame, split and fullscreen remain available because they are genuine commands. A new dispatch action sends a named intent with a payload to the ViewState of a target control. An action may both run an imperative command and dispatch an intent, which lets command-oriented behavior coexist with the unidirectional state flow. Intents are registered with an optional reducer and an optional effect, so that a gesture either changes state directly or triggers a service and then changes state with the result; a reducer that throws ends the dispatch, so no effect writes on behalf of a transition that did not happen. The net effect is that data-wx-bind and data-wx-primary-action remain the public surface authored in C#, while underneath both feed the same loop.
 
-## 8. C# Side Control of State and Services
+## C# Side Control of State and Services
 
 The C# control model described here shows how an author controls the entire client behavior from C#, because the central constraint of the concept is that applications stay in C#. The author declares state, services, bindings and actions on typed controls, and the framework generates the markup contract.
 
@@ -230,7 +205,7 @@ State initialization is declared with a builder on the control. The author sets 
 
 Service definition is declared with a descriptor on the control. The author names a service, resolves its endpoint through the sitemap manager so that routing stays in C#, sets the method, maps the logical parameters to the wire parameter names and maps the response shape into state. The descriptor is rendered into a wx-service island element, and the JavaScript RestService consumes it without any hard-coded knowledge of endpoints or parameter names. Targeting is also declared in C#. Actions and binds reference services and ViewStates by stable identifiers that the control derives from its id, and the control exposes typed methods that generate the corresponding data attributes, so the markup is never hand-written. The result is that an author reads and writes only C#, while the client gains a fully configured ViewState and service set.
 
-## 9. Service Concept in Control Families
+## Service Concept in Control Families
 
 The following service view describes how the concept manifests in the established control families of WebExpress.WebApp. It exists to make the architecture concrete across lists, tables, forms, wizard flows, tabs and other controls that already rely on remote data.
 
@@ -240,7 +215,7 @@ The default RestService realizes the common REST interaction model of WebExpress
 
 Service descriptors remain the source of truth for endpoint knowledge. The descriptor carries the route resolved through the sitemap, the HTTP method, the parameter mapping, the response mapping and the policies for headers, retry and cancellation. The JavaScript layer consumes that descriptor and performs the call, but it does not define routes or parameter conventions on its own. This keeps transport concerns declarative and keeps routing authoritative in C#.
 
-## 10. Error Handling
+## Error Handling
 
 The error model defined here is single and predictable, because consistent failures are part of a good user interface and part of a testable system. Errors are normalized in the service, surfaced through state and presented by the view.
 
@@ -248,7 +223,7 @@ Every service operation normalizes a failure into a result that reports the kind
 
 The global error channel (`ErrorChannel`) reports every non-abort failure of a service through the `webexpress.webapp.service.error` event and, when its `toast` flag is set, through a popup that reuses the existing popup notification component, so that an unexpected failure is visible without crashing a control. A control that has to say what a failure meant for what is on screen calls `ErrorChannel.present` with words of its own: a table or a kanban board applies a layout or card change the moment it is made and, when the server refuses it, loads the stored state back over the screen and presents the refusal, because a card that snaps back with no word about why reads as a bug. The C# service descriptor can declare a mapping from status codes to message keys, so that the messages stay server-authored and localizable through the existing internationalization layer. The WebUI controls that talk to a server take the same path: their `Transport` is the service layer on a WebApp page, and they get the same result shape and report on the same channel. The outcome is that a failure has exactly one path, from the service to the state to the view, and that path is the same for every control.
 
-## 11. Reusability and Naming Conventions
+## Reusability and Naming Conventions
 
 The naming and module conventions below fix the vocabulary and shapes, because a uniform terminology is what makes the architecture extensible and approachable. The conventions extend the patterns that already exist rather than inventing new ones.
 
@@ -256,7 +231,7 @@ A control module stays cohesive, and the three internal roles of state, view and
 
 The registries for ViewStates, services, intents, templates, actions and binds all follow the same register, get and unregister shape that the Actions and Binds registries already expose, so a plugin author learns one pattern and applies it everywhere. Reuse is encouraged through shared services for endpoints that several controls consume, through ViewStates for state that several controls observe, and through registered templates for views that repeat across controls. The naming table in the appendix records the full vocabulary so that reviews can check a change against a single reference.
 
-## 12. Build Pipeline
+## Build Pipeline
 
 The build pipeline described here explains how the modules reach the page, because the load order is significant in a world without a mandatory bundler. The pipeline reuses the embedded resource and Asset attribute mechanism that the framework already relies on.
 
@@ -264,11 +239,11 @@ The JavaScript modules are embedded resources, and they are registered through A
 
 The architecture does not require a bundler. Each module may stay a separate include. Where deployment scenarios benefit from concatenation or minification, that optimization can be added without changing the architectural contract, because the source of truth for ordering remains the Asset declarations. A formatting and linting gate for the JavaScript core and a small unit harness are recommended so that the engine is protected by automated checks.
 
-## 13. Example Modules
+## Example
 
 The following examples ground the concept in four concrete modules, because a pattern is only convincing when it is shown on real controls. The four modules are a list, a form, a wizard and the REST tab control, and each is presented through its state shape, its services and its intents, with a short C# authoring sketch and the resulting client behavior. The code is illustrative and favors clarity over completeness.
 
-### 13.1 List
+### List
 
 The introduction to this example is that the list exercises search, filter, paging and selection in one place. The state shape holds the search term, the structured query, the filter, the page, the page size, the items, the total, a loading flag and an error value. A data service of the RestService kind performs the query. The search, paging and filter binds dispatch the intents named list search, list page and list filter, each of which sets the relevant state and triggers a load.
 
@@ -301,25 +276,25 @@ new ControlDataList("orders")
 
 The client behavior is that the control seeds its ViewState from the state island, renders placeholders, and loads through the data service on mount. A keystroke in a bound search box dispatches list search, which resets the page to zero and triggers a load through the same service. The data arrived event is still dispatched, so any existing listener continues to work.
 
-### 13.2 Form
+### Form
 
 The introduction to this example is that a form needs a model, validation errors and a submitting flag, which maps cleanly onto state. A form service loads the initial model and submits it. Inputs use the model bind for two-way binding, and a submit action dispatches a form submit intent whose effect calls the service and reduces validation errors into state.
 
 The state shape holds the model object, a map of field errors, a submitting flag and a general error value. The submit intent sets submitting to true, calls the service, and on a validation failure reduces the field errors into state so that the view renders them next to the inputs, which reuses the presentation that the modal form already provides. On success the intent clears the errors and dispatches a follow-up intent that closes the host modal when the form lives inside one. The author declares the endpoints and the field mapping in C#, so the client form carries no endpoint knowledge.
 
-### 13.3 Wizard Steps
+### Wizard Steps
 
 The introduction to this example is that a wizard is a small state machine, which the ViewState expresses naturally and which becomes resumable once the state is explicit. The state shape holds the current step index, a per-step model, a map of completed flags and a loading flag. Navigation actions named next, previous and go to are intents with guard reducers that refuse to advance past an invalid step. A wizard service persists the data of a step and loads the next step when the steps are server-driven.
 
 The view renders only the active step from state, which keeps the DOM small and the transitions predictable. Because the progress lives in state, a wizard can be serialized and restored, which enables a resume feature without any change to the view. The author declares the steps, the validation and the persistence endpoints in C#, and the client engine runs the machine.
 
-### 13.4 REST Tab Control
+### REST Tab Control
 
 The introduction to this example is that the tab control demonstrates optimistic updates and rollback, which are where a reactive ViewState pays off most clearly. The state shape holds the tabs, the active tab id, the available templates and a loading flag. A tab service loads the tabs, creates a tab with a create operation, reorders tabs with an update operation and closes a tab with a remove operation. Add and close are intents, and a drag reorder updates the state optimistically, then calls the service, and rolls back to the previous order when the service reports an error.
 
 The client behavior is that a reorder feels immediate because the view renders the new order from the optimistic state before the network confirms it, and a failure restores the previous order from the state snapshot that the intent kept. The tab added and tab closed events are still dispatched, so existing integrations continue to work. The author declares the tab endpoints and the templates in C#, and the optimistic policy lives in the intent rather than in the view.
 
-## 14. Architectural Qualities, Constraints and Verification
+## Architectural Qualities, Constraints and Verification
 
 The following quality and verification view records the architectural qualities that the concept must satisfy, the design constraints that shape it and the ways in which conformity can be verified. It exists so that the concept can be judged as an architecture rather than as a sequence of implementation steps.
 
@@ -329,17 +304,17 @@ The main design constraints are the preservation of nested controls and focus ac
 
 Verification follows four layers. C# unit tests assert that the rendered control emits the correct state and service islands, in the same style as the existing control render tests. JavaScript unit tests cover the ViewState, the service, the renderer and the intents through a small headless harness (see 0.1). Integration tests assert that network calls and DOM outcomes follow the declared state and service contracts. Manual and visual verification runs on the tutorial pages, which already demonstrate the controls. The architecture is conformant when controls with state and services author those concerns in C#, route side effects through services, route state changes through intents and preserve the documented data attribute and registry contracts.
 
-## 15. Architectural Summary
+## Architectural Summary
 
 The following summary condenses the concept into a short operational reference for implementation and review.
 
 A WebExpress control is a state-driven client artifact generated from C#. Its state is seeded through the wx-state island element, its services are declared through wx-service island elements, its interactions enter through binds and actions, its mutations happen through intents, and its DOM is produced by the view from the current state. The service is the only place for network access, the reducer is the only place for pure state transitions and the view is the only place that produces component DOM. Shared registries provide discovery and reuse, lifecycle hooks provide deterministic setup and teardown, the public authoring surface remains the typed C# control model, and the WebUI controls reach the same network layer through their transport.
 
-## 16. Appendix
+## Appendix
 
 The appendix below collects the reference tables that support reviews, because a single place for the vocabulary and the contract reduces ambiguity. The tables are intended to be extended as the architecture evolves.
 
-### 16.1 Island and data attribute contract
+### Island and data attribute contract
 
 The introduction to this table is that it lists the island elements and the data attributes that the C# layer emits and the JavaScript engine consumes. The island elements are hidden first children of the host and are consumed on the first read.
 
@@ -348,14 +323,14 @@ The introduction to this table is that it lists the island elements and the data
 |wx-state element       |IDataIsland      |ViewState        |Seeds the initial ViewState state through typed wx-prop children.
 |wx-service element     |IDataIsland      |ServiceRegistry  |Declares a named service descriptor, with the mappings as wx-query, wx-response, wx-header and wx-error children and the served domains as the domains attribute.
 |wx-resource element    |IViewState       |ViewState        |Declares a named central resource, with the bidirectional parameter bindings as wx-param children (name, state, dir).
-|data-wx-viewstate          |ControlViewState |ViewState        |Identifies a ViewState host, so a control resolves its ViewState by id or by ancestry.
+|data-wx-viewstate      |ControlViewState |ViewState        |Identifies a ViewState host, so a control resolves its ViewState by id or by ancestry.
 |data-wx-template       |IDataIsland      |Templates        |References a registered or server rendered view template.
 |data-wx-model          |Control authors  |model bind       |Two way binding between an input and a state path; the ViewState written is the enclosing one when the element also binds a resource, so a writing surface writes into the shared state.
 |data-wx-model-query    |IViewStateModelBound|model bind, writing surfaces|Names the resource a write re-queries, so a search, filter or form write routes through the viewstate/query intent and re-loads the resource; absent for a plain state write.
 |data-wx-bind           |Control authors  |Binds            |Existing declarative bindings, now state oriented.
 |data-wx-primary-action |Control authors  |Actions, Intents |Existing primary action, may dispatch an intent.
 
-### 16.2 Registry shapes
+### Registry shapes
 
 The introduction to this table is that every registry shares the same shape, so that one mental model covers all of them. The shape is a register method, a get method and an unregister method, with a stable key.
 
@@ -368,28 +343,6 @@ The introduction to this table is that every registry shares the same shape, so 
 |ViewStateRegistry |ViewState id |The ViewState, indexed by its ViewState id and by the resources it declares, resolved by id, by the nearest ancestor declaring the resource, or by the resource index.
 |Templates |template id  |A render function that returns a DOM node or a node tree.
 
-### 16.3 Naming vocabulary
-
-The introduction to this table is that it fixes the names used across the codebase, so that reviews can check a change against a single reference. The vocabulary extends the existing conventions.
-
-|Concept        |Convention                  |Example
-|---------------|----------------------------|------------------------------
-|Control class  |name ends in Ctrl           |webexpress.webapp.ListCtrl
-|Data base      |the base class Data         |webexpress.webapp.Data
-|ViewState host     |the ViewState container     |webexpress.webapp.ViewState
-|ViewState id       |the data-wx-viewstate id        |orders, checkout
-|Service role   |a short noun                |data, form, tab
-|Resource name  |a short noun                |orders, summary
-|Resource target|the reduced state slice     |state.orders = { items, total, data, loading, error }, read through viewState.slice("orders")
-|Param direction|the binding direction       |out, in, inout
-|ViewState intent   |the central re-query        |viewstate/query, viewstate/reload
-|Intent name    |domain and verb             |list search, tab add
-|Data island    |wx element prefix           |wx-state, wx-service, wx-resource
-|Domain name    |lower case full type name   |myapp.model.order
-|Change message |the outbound data change    |webexpress.webapp.data.changed
-|Subscribe message|the inbound subscription  |webexpress.webapp.data.subscribe
-|Change flash   |the wx-data-changed class   |played on re-queried controls
-
 ---
 
-**Last updated**: 2026-10-20
+**Last updated**: 2026-10-26
