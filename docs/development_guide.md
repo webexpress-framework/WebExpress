@@ -9,6 +9,8 @@
 The software is freely available as open source (MIT). The software sources can be obtained from https://github.com/webexpress-framework/WebExpress. **WebExpress** is based on components that are available as open source:
 
 - https://github.com/dotnet/core (MIT)
+- [Microsoft.IdentityModel.JsonWebTokens](https://www.nuget.org/packages/Microsoft.IdentityModel.JsonWebTokens/) ([MIT](../licenses/Microsoft.IdentityModel.JsonWebTokens.lic))
+- [Microsoft.IdentityModel.Protocols.OpenIdConnect](https://www.nuget.org/packages/Microsoft.IdentityModel.Protocols.OpenIdConnect/) ([MIT](../licenses/Microsoft.IdentityModel.Protocols.OpenIdConnect.lic))
 
 ```
 The MIT License (MIT)
