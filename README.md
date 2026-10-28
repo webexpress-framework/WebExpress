@@ -22,6 +22,7 @@ The WebExpress family includes the following projects:
 - https://github.com/dotnet/core (MIT)
 - [Microsoft.IdentityModel.JsonWebTokens](https://www.nuget.org/packages/Microsoft.IdentityModel.JsonWebTokens/) ([MIT](licenses/Microsoft.IdentityModel.JsonWebTokens.lic))
 - [Microsoft.IdentityModel.Protocols.OpenIdConnect](https://www.nuget.org/packages/Microsoft.IdentityModel.Protocols.OpenIdConnect/) ([MIT](licenses/Microsoft.IdentityModel.Protocols.OpenIdConnect.lic))
+- [flag-icons](https://github.com/lipis/flag-icons)([MIT](https://github.com/lipis/flag-icons/blob/main/LICENSE))
 
 # Download 
 The current binaries are available for download [here](https://github.com/webexpress-framework/WebExpress/releases).
