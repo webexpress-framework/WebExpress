@@ -5,10 +5,10 @@ WebExpress is a lightweight web server that has been optimized for use in low-pe
 small systems, such as the Raspberry Pi, web applications can be operated efficiently. This is achieved through a 
 small footprint with a low resource burden. Furthermore, WebExpress has a powerful and optimized plugin system, with a 
 comprehensive API and application templates. This allows web applications to be easily and quickly integrated into a .NET language 
-(e.g. C#). WebExpress is based on Kestrel, a cross-platform web server for ASP.NET core. With this, WebExpress also supports:
+(e.g. C#). WebExpress is based on Kestrel, a cross-platform web server for ASP.NET Core. With this, WebExpress also supports:
 
-- https
-- HTTP/2 (currently not macOS)
+- HTTPS
+- HTTP/2 and, where the operating system provides QUIC, HTTP/3 (see [Choosing HTTP protocol versions](config.md#choosing-http-protocol-versions--protocols))
 
 # License
 The software is freely available as open source (MIT). The software sources can be obtained 
@@ -44,164 +44,173 @@ SOFTWARE.
 ```
 
 # Installation
-The installation is described using the Raspberry Pi. However, the general procedure can also be applied to 
-other operating systems.
+The installation is described using the Raspberry Pi with Raspberry Pi OS. The general procedure can also be applied to 
+other Linux distributions; only the operating system steps differ.
 
 ## Installing the operating system
-The first step is to write the operating system to an SD card. For this purpose, there is https://downloads.raspberrypi.org/imager/imager.exe 
-a free program (Windows), with the help of which the image is copied to the SD card.
+The first step is to write the operating system to an SD card. The free Raspberry Pi Imager (Windows, macOS and Linux) 
+from https://www.raspberrypi.com/software/ copies the image to the SD card. Choose **Raspberry Pi OS Lite (64-bit)**; 
+a server needs no desktop.
 
 ![imager](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/imager.png)
 
-## Setting up the operating system
+Before writing, open the OS customisation settings of the Imager and
 
-In the second step, the SD card is inserted into the Raspberry Pi and the Raspberry Pi is started. Since SSH is not 
-yet active, a keyboard and a monitor must be connected. When the Raspberry Pi has been booted, logging in can be done 
-with the following data:
+- set the host name – the remainder of this guide uses ```wx```,
+- create a user account with a password of your own – the examples use the user ```pi```; there is no default user any more,
+- configure the Wi-Fi, if the Raspberry Pi is not connected by cable,
+- set the time zone and keyboard layout,
+- enable SSH.
+
+With these settings, the Raspberry Pi needs neither a keyboard nor a monitor.
+
+## Connecting to the Raspberry Pi
+Insert the SD card and start the Raspberry Pi. After the first boot, which takes a little longer, a connection can be 
+established with an SSH client (e.g. OpenSSH, which is part of Windows, macOS and Linux, or PuTTY). Raspberry Pi OS 
+ships the mDNS service Avahi, so the Raspberry Pi answers under its host name followed by ```.local```:
 
 ```
-User: pi 
-Password: raspberry
+ssh pi@wx.local
 ```
-
-After successful login, the ```raspi-config``` utility is called, with the help of which the basic configuration of the 
-Raspberry Pi is carried out.
-
-```
-pi@raspberrypi:~ $ sudo raspi-config
-```
-
-It is recommended to change the password, as well as to set up the Wi-Fi, change the time zone and the host name if necessary. In the 
-remainder of the application guide, the host name ```wx``` is used. In addition, SSH must be activated (to be found under Interface Options).
-
-![raspiconfig](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/raspiconfig.png)
-
-All subsequent steps can now be done via SSH and the Raspberry Pi can be disconnected from the keyboard and screen.
-
-## Installing the .NET SDK
-After SSH has been activated, a connection to the Raspberry Pi can be established with the help of an SSH client (e.g. Putty, OpenSSH).
 
 ![piconnect](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/piconnect.png)
 
-First, the .NET SDK must be installed (it includes the .NET Runtime and the ASP.NET Core Runtime). Help for this is offered under [1]. The current versions 
-can be obtained free of charge from Microsoft at https://dotnet.microsoft.com/download/dotnet-core.
+All further settings of the operating system can be changed later with ```sudo raspi-config```. On other distributions, 
+mDNS is installed with ```sudo apt install avahi-daemon -y```.
 
-![downloadnet1](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/downloadnet1.png)
+## Set static IP
+It is recommended to give the Raspberry Pi a fixed IP address, either as a DHCP reservation in the router or on the 
+Raspberry Pi itself. Raspberry Pi OS manages the network with NetworkManager; the name of the connection is shown by the 
+first command (see [2]):
 
-For the Raspberry Pi, the binaries for Linux-Arm32 are to be used. The direct link to the Linux-Arm32 binaries must be copied.
-
-![downloadnet2](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/downloadnet2.png)
-
-The Linux Arm32 archive for the .NET SDK is downloaded to the Raspberry using wget.
-
-``` bash
-pi@wx:~ $ wget https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.100/dotnet-sdk-10.0.100-linux-arm.tar.gz 
+```bash
+pi@wx:~ $ nmcli connection show
+pi@wx:~ $ sudo nmcli connection modify "<connection name>" ipv4.method manual ipv4.addresses 192.168.1.50/24 ipv4.gateway 192.168.1.1 ipv4.dns 192.168.1.1
+pi@wx:~ $ sudo nmcli connection up "<connection name>"
 ```
 
-In preparation for the installation of .NET, a directory must be created at ```/usr/share/dotnet-sdk``` by then unpacking the .NET archive.
+Replace the addresses with those of your network.
 
-``` bash
-pi@wx:~ $ sudo mkdir /usr/share/dotnet-sdk 
+## Installing .NET
+WebExpress needs the ASP.NET Core Runtime 10 (it includes the .NET Runtime); the SDK is only needed to build plugins. 
+Microsoft's install script selects the right build for the processor - `linux-arm64` on a 64-bit system - and installs it 
+into a directory shared by all users (see [1]):
+
+```bash
+pi@wx:~ $ wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+pi@wx:~ $ chmod +x dotnet-install.sh
+pi@wx:~ $ sudo ./dotnet-install.sh --channel 10.0 --runtime aspnetcore --install-dir /usr/share/dotnet
+pi@wx:~ $ sudo ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet
 ```
 
-After creating the directory ```/usr/share/dotnet-sdk```, the binaries can be unpacked.
+The last command makes ```dotnet``` available on the search path. The installation can be checked with:
 
-``` bash
-pi@wx:~ $ sudo tar zxf dotnet-sdk-10.0.100-linux-arm.tar.gz -C /usr/share/dotnet-sdk/
+```bash
+pi@wx:~ $ dotnet --list-runtimes
 ```
 
 ## Installing utilities
-In the following step, further (service) programs are installed, which are helpful for the execution of WebExpress or for the administration 
-of the Raspberry Pi.
+In the following step, further programs are installed: ```unzip``` is needed to unpack WebExpress, and the Midnight 
+Commander (MC) is an optional help for the administration of the Raspberry Pi:
 
-As an optional application, the Midnight Commander (MC) can be installed and the profile can be customized.
-
-```
-pi@wx:~ $ sudo apt-get install mc -y
+```bash
+pi@wx:~ $ sudo apt install mc unzip -y
 ```
 
 If necessary, the profile can be extended by ```alias ll='ls -l'```.
 
 ![profile](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/profile.png)
 
-## Set static IP
-It is recommended to configure a static IP address for the Raspberry under ```/etc/dhcpcd.conf``` (see [2]).
-
-![dhcpcd](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/dhcpcd.png)
-
-## Multicast Domain Name Service (mDNS)
-For example, Avahi can be used as mDNS. Avahi is an open-source mDNS implementation. At the command prompt, type the following command to install Avahi:
-
-```
-pi@wx:~ $ sudo apt install avahi-daemon -y
-```
-
-Once the installation process is complete, local network queries are accepted and answered at ```wx.local```.
-
 ## Installing WebExpress
-WebExpress is provided in packaged form for the Raspberry Pi in the GitHub repository https://github.com/webexpress-framework/WebExpress/releases 
-free of charge.
+WebExpress is provided free of charge on the release page of the GitHub repository 
+https://github.com/webexpress-framework/WebExpress/releases. The release archive ```WebExpress.<version>.zip``` runs on 
+every platform with .NET, so the same archive serves Windows, Linux and the Raspberry Pi. Copy the link of the archive 
+from the release page and download it:
 
 ![downloadwebexpress](https://raw.githubusercontent.com/webexpress-framework/WebExpress/main/assets/ig/downloadwebexpress.png)
 
-The binaries of WebExpress can be obtained from GitHub via wget.
-
-``` bash
-pi@wx:~ $ wget https://github.com/webexpress-framework/WebExpress/releases/download/2.0.0-alpha/WebExpress_2.0.0-alpha_LinuxArm32.zip
+```bash
+pi@wx:~ $ wget -O webexpress.zip "<link to the WebExpress zip archive of the release>"
 ```
 
-In preparation for the installation of WebExpress, a directory must be created under ```/opt/wx``` by unpacking the binaries.
+WebExpress runs under an account of its own, which owns the installation directory ```/opt/wx```:
 
-``` bash
-pi@wx:~ $ sudo mkdir /opt/wx 
+```bash
+pi@wx:~ $ sudo useradd --system --home-dir /opt/wx --shell /usr/sbin/nologin webexpress
+pi@wx:~ $ sudo mkdir -p /opt/wx
+pi@wx:~ $ sudo unzip webexpress.zip -d /opt/wx
+pi@wx:~ $ sudo chown -R webexpress:webexpress /opt/wx
 ```
 
-The archive must then be unpacked.
+The program and its ```settings``` directory are now in ```/opt/wx/bin```. To start WebExpress automatically, create a 
+systemd unit with ```sudo nano /etc/systemd/system/webexpress.service```:
 
-``` bash
-pi@wx:~ $ sudo unzip WebExpress_2.0.0-alpha_LinuxArm32.zip -d /opt/wx 
+```ini
+[Unit]
+Description=WebExpress
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=webexpress
+WorkingDirectory=/opt/wx/bin
+ExecStart=/usr/local/bin/dotnet /opt/wx/bin/WebExpress.dll
+Environment=DOTNET_ROOT=/usr/share/dotnet
+EnvironmentFile=-/etc/webexpress.env
+# allows the ports 80 and 443 without running as root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+# must exceed ShutdownDelaySeconds + ShutdownTimeoutSeconds (see the configuration guide)
+TimeoutStopSec=45
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-After WebExpress has been successfully unpacked, the execution rights must be granted.
+Secrets such as the signing key are kept out of the settings file in ```/etc/webexpress.env```, which only root can read:
 
-``` bash
-pi@wx:~ $ sudo chmod +x /opt/wx/webexpress.sh /opt/wx/WebExpress.App
+```bash
+pi@wx:~ $ sudo touch /etc/webexpress.env
+pi@wx:~ $ sudo chmod 600 /etc/webexpress.env
 ```
 
-To start the WebExpress application automatically, the supplied SystemCtl unit must be installed.
+Finally, the unit is activated:
 
-``` bash
-pi@wx:~ $ sudo cp /opt/wx/webexpress.service /etc/systemd/system
-```
-
-Finally, the SystemCtl unit must be activated.
-
-``` bash
+```bash
+pi@wx:~ $ sudo systemctl daemon-reload
 pi@wx:~ $ sudo systemctl enable webexpress.service
 ```
 
 # Setting up WebExpress
-Before WebExpress can be started, it must be configured. Furthermore, the desired web applications must be installed. 
+Before WebExpress is started for the first time, it must be configured. Furthermore, the desired web applications must be installed. 
 
 ## Basic configuration
 
-For environment separation, use **HTTP for local development** and **HTTPS for production**. The shipped settings remain HTTP only. Development requires no PFX file, local certificate authority, trusted development certificate or HTTPS redirect. Configure production certificates only in deployment settings.
+The settings file ```/opt/wx/bin/settings/webexpress.settings.json``` stores the general settings of WebExpress. It is a JSON file; every setting of the server sits under the name `WebExpress`. All other `.json` files in the `settings` directory are read as well – that is where the installed plugins keep their own settings, each under `Plugins` in a section of its own. The [configuration guide](config.md) describes every setting; relative paths are resolved against the working directory ```/opt/wx/bin```. Three settings need attention on every installation:
 
-The settings file ```/opt/wx/settings/webexpress.settings.json``` stores the general settings of WebExpress. It is a JSON file; every setting of the server sits under the name `WebExpress`. All other `.json` files in the `settings` directory are read as well – that is where the installed plugins keep their own settings, each under `Plugins` in a section of its own. See the [configuration guide](config.md) for every setting.
+1. **Where to listen.** The shipped endpoint `http://localhost/` is only reachable from the Raspberry Pi itself. Change it to `http://*:80/` (or another port) so that other computers can reach the server.
+2. **Signing in.** The shipped `Authentication` block is meant for local development: its signing key is public and `RequireHttps` is `false`. Create a key of your own, set `Issuer` and `Audience` to values of your installation, and set `RequireHttps` to `true` as soon as HTTPS is configured (see [Signing in](config.md#signing-in--authentication)). Put the key into the environment file rather than the settings file:
+
+   ```bash
+   pi@wx:~ $ echo "WEBEXPRESS_WebExpress__Authentication__SigningKey=$(openssl rand -base64 32)" | sudo tee -a /etc/webexpress.env > /dev/null
+   ```
+
+3. **Language.** `Culture` sets the language and the formats of dates and numbers, e.g. `de-DE`.
 
 |Property         |Description                                                                                            |Example
 |-----------------|-------------------------------------------------------------------------------------------------------|---
-|Endpoints        |Defines listeners. Development uses HTTP. Production HTTPS resolves a certificate.                     |`"Endpoints": [{ "Uri": "http://localhost:8080/" }]`
-|Certificates     |Configures the PFX base directory, shared certificate inventory and expiry warning thresholds in days. |`"Certificates": { "Directory": "./ssl", "WarningThresholdDays": [30, 14, 7] }`
-|Kestrel          |Configures the underlying Kestrel server and all request limits. MaxConcurrentConnections: Number of concurrently active connections. MaxRequestBodySize: The maximum number of bytes that may be transferred to the web server in the body. |```"Kestrel": { "MaxConcurrentConnections": 300, "MaxRequestBodySize": 30000000 }```
-|Culture          |Specifies the language, calendar used, and formatting for dates and numbers for expenses.              |```"Culture": "de-DE"```
-|Assets directory |Contains static files that are to be served by the web server.                                         |```"AssetPath": "./"```
-|Context path     |The context path is the prefix path of a Uri (e.g. http://localhost/contextpath/pathToResource).       |```"ContextPath": "wx"```
-|Plugin directory |Directory where the plugins are executed.                                                              |```"PackagePath": "./"```
+|Endpoints        |Defines listeners. Development uses HTTP. Production HTTPS resolves a certificate.                     |`"Endpoints": [{ "Uri": "http://*:80/" }]`
+|Authentication   |Defines who signs the sign-in tokens, with which key, and how long they stay valid.                    |`"Authentication": { "Issuer": "http://wx.local", "Audience": "wx", "RequireHttps": false }`
+|Certificates     |Configures the PFX base directory, shared certificate inventory and expiry warning thresholds in days. |`"Certificates": { "Directory": "/opt/wx/ssl", "WarningThresholdDays": [30, 14, 7] }`
+|Kestrel          |Configures the underlying Kestrel server and its request limits, e.g. the number of concurrently active connections and the largest request body in bytes. |```"Kestrel": { "MaxConcurrentConnections": 300, "MaxRequestBodySize": 30000000 }```
+|Culture          |Specifies the language, the calendar and the formatting of dates and numbers for the output.          |```"Culture": "de-DE"```
+|AssetPath        |Contains static files that are to be served by the web server.                                         |```"AssetPath": "./assets"```
+|ContextPath      |The context path is the prefix path of a Uri (e.g. http://localhost/contextpath/pathToResource).       |```"ContextPath": "wx"```
+|PackagePath      |Directory from which the plugin packages are installed and loaded.                                     |```"PackagePath": "./packages"```
 
 ## HTTP for development
 
-For local development, keep an HTTP endpoint in `settings/webexpress.settings.json`. No certificate configuration is necessary, and the certificate manager does not read any certificate files when no certificates are configured.
+For local development, keep an HTTP endpoint in `settings/webexpress.settings.json`. No certificate configuration is necessary, and the certificate manager does not read any certificate files when no certificates are configured. Development requires no PFX file, local certificate authority, trusted development certificate or HTTPS redirect.
 
 ```json
 {
@@ -215,7 +224,7 @@ For local development, keep an HTTP endpoint in `settings/webexpress.settings.js
 
 ## HTTPS for production
 
-For production deployment, obtain a certificate for the public hostname from your certificate authority or existing certificate management process. This release loads existing local PFX files. It does not request certificates through ACME, answer DNS or HTTP challenges, or renew certificates automatically.
+For production deployment, obtain a certificate for the public hostname from your certificate authority or existing certificate management process. This release loads existing local PFX files. It does not request certificates through ACME, answer DNS or HTTP challenges, or renew certificates automatically. The [configuration guide](config.md#production-certificates--certificates) describes every certificate setting and the selection rules.
 
 ### Prepare the certificate directory
 
@@ -224,6 +233,8 @@ For certificate storage, create a directory outside `AssetPath` and outside publ
 ```bash
 pi@wx:~ $ sudo mkdir -p /opt/wx/ssl
 pi@wx:~ $ sudo cp site.pfx /opt/wx/ssl/site.pfx
+pi@wx:~ $ sudo chown -R webexpress:webexpress /opt/wx/ssl
+pi@wx:~ $ sudo chmod 600 /opt/wx/ssl/site.pfx
 ```
 
 For PFX creation from an existing issued PEM certificate, include the private key and intermediate certificates. The export command prompts for a password, avoiding a password in the shell command line. Replace the file names with your issued certificate material.
@@ -232,24 +243,22 @@ For PFX creation from an existing issued PEM certificate, include the private ke
 pi@wx:~ $ openssl pkcs12 -export -out site.pfx -inkey site.key -in site.crt -certfile intermediates.pem
 ```
 
-For certificate identity, the leaf certificate must include subject alternative names covering its configured DNS names or IP addresses. A common name alone is insufficient. The leaf must be within its validity period, have a private key, and allow TLS server authentication and digital signatures when the corresponding usage extensions are present. A CA certificate cannot be used as a server leaf.
+The leaf certificate must include subject alternative names covering its configured DNS names or IP addresses; a common name alone is insufficient. It must be within its validity period, have a private key, and allow TLS server authentication. A CA certificate cannot be used as a server leaf.
 
-### Configure production endpoints
+### Configure the production endpoint
 
-For a single HTTPS endpoint, the existing `PfxFile` and `Password` fields remain available. `CertificateAlias` optionally gives the certificate a stable name. Relative PFX paths are resolved against `Certificates.Directory`; this directory is relative to the process working directory unless it is absolute. If the directory setting is omitted, relative PFX paths retain their existing working directory semantics. Absolute PFX paths are also supported.
+For a single HTTPS endpoint, name the PFX file directly at the endpoint. Relative PFX paths are resolved against `Certificates.Directory`.
 
 ```json
 {
   "WebExpress": {
     "Certificates": {
-      "Directory": "/opt/wx/ssl",
-      "WarningThresholdDays": [30, 14, 7]
+      "Directory": "/opt/wx/ssl"
     },
     "Endpoints": [
       {
         "Uri": "https://*:443/",
         "PfxFile": "site.pfx",
-        "Password": "",
         "CertificateAlias": "public-site"
       }
     ]
@@ -257,93 +266,65 @@ For a single HTTPS endpoint, the existing `PfxFile` and `Password` fields remain
 }
 ```
 
-For password configuration, set `WEBEXPRESS_WebExpress__Endpoints__0__Password` in the service environment to the actual PFX password. The existing configuration loader applies environment variables after JSON settings. Passwords may also be specified directly in protected deployment settings. The empty string in this example is a placeholder, not an automatically generated password.
+Supply the PFX password through the environment file, never through the settings file:
 
-For several certificates, define a shared inventory under `Certificates.Items`. Each item has a unique `Alias`, a `Reference` interpreted as a PFX path by the default `file` store, an optional `Password`, and optional concrete `HostNames`. Endpoints select a certificate through `CertificateAlias` or, when the alias and inline PFX are omitted, through their hostname. No unconfigured files in the directory are imported.
-
-```json
-{
-  "WebExpress": {
-    "Certificates": {
-      "Directory": "/opt/wx/ssl",
-      "WarningThresholdDays": [30, 14, 7],
-      "Items": [
-        {
-          "Alias": "public-site",
-          "Reference": "site.pfx",
-          "Password": "",
-          "HostNames": ["site.example.com"]
-        },
-        {
-          "Alias": "admin-site",
-          "Reference": "admin.pfx",
-          "Password": "",
-          "HostNames": ["admin.example.com"]
-        }
-      ]
-    },
-    "Endpoints": [
-      { "Uri": "https://*:443/", "CertificateAlias": "public-site" },
-      { "Uri": "https://*:8443/", "CertificateAlias": "admin-site" }
-    ]
-  }
-}
+```bash
+pi@wx:~ $ echo "WEBEXPRESS_WebExpress__Endpoints__0__Password=<pfx password>" | sudo tee -a /etc/webexpress.env > /dev/null
 ```
 
-For passwords, use `WEBEXPRESS_WebExpress__Certificates__Items__0__Password` and `WEBEXPRESS_WebExpress__Certificates__Items__1__Password`. Alias and hostname lookup is case insensitive. Host mappings contain concrete names; a wildcard SAN in the certificate may cover a concrete name, but `*.example.com` is not itself a hostname mapping. Every lookup key must identify one certificate unambiguously.
+Several certificates are defined as a shared inventory under `Certificates.Items` and selected per endpoint through `CertificateAlias`; because this release assigns one fixed certificate to each listener, they need separate ports or IP addresses. The [configuration guide](config.md#production-certificates--certificates) shows the inventory format.
 
-For listener allocation, the example uses separate ports because this release assigns one fixed certificate to each listener. Distinct IP addresses can also separate listeners. Several hostnames on the same IP and port do not yet select certificates through SNI. A wildcard listener host `*` requires an explicit alias or an inline PFX definition because it does not identify a certificate hostname.
+### Checking the certificates
 
-### Startup validation and operation
+- If an HTTPS endpoint cannot resolve a usable certificate, WebExpress stops at startup before any listener opens, and the log names the reason.
+- A certificate within a warning threshold (by default 30, 14 and 7 days before expiry) is reported in the log at startup.
+- WebApp shows every configured certificate with its validity and status under **Settings > System > Certificates** for identities with the system access policy.
+- To replace a certificate, copy the new PFX file and restart WebExpress; changed files are not picked up while the server runs.
 
-During startup, `CertificateManager` loads every configured inventory and inline endpoint certificate, validates the leaf material and records its metadata. Applications and hosting components resolve certificates through this service instead of opening certificate files. Kestrel receives the managed leaf and supplied certificate chain. If any HTTPS endpoint cannot resolve usable material, startup fails before any HTTP or HTTPS listener opens. A failed inventory entry that is not used by a listener remains visible through status metadata and logs.
+### Client trust for private certificate authorities
 
-For expiry monitoring, `WarningThresholdDays` defaults to `[30, 14, 7]`. At startup, a certificate within a threshold produces a warning showing its alias, UTC expiry time and the nearest applicable threshold. An empty array disables expiry warnings, while negative thresholds are rejected. Expired, not yet valid, keyless or unsuitable certificates remain inspectable but cannot be resolved for HTTPS. Logs exclude certificate passwords and provider exception details that could contain credentials.
-
-For validation scope, this release checks the leaf validity period, private key presence, CA and usage restrictions, and subject alternative name coverage of configured hostnames. It does not establish client trust or perform online revocation checks. Deploy a complete and valid issuer chain and ensure clients trust the issuing authority. On Windows, the service account must be able to create temporary private key containers required by Schannel. Other platforms use ephemeral imports.
-
-For updates, replace the certificate through your deployment process and restart WebExpress. File watching, periodic warning checks, automatic listener certificate replacement and renewal are not implemented in this release. Metadata reads and manager resolutions recheck the current validity period. Certificate handles remain alive until their hosting consumers stop.
-
-For administrative diagnostics in WebApp, open **Settings > System > Certificates** with an identity carrying `WebExpress.WebCore.WebPolicies.SystemAccessPolicy`. The page shows aliases, configured hostnames, store names, subjects, issuers, thumbprints, UTC validity periods and current validation status through `ICertificateManager`. It includes summary counts and an empty state for HTTP development. Reload the page to refresh status. This first version provides an overview without editing configuration or exposing passwords, file references or private keys. Continue to use **HTTP for development** and **HTTPS only for production**.
-
-For future modules, the core exposes `ICertificateStore` and `ICertificateManager` as the integration boundaries. ACME acquisition, renewal scheduling, DNS or HTTP challenges, Azure Key Vault and other providers can be implemented separately. The application-facing manager API remains independent of those technologies. See [Certificate management](development_guide.md#certificate-management) for ownership and provider contracts.
+For production clients using a private certificate authority, install only that authority's public root certificate in the client's trusted root certificate store according to your organization's deployment policy. Do not distribute the server PFX or its private key to clients. Publicly trusted certificates normally require no manual client trust installation. Local development continues to use HTTP and does not require this step.
 
 ## Installing WebExpress applications
-WebExpress has a powerful plugin system. The plugins to be installed and, if applicable, dependencies are copied to the ```/opt/wx/packages``` 
-directory (see section Basic configuration). The plugin may need to be configured. For the installation and setup of the plugins, the 
-instructions of the plugins are to be used.
+WebExpress has a powerful plugin system. The plugin packages (```.wxp```) to be installed and, if applicable, their 
+dependencies are copied to the ```/opt/wx/bin/packages``` directory (`PackagePath`, see section Basic configuration); 
+WebExpress picks them up while it runs. A plugin may need to be configured – follow the instructions of the plugin.
 
 # Start WebExpress
 For the first start-up or after a change in the configuration, WebExpress must be restarted.
 
-``` bash
+```bash
 pi@wx:~ $ sudo systemctl restart webexpress
 ```
 
-WebExpress will start automatically after each restart of the Raspberry Pi.
-
-# Client trust for private production certificate authorities
-
-For production clients using a private certificate authority, install only that authority's public root certificate in the client's trusted root certificate store according to your organization's deployment policy. Do not distribute the server PFX or its private key to clients. Publicly trusted certificates normally require no manual client trust installation. Local development continues to use HTTP and does not require this step.
+The output of the server can be followed with ```journalctl -u webexpress -f```. WebExpress starts automatically after each restart of the Raspberry Pi.
 
 # Update
 To ensure security, the Raspberry Pi, its applications and WebExpress must be updated regularly.
 
-``` bash
-pi@wx:~ $ sudo raspi-config
-pi@wx:~ $ sudo apt-get update
-pi@wx:~ $ sudo apt-get upgrade
+```bash
+pi@wx:~ $ sudo apt update
+pi@wx:~ $ sudo apt full-upgrade
 ```
 
-The WebExpress binaries are also to be updated. For this purpose, the current binaries from https://github.com/webexpress-framework/WebExpress/releases must be used (see section Installing WebExpress).
+The .NET runtime is updated by running the install script from section Installing .NET again. The WebExpress binaries are updated from the current release on https://github.com/webexpress-framework/WebExpress/releases (see section Installing WebExpress). The archive contains a ```settings/webexpress.settings.json``` of its own, so keep a copy of your settings and put it back afterwards:
+
+```bash
+pi@wx:~ $ sudo systemctl stop webexpress
+pi@wx:~ $ sudo cp -a /opt/wx/bin/settings ~/wx-settings-backup
+pi@wx:~ $ sudo unzip -o webexpress.zip -d /opt/wx
+pi@wx:~ $ sudo cp -a ~/wx-settings-backup/. /opt/wx/bin/settings/
+pi@wx:~ $ sudo chown -R webexpress:webexpress /opt/wx
+pi@wx:~ $ sudo systemctl start webexpress
+```
 
 # Shopping list
 The following hardware is required:
-- A Raspberry Pi 4 Model B with 8GB
-- One plug-in power supply 5V/3A USB Type-C
-- A 16GB or 32GB MicroSD card
+- A Raspberry Pi 4 Model B or Raspberry Pi 5 with at least 4 GB
+- The matching official power supply (USB Type-C, 5V/3A for the Raspberry Pi 4, 5V/5A for the Raspberry Pi 5)
+- A MicroSD card with at least 32 GB
 - Optional housing
 
 # Sources
-- [1] https://dotnet.microsoft.com/download/linux-package-manager/debian10/runtime-current
-- [2] https://www.ionos.de/digitalguide/server/konfiguration/raspberry-pi-mit-fester-ip-adresse-versehen/#:~:text=Den%20Raspberry%20Pi%20mit%20einer%20festen%20IP-Adresse%20ausstatten.,Zeitraum%20mit%20anderen%20Ger%C3%A4ten%20auf%20ihn%20zugreifen%20will
+- [1] https://learn.microsoft.com/dotnet/core/install/linux-scripted-manual
+- [2] https://www.raspberrypi.com/documentation/computers/configuration.html

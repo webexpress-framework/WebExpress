@@ -18,13 +18,17 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 
 ## C
 
+**Certificate inventory** *(WebCore)*: The certificate inventory is the list of TLS certificates a server may use for HTTPS, configured under `Certificates` and loaded and checked by the `CertificateManager`. Each entry has an alias, the host names it covers and a reference to its file, and an HTTPS endpoint picks its certificate by alias or by host name.
+
 **Change flash** *(WebApp)*: When data on a page updates because someone else changed it in the background, the affected control briefly plays a small highlight animation (the `wx-data-changed` style) so the user notices that the content changed on its own. The animation is skipped for users who prefer reduced motion.
 
 **Cluster** *(WebCore)*: A cluster is a group of server instances serving the same deployment. The `Cluster` settings identify a shared state directory, peer instances and a shared secret so that sessions and other shared state can be coordinated across instances.
 
+**Cluster store and cluster transport** *(WebCore)*: These are the two services the `ClusterManager` hands to every part of the server. The cluster store holds state all instances must agree on, such as sessions, job claims and locks, with an atomic add that lets exactly one instance claim something. The cluster transport carries live messages to the other instances on a best-effort basis. Without cluster settings, the store lives in the process and there is no transport.
+
 **Collaboration** *(WebApp)*: Collaboration lets several users edit the same document while receiving each other's changes. `ControlCollaborative` connects participating editors to the server's document manager, which validates changes, assigns versions and distributes accepted operations.
 
-**Component** *(WebCore)*: A component is a core building block of the framework, one of the managers such as the sitemap manager or the fragment manager. They are all registered at the central component hub, which is the single place every part of the framework can reach to find them. Note that pieces running in the browser are never called components; the browser side base class is called Data instead.
+**Component** *(WebCore)*: A component is a core building block of the framework, one of the managers such as the sitemap manager or the fragment manager. They are all registered at the central component hub, which is the single place every part of the framework can reach to find them. Note that pieces running in the browser are never called components; they are controls, built on `Ctrl`, or on its descendant `Data` when they hold their own state and load their own data.
 
 **Condition** *(WebCore)*: A condition is a yes or no test attached to a page or a contribution that decides, for each request, whether it should appear. Conditions answer the question of whether something shows up, while scopes answer the question of where.
 
@@ -63,6 +67,8 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 **Domain** *(WebCore, WebApp)*: A domain is a named area of data, such as all orders, identified by an `IDomain` type. It is the label the live update channel uses to route change notifications. A service that declares no domain simply stays disconnected from that channel. It is not a web domain name.
 
 ## E
+
+**Email profile** *(WebCore)*: An email profile is a named mail server configuration under `Email:Profiles`, holding the provider, server, port, transport security and credentials. Applications send a message by naming a profile, so they never see the mail server's password; the `EmailManager` validates the message and protects it against being sent twice.
 
 **Endpoint** *(WebCore)*: An endpoint is anything that has its own web address: a page, a REST interface or a downloadable resource. Endpoints are what the sitemap turns into addresses, which keeps all the routing decisions in C# code rather than scattered as hard coded links.
 
@@ -108,13 +114,15 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 
 **Index-Explorer** *(WebIndex)*: Index-Explorer is the desktop interface for inspecting stored indexes, running WQL queries and examining documents, schema fields and reverse terms. The `WebExpress.WebIndex.WiUI` application also provides project links, result filtering and export.
 
-**Intent** *(WebApp)*: An intent is a named request to change a ViewState's data. It has a pure part that works out the new data and an optional part that talks to a service first. The two built in intents that reload shared data are `viewstate/query` and `viewstate/reload`, and intent names follow a domain and verb pattern such as `list/search`.
+**Intent** *(WebApp)*: An intent is a named request to change a ViewState's data. It has a pure part that works out the new data and an optional part that talks to a service first. The two built in intents that reload shared data are `viewstate/query` and `viewstate/reload`, the built in `wx/set` and `wx/patch` write a value or a patch into the data, and intent names follow a domain and verb pattern such as `list/search`.
 
 **Internationalization (i18n)** *(WebCore)*: Internationalization is the system for offering the interface in different languages. Every piece of wording is looked up by a key that is prefixed with its plugin, and the same keys work on the server and in the browser.
 
 ## J
 
 **Job** *(WebCore)*: A job is an operation that runs again and again on a schedule set by a cron expression, such as a nightly report. It differs from a task, which runs only once.
+
+**Job scope** *(WebCore)*: The job scope says where a job runs when several instances form a cluster. With `JobScope.Cluster`, the default, each due run is claimed by exactly one instance; with `JobScope.Node`, every instance runs it, which suits work on something the instance keeps for itself, such as a cache.
 
 ## L
 
@@ -150,9 +158,13 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 
 **Package** *(WebCore)*: A package is the deliverable bundle that carries a plugin so that it can be installed into a server. WebApp's settings pages include a surface for managing these packages.
 
+**Package catalog** *(WebCore)*: The package catalog (`catalog.xml` in the packages folder) records the installed packages and their states. A plugin that is deployed next to the server program rather than installed as a package (a built-in plugin) never appears in the catalog; `IPackageManager.GetPackages()` reports both kinds together.
+
 **Page** *(WebCore)*: A page is an endpoint that produces a whole HTML document, drawn through a visual tree. Pages state which scopes they belong to.
 
 **Parameter** *(WebCore)*: A parameter is a named value that comes in with a request. Its `ParameterScope` says where it travelled from: the web address, a query value or the session.
+
+**Personal access token (PAT)** *(WebCore)*: A personal access token is a credential a signed-in user creates for a script or another program, sent as `Authorization: Bearer <token>`. It belongs to one application, carries a chosen subset of the user's permissions, expires at a fixed time and is never renewed.
 
 **Phrase search** *(WebIndex)*: Phrase search matches terms in a specified order as a phrase. It uses term positions to distinguish a matching word sequence from documents that merely contain the same words elsewhere.
 
@@ -216,6 +228,8 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 
 **Theme** *(WebCore)*: A theme is a visual appearance registered for an application. WebUI icons use CSS masks that inherit the surrounding text color, allowing them to follow the appearance of the active theme.
 
+**Token store** *(WebCore)*: The token store keeps the few markers that stateless sign-in tokens still need: used refresh tokens, consumed sign-in challenges and revoked personal access tokens. Each application has exactly one, bound by the `IdentityTokenStoreManager`; the default keeps them in files under `Authentication:TokenStorePath`, or in the cluster store when no path is set and the cluster store is shared.
+
 **Tokenization** *(WebIndex)*: Tokenization splits input text into units that can be analyzed for indexing or querying. Tokens are intermediate units; the analysis pipeline turns them into the terms used by the search index.
 
 ## U
@@ -252,4 +266,4 @@ This glossary explains the key terms of the WebExpress framework in plain langua
 
 ---
 
-**Last updated**: 2026-10-26
+**Last updated**: 2026-10-28

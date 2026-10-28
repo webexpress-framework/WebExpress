@@ -43,9 +43,9 @@ Every settings file follows the same shape:
 
 When WebExpress starts, it looks for a folder named `settings` next to the program and reads the file
 `webexpress.settings.json` in it. You can point it to a different file when starting the program:
-`WebExpress -config myserver.settings.json` (the name is taken relative to the `settings` folder;
-a full path works as well). If the file cannot be found, WebExpress stops and tells you where it
-looked.
+`WebExpress -config myserver.settings.json` (or `-c` for short; the name is taken relative to the
+`settings` folder, and a full path works as well). If the file cannot be found, WebExpress stops and
+tells you where it looked.
 
 The `settings` folder is the **one place for every settings file** – the server's and those of the
 installed web applications. WebExpress reads *every* file ending in `.json` in that folder and merges
@@ -65,44 +65,9 @@ noticed right away rather than silently ignored.
 
 ## The settings in detail
 
-All of the settings in this section go inside the `"WebExpress"` block.
-
-### Container termination: `Shutdown`
-
-The shutdown policy enables controlled container termination when set to `"graceful"`. WebExpress stops admitting requests and background work, waits for already admitted operations, and then releases owned resources. `"immediate"` is the default when this setting is omitted. The `ShutdownTimeoutSeconds` setting defaults to 30 and accepts values from 1 through 86400.
-
-```json
-"Shutdown": "graceful",
-"ShutdownTimeoutSeconds": 30
-```
-
-The container timeout must leave time for draining and cleanup. For example, use `terminationGracePeriodSeconds: 45` with a 30-second drain budget and increase it further if a Kubernetes `preStop` hook consumes part of that interval. The [Graceful shutdown guide](https://github.com/webexpress-framework/WebExpress.WebCore/blob/main/docs/graceful-shutdown.md) describes signals, environment overrides, application integration, and deployment verification.
-
-Behind a load balancer, `ShutdownDelaySeconds` keeps the server answering for a few more seconds after the termination signal while `/health` already reports it as not ready, so the requests still routed to it during that moment are not refused. Set it a little above the readiness probe period and add it to the container timeout. It defaults to 0 and accepts values up to 3600.
-
-```json
-"ShutdownDelaySeconds": 10
-```
-
-### Running several instances – `Cluster`
-
-Several instances of the same server can share the work behind one load balancer. They then need a folder they all can reach, for the state every instance must see (sign-in sessions, scheduled job runs, notifications), and a way to pass live messages to each other. Leave the block out for a single instance.
-
-```json
-"Cluster": {
-  "StatePath": "/var/lib/webexpress/state",
-  "Peers": [ "dns://webexpress-peers:8080" ],
-  "Secret": "base64-encoded-32-random-bytes"
-}
-```
-
-- `StatePath` – a folder on a volume every instance mounts.
-- `Peers` – the other instances, as addresses (`http://10.0.0.5:8080/`) or as a name that lists all of them (`dns://name:port`).
-- `Secret` – at least 32 random bytes in Base64 (`openssl rand -base64 32`); required as soon as `Peers` is set. Keep it out of the settings file and pass it as the environment variable `WEBEXPRESS_WebExpress__Cluster__Secret`.
-- `NodeId` – optional name of the instance; the host name is used when it is left out.
-- `Listen` – optional own address for the traffic between instances, e.g. `http://0.0.0.0:8081/`. Only the other instances need to reach it; visitors never do, so it should not be published through the load balancer.
-
-The [Cluster model](development_guide.md#cluster-model) in the Development Guide describes what each part of the server shares and shows complete Kubernetes and Docker Compose setups.
+All of the settings in this section go inside the `"WebExpress"` block. The first ones are what
+almost every installation touches; the later ones are only needed for sign-in, mail, monitoring,
+containers and running several instances.
 
 ### Listening for visitors – `Endpoints`
 
@@ -122,7 +87,11 @@ For development, keep the endpoint on **HTTP**. The shipped configuration does n
 
 For certificate selection, the alias takes precedence. Without an alias, an inline PFX is identified by its endpoint URI; otherwise the endpoint's concrete hostname must resolve a configured inventory entry. A wildcard listener needs an alias or inline PFX.
 
-### Production certificate inventory
+### Production certificates – `Certificates`
+
+This guide is the reference for the certificate settings; the [installation guide](installation_guide.md#https-for-production)
+walks through preparing the files, and the [development guide](development_guide.md#certificate-management)
+describes the programming interface.
 
 For shared certificate configuration, add `Certificates` under `WebExpress`. The file store imports only configured PFX references. `Directory` defaults to the working directory. `WarningThresholdDays` defaults to `[30, 14, 7]`, accepts nonnegative day values and can be an empty array to disable expiry warnings.
 
@@ -145,9 +114,15 @@ For shared certificate configuration, add `Certificates` under `WebExpress`. The
 ]
 ```
 
-For secrets, supply the actual password through `WEBEXPRESS_WebExpress__Certificates__Items__0__Password`, or place it in protected deployment settings. `Store` defaults to `file`; modules may register additional stores through the manager. Alias and hostname keys must be unique across the inventory, ignoring case. Configured hostnames must be covered by certificate subject alternative names.
+|Name                   |What it means
+|-----------------------|---------------------------------------------------------------------------
+|`Directory`            |The folder relative PFX paths are resolved against. Relative to the working directory unless absolute; left out, relative endpoint PFX paths keep resolving against the working directory.
+|`WarningThresholdDays` |The days before expiry at which a warning is logged at start-up.
+|`Items`                |The shared inventory. Each item has a unique `Alias`, optional concrete `HostNames`, a `Store` (default `file`), a store-specific `Reference` (a PFX path for the file store) and an optional `Password`.
 
-For startup behavior, an unusable certificate referenced by an HTTPS endpoint stops startup before listeners open. The manager exposes issuer, validity dates, thumbprint and suitability status, and logs startup expiry warnings. This release has fixed certificates per listener, so separate certificates require separate ports or IP addresses. SNI selection, automatic renewal, file watching and periodic warning checks are future extensions. See the [production HTTPS installation instructions](installation_guide.md#https-for-production) for validation scope and complete deployment examples.
+For secrets, supply the actual password through `WEBEXPRESS_WebExpress__Certificates__Items__0__Password`, or place it in protected deployment settings. Alias and hostname keys must be unique across the inventory, ignoring case. Configured hostnames must be covered by certificate subject alternative names; a wildcard SAN may cover a concrete name, but `*.example.com` is not itself a hostname mapping.
+
+For startup behavior, an unusable certificate referenced by an HTTPS endpoint stops startup before listeners open. This release has fixed certificates per listener, so separate certificates require separate ports or IP addresses. SNI selection, automatic renewal, file watching and periodic warning checks are future extensions.
 
 ### Language and regional formatting – `Culture`
 
@@ -182,6 +157,35 @@ domain with other software. Leave the value empty (or omit it) for no prefix.
 
 ```json
 "ContextPath": ""
+```
+
+### The public address – `ExternalUri`
+
+Behind a reverse proxy, the address visitors type differs from the address WebExpress listens on:
+the proxy answers `https://www.example.com/` and forwards to `http://0.0.0.0:8080/`. `ExternalUri`
+tells WebExpress the public address, so that links and redirects it builds for the outside world
+point there. Leave it out when visitors reach the server directly.
+
+```json
+"ExternalUri": "https://www.example.com/"
+```
+
+### The entry page – `Root`
+
+When several web applications run on one server, the address of the server itself (or of the
+context path) is a shared entry point. By default it forwards to the application when there is
+exactly one, and shows an overview of all applications when there are several. The optional `Root`
+block changes that.
+
+|Name              |What it means
+|------------------|---------------------------------------------------------------------------
+|`RedirectEnabled` |Set to `false` to always show the overview, even when an application is selected. The default is `true`.
+|`ApplicationId`   |The id of the application the entry point forwards to. Left out, the only application is chosen automatically; an unknown id shows the overview.
+
+```json
+"Root": {
+  "ApplicationId": "webexpress.tutorial.webapp"
+}
 ```
 
 ### Keeping a log – `Log`
@@ -231,6 +235,118 @@ request came in over https.
 }
 ```
 
+### Signing in – `Authentication`
+
+Web applications with a sign-in issue signed tokens instead of keeping the signed-in user in memory.
+The `Authentication` block says who signs them, with which key, and how long they stay valid.
+Without it, sign-in is refused with the message *Configure WebExpress:Authentication before signing in.*
+
+> **Important:** The `webexpress.settings.json` shipped with WebExpress contains an `Authentication`
+> block for local development: its signing key is public (it is part of the source code) and
+> `RequireHttps` is `false`. Replace both before the server is reachable by anyone else.
+
+|Name                                 |What it means
+|-------------------------------------|---------------------------------------------------------------------------
+|`Issuer`                             |Who issues the tokens, usually the public address, e.g. `https://app.example.org`.
+|`Audience`                           |A name that keeps this installation's tokens apart from those of other services, e.g. `webexpress-production`.
+|`SigningKey`                         |At least 32 random bytes in Base64 (`openssl rand -base64 32`). Every instance of one installation uses the same key; changing it signs every visitor out.
+|`RequireHttps`                       |`true` (the default) accepts sign-in over https only. Set `false` for local development over plain http only.
+|`TokenStorePath`                     |A folder for the markers that stop a stolen refresh token from being reused and that record revoked access tokens. Left out, they go to the shared cluster state (see [`Cluster`](#running-several-instances--cluster)); with neither, sign-in is unavailable.
+|`ApplicationId`                      |The application the sign-in addresses (`/api/auth/…`) use when the request names none – needed when several applications run on the server.
+|`AccessTokenLifetime`                |How long a sign-in is trusted before it is renewed in the background. Default `00:05:00` (five minutes).
+|`RefreshTokenLifetime`               |How long a visitor stays signed in without signing in again. Default `7.00:00:00` (seven days).
+|`MaximumPersonalAccessTokenLifetime` |The longest lifetime a personal access token for scripts and other programs may get. Default `90.00:00:00`.
+
+Durations are written as `hours:minutes:seconds`, with the days in front and a dot: `7.00:00:00` is
+seven days.
+
+```json
+"Authentication": {
+  "Issuer": "https://app.example.org",
+  "Audience": "webexpress-production",
+  "SigningKey": "",
+  "RequireHttps": true,
+  "TokenStorePath": "./data/authentication"
+}
+```
+
+Keep the key out of the file and pass it as the environment variable
+`WEBEXPRESS_WebExpress__Authentication__SigningKey`. The [development guide](development_guide.md#authentication)
+describes the token model, the sign-in addresses and the cookies.
+
+### Sending mail – `Email`
+
+Web applications send mail – a notification, a password link – through profiles that are configured
+here, so that the applications never see the mail server's password. Sending is switched off until
+`Enabled` is `true`.
+
+|Name                 |What it means
+|---------------------|---------------------------------------------------------------------------
+|`Enabled`            |Set to `true` to allow applications to send mail. The default is `false`.
+|`DefaultProfile`     |The profile used when an application names none. The default is `default`.
+|`DeduplicationHours` |How long a message that was handed over is remembered, so that it is not sent twice. The default is `168` (one week).
+|`MaxAttachmentBytes` |The largest combined size of all attachments of one message. The default is 26,214,400 bytes (25 MB).
+|`Profiles`           |The named mail server configurations, see below.
+
+Each profile has the following settings:
+
+|Name             |What it means
+|-----------------|---------------------------------------------------------------------------
+|`Provider`       |How mail is delivered. The default `smtp` is built in; plugins can add others.
+|`From`           |The sender used when a message names none.
+|`Host`, `Port`   |The mail server and its port. The default port is `587`.
+|`Security`       |`StartTls` (the default, usually port 587), `SslOnConnect` (usually port 465) or `None` (an unencrypted relay for development only; cannot be combined with a user name).
+|`UserName`       |The account at the mail server, if it needs one.
+|`Password`       |The password of that account – best passed as an environment variable.
+|`TimeoutSeconds` |How long one delivery may take, including connecting and signing in. The default is `60`.
+|`Options`        |Additional text settings for a provider supplied by a plugin.
+
+```json
+"Email": {
+  "Enabled": true,
+  "Profiles": {
+    "default": {
+      "From": "WebExpress <noreply@example.org>",
+      "Host": "smtp.example.org",
+      "Port": 587,
+      "Security": "StartTls",
+      "UserName": "noreply@example.org"
+    }
+  }
+}
+```
+
+The password goes into `WEBEXPRESS_WebExpress__Email__Profiles__default__Password`. Changes to this
+block take effect after a restart. The [Email model](development_guide.md#email-model) describes how
+applications send mail and how duplicates are prevented.
+
+### Security headers – `Security`
+
+Every response carries protective headers: a strict content security policy, protection against
+being embedded in other sites, a referrer policy and – over https – HSTS. Requests that change data
+and that another web site triggers in a signed-in visitor's browser are refused. The optional
+`Security` block loosens or extends these protections; leave it out to keep them all.
+
+|Name                              |What it means
+|----------------------------------|---------------------------------------------------------------------------
+|`ContentSecurityPolicy`           |Replaces the built-in content security policy. `{nonce}` is replaced by the per-response value that marks the server's own inline scripts. An empty value switches the header off.
+|`ContentSecurityPolicyReportOnly` |`true` only reports violations in the browser console instead of blocking – useful for trying out a new policy.
+|`HstsMaxAge`                      |How many seconds browsers remember to use https only. Default one year; `0` switches HSTS off.
+|`HstsIncludeSubDomains`           |`true` extends HSTS to every subdomain. Off by default.
+|`CookieSameSite`                  |The `SameSite` attribute of cookies: `Lax` (the default), `Strict` or `None`.
+|`Headers`                         |Further response headers by name. A value replaces a built-in header, an empty value removes it, an unknown name is added.
+|`CsrfProtection`                  |`false` switches off the check against requests triggered by other sites. Only do that if you know why.
+|`TrustedOrigins`                  |Further origins, e.g. `https://portal.example.org`, allowed to send requests that change data – needed when a proxy rewrites the host name.
+|`TrustedProxies`                  |The addresses (`10.0.0.5`) or ranges (`172.16.0.0/12`) of your reverse proxies. Their `X-Forwarded-For` header is then trusted as the visitor's address, so per-visitor limits such as the sign-in throttle work behind a proxy.
+|`DetailedErrors`                  |`true` shows the technical details of an internal error on the error page. For development only.
+
+```json
+"Security": {
+  "TrustedProxies": [ "10.0.0.5" ],
+  "Headers": { "Permissions-Policy": "camera=(self)" }
+}
+```
+
 ### Monitoring – `Metrics`
 
 WebExpress publishes operating figures such as response times, error rates, memory use, logins and
@@ -256,6 +372,52 @@ be reached from outside your own network.
 Keep the token out of files you share by setting it as an environment variable instead (see
 [Overriding settings from the environment](#overriding-settings-from-the-environment)):
 `WEBEXPRESS_WebExpress__Metrics__BearerToken`.
+
+### Container termination – `Shutdown`
+
+When a container platform such as Docker or Kubernetes stops WebExpress, it first sends a polite
+request and only later pulls the plug. With `Shutdown` set to `"graceful"`, WebExpress uses that time:
+it stops accepting new requests and background work, lets the work already under way finish, and
+then shuts down cleanly. `"immediate"` – the default when the setting is left out – skips the waiting.
+`ShutdownTimeoutSeconds` limits how long WebExpress waits; it defaults to 30 and accepts values from
+1 through 86400.
+
+```json
+"Shutdown": "graceful",
+"ShutdownTimeoutSeconds": 30
+```
+
+The container platform must grant more time than WebExpress waits, so that the cleanup still fits
+in. For example, use `terminationGracePeriodSeconds: 45` with a 30-second budget, and more if a
+Kubernetes `preStop` hook uses up part of that time. The [Graceful shutdown](development_guide.md#graceful-shutdown)
+section of the development guide describes the signals, how applications take part and how to
+verify the setup.
+
+Behind a load balancer, `ShutdownDelaySeconds` keeps the server answering for a few more seconds after the termination signal while `/health` already reports it as not ready, so the requests still routed to it during that moment are not refused. Set it a little above the readiness probe period and add it to the container timeout. It defaults to 0 and accepts values up to 3600.
+
+```json
+"ShutdownDelaySeconds": 10
+```
+
+### Running several instances – `Cluster`
+
+Several instances of the same server can share the work behind one load balancer. They then need a folder they all can reach, for the state every instance must see (sign-in sessions, scheduled job runs, notifications), and a way to pass live messages to each other. Leave the block out for a single instance.
+
+```json
+"Cluster": {
+  "StatePath": "/var/lib/webexpress/state",
+  "Peers": [ "dns://webexpress-peers:8080" ],
+  "Secret": "base64-encoded-32-random-bytes"
+}
+```
+
+- `StatePath` – a folder on a volume every instance mounts.
+- `Peers` – the other instances, as addresses (`http://10.0.0.5:8080/`) or as a name that lists all of them (`dns://name:port`).
+- `Secret` – at least 32 random bytes in Base64 (`openssl rand -base64 32`); required as soon as `Peers` is set. Keep it out of the settings file and pass it as the environment variable `WEBEXPRESS_WebExpress__Cluster__Secret`.
+- `NodeId` – optional name of the instance; the host name is used when it is left out.
+- `Listen` – optional own address for the traffic between instances, e.g. `http://0.0.0.0:8081/`. Only the other instances need to reach it; visitors never do, so it should not be published through the load balancer.
+
+All instances also need the same `Authentication` settings. The [Cluster model](development_guide.md#cluster-model) in the Development Guide describes what each part of the server shares and shows complete Kubernetes and Docker Compose setups.
 
 ## Advanced: tuning the server – `Kestrel`
 
@@ -401,10 +563,15 @@ counting from `0`. Environment variables win over every file.
 |`WebExpress` → `Endpoints` → first → `Password`   |`WEBEXPRESS_WebExpress__Endpoints__0__Password`
 |`Plugins` → `another.plugin` → `ConnectionString` |`WEBEXPRESS_Plugins__another.plugin__ConnectionString`
 
+> **Note:** Plugin ids contain dots, and a plain shell refuses variable names with a dot
+> (`export WEBEXPRESS_Plugins__another.plugin__…` fails in bash). Docker, Docker Compose, Kubernetes
+> and systemd (`Environment=` in a unit file) accept such names, as does `env` on the command line:
+> `env 'WEBEXPRESS_Plugins__another.plugin__ConnectionString=…' dotnet WebExpress.dll`.
+
 ## A complete example
 
 This file shows the settings working together. It listens on both HTTP and HTTPS, writes a log,
-allows large uploads, uses US English and carries a setting for one plugin:
+allows large uploads, uses US English, signs visitors in and carries a setting for one plugin:
 
 ```json
 {
@@ -426,6 +593,15 @@ allows large uploads, uses US English and carries a setting for one plugin:
       { "Uri": "http://localhost/" },
       { "Uri": "https://localhost:443/", "PfxFile": "./cert/server.pfx", "Password": "" }
     ],
+
+    // Sign-in. Supply the key through WEBEXPRESS_WebExpress__Authentication__SigningKey.
+    "Authentication": {
+      "Issuer": "https://localhost",
+      "Audience": "webexpress-production",
+      "SigningKey": "",
+      "RequireHttps": true,
+      "TokenStorePath": "./data/authentication"
+    },
 
     // Advanced and optional: only needed to change the server defaults
     "Kestrel": {
