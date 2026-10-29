@@ -4335,7 +4335,7 @@ Tasks are created dynamically through the `TaskManager` (`CreateTask`), which in
 
 ## Notification model
 
-Notifications are messages that are displayed to users as pop-up windows. The notifications are globally (visible to all), linked to a session (visible to current users) or to specific roles (visible to selected users). The notifications are displayed in the upper right corner and are retained when a page is changed. Notifications are closed by the user or at the end of the display period. A notification that is visible to several users is removed for all of them as soon as one of them closes it. To better understand the relationships and structure, refer to the UML diagram below:
+Notifications are messages that are displayed to users as pop-up windows. The notifications are globally (visible to all) or linked to a session (visible to current users). The notifications are displayed in the upper right corner and are retained when a page is changed. Notifications are closed by the user or at the end of the display period. A notification that is visible to several users is removed for all of them as soon as one of them closes it; a closed session notification is removed from the session, so it does not return with the next page or reconnect. To better understand the relationships and structure, refer to the UML diagram below:
 
 ```
 ╔WebExpress.WebUI══════════════════════════════════════════════════════════════════════╗
@@ -4361,6 +4361,7 @@ Notifications are messages that are displayed to users as pop-up windows. The no
 ║  │ INotificationManager                                                       │      ║
 ║  ├────────────────────────────────────────────────────────────────────────────┤      ║
 ║  │ CreateNotification:Event                                                   │      ║
+║  │ DispatchNotification:Event                                                 │      ║
 ║  │ DestroyNotification:Event                                                  │      ║
 ║  ├────────────────────────────────────────────────────────────────────────────┤ 1    ║
 ║  │ GlobalNotifications:IEnumerable<INotification>                             ├────┐ ║
@@ -4370,8 +4371,9 @@ Notifications are messages that are displayed to users as pop-up windows. The no
 ║  │ AddNotification(IRequest,Message,Durability,Heading,Icon,TypeNotification) │    │ ║
 ║  │   :INotification                                                           │    │ ║
 ║  │ GetNotifications(IRequest):IEnumerable<INotification>                      │    │ ║
-║  │ RemoveNotification(Id)                                                     │    │ ║
-║  │ RemoveNotification(IRequest)                                               │    │ ║
+║  │ RemoveNotifications(IApplicationContext)                                   │    │ ║
+║  │ RemoveNotifications(IRequest)                                              │    │ ║
+║  │ RemoveNotifications(Id,Session)                                            │    │ ║
 ║  └────────────────────────────────────────────────────────────────────────────┘    │ ║
 ║                                                                                    │ ║
 ║                                                                           ┌────────┘ ║
