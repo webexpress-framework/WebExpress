@@ -286,7 +286,7 @@ The packages are versioned and can assume the following states:
              └───────────┘
 ```
 
-- **Available** - The package is available, but not yet loaded by the **WebExpress**. 
+- **Available** - The package is installed but not running: it waits for its dependencies, or its last start failed. `PackageCatalogItem.Problem` says which.
 - **Active** - The package has been loaded and is ready for use. 
 - **Disable** - The package has been disabled. The use of the package is not possible.
 
@@ -295,6 +295,8 @@ The `PackageManager` is responsible for provisioning the packages. This has the 
 ```
    📁 packages
    ├─📁 <package>
+   │  └─📁 <start>
+   ├─📁 .staging
    ├─📄 catalog.xml
    ├─📦 <package 1>.wxp
    ├─📦 <package …>.wxp
@@ -305,27 +307,47 @@ The `PackageManager` is responsible for provisioning the packages. This has the 
 |----------------|-----------------------
 |packages        |The home directory that contains the catalog and packages.
 |package         |Each active package is unpacked in a separate directory. This directory contains the libraries of the **WebExpress** packages for the installed framework and platform.
+|start           |Every start of a package unpacks into a fresh directory. On Windows the assemblies of the previous start stay locked until the runtime has collected their load context, so unpacking over them would fail; a directory that is still locked is removed on the next start of the server.
+|.staging        |Uploads and backups are kept here while an operation runs. An upload reaches the packages directory only after it passed every check.
 |catalog.xml     |The catalog.xml file collects all metadata (including the package state) of the installed packages.
 |package.wxp     |Each installed package is kept as its packed archive for future actions (activation, update).
 
-New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning service cyclically scans the directory for new packages and loads them. If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). In addition, the directory of the deactivated package is deleted and all contents (components) are removed from the running **WebExpress**. When **WebExpress** boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and loading the package into the package directory. When a package is deleted, it is removed from the package directory and from the catalog. The `PackageManager` manages the catalog; the class diagram at the end of the next section shows how it is accessed at runtime.
+New packages can be installed on the fly by copying them into the packages directory by the user. The provisioning service cyclically scans the directory for new packages and loads them. A file carrying the id of an installed package is a copy and is ignored. If a package is to be deactivated without removing it, the `PackageManager` notes it in the catalog (state `Disable`). In addition, the directory of the deactivated package is deleted and all contents (components) are removed from the running **WebExpress**. When **WebExpress** boots up and initializes, the catalog is read and the disabled packages are excluded. A disabled package is activated by changing the state in the catalog and unpacking and loading the package into the package directory. When a package is deleted, it is removed from the package directory and from the catalog. The `PackageManager` manages the catalog; the class diagram at the end of the next section shows how it is accessed at runtime.
+
+Dependencies are resolved in both directions:
+
+- Every change of the package set ends with a round that starts each available package whose dependencies are active, until a round starts nothing. A package installed before its dependency waits and starts together with it; the order of the catalog does not matter. A dependency names a package id or the id of a plugin.
+- A package other active packages depend on cannot be uninstalled (`IPackageManager.GetDependentPackages`). Deactivating it stops its dependents along - directly and indirectly - without disabling them: they wait and start again once it is activated. The same happens when its file disappears from the directory or a new version replaces it.
+- A start that fails takes out again whatever got registered. A failed new installation leaves nothing behind; a failed update restores the previous version. An update whose dependencies are missing is refused before the running version is touched.
+- A package whose plugin carries the id of a registered plugin - built in or of another package - is refused: unloading it would otherwise remove the plugin it collided with.
+
+All changes go through the public operations of `IPackageManager`. They hold the lock of the scan, coordinate the instances of a cluster and announce the change to them; code that reproduces their steps from outside races the scan.
 
 ### Packages and statically deployed plugins
 
 Not every plugin arrives as a package. A plugin that is referenced by the host project is deployed next to the host assembly and is loaded by the `PluginManager` from the application directory, without ever passing through the `PackageManager`. In a plain `dotnet build` deployment this is the normal case: every plugin is static, no `wxp` file exists, and `catalog.xml` is `<catalog />`.
 
-The catalog therefore describes installed packages only, and reading `Catalog.Packages` answers a narrower question than "which plugins does this server run". The union of both is formed by `IPackageManager.GetPackages()`, which reports the catalog entries plus one synthesized entry per registered plugin that no catalog entry accounts for. A management surface has to read that method; going to the catalog directly leaves out every statically deployed plugin.
+The catalog therefore describes installed packages only, and reading `Catalog.Packages` answers a narrower question than "which plugins does this server run". The union of both is formed by `IPackageManager.GetPackages()`, which reports the catalog entries plus one entry per statically deployed plugin that no catalog entry accounts for. A management surface has to read that method; going to the catalog directly leaves out every statically deployed plugin.
 
 |Property             |Installed package                   |Statically deployed plugin
 |---------------------|------------------------------------|---------------------------------------
 |`BuiltIn`            |`false`                             |`true`
+|`SystemPlugin`       |`false`                             |`true` for a plugin marked `[assembly: SystemPlugin]`
 |`File`               |The `wxp` file name.                |Empty - there is no package behind it.
-|`State`              |`Available`, `Active` or `Disable`. |Always `Active`.
+|`State`              |`Available`, `Active` or `Disable`. |`Available`, `Active` or `Disable`.
 |`Metadata`           |Read from the `spec` file.          |Read from the `IPluginContext`.
-|Written to catalog   |Yes.                                |Never.
-|Lifecycle operations |Apply.                              |Refused with a defined failure.
+|Written to catalog   |As `<package>`.                     |When deactivated as `<disabled>id</disabled>`, when uninstalled as `<removed>file.dll</removed>`.
+|Activate, deactivate |Apply.                              |Apply, except to a system plugin.
+|Uninstall            |Apply.                              |Applies, except to a system plugin; the file goes on the next start.
+|Update               |Apply.                              |Refused with a defined failure.
 
-The synthesized entries exist in the read path only. They are never added to `PackageCatalog.Packages`, because a persisted built-in entry would be read back as an installed package on the next start, would resolve to an empty package file name, and would be dropped again by the next directory scan as "no longer present". For the same reason `ActivatePackage`, `DeactivatePackage`, `UpdatePackage` and `UninstallPackage` refuse a built-in entry up front rather than running half of their steps: an assembly sitting in the application directory, loaded into the default assembly load context, cannot be replaced or removed while the process runs. Deduplication is by id - a plugin that is present both statically and as an installed package is reported once, as the package, which is the entry the operations can act on.
+A statically deployed plugin is never added to `PackageCatalog.Packages`: a persisted built-in package entry would be read back as an installed package on the next start, would resolve to an empty package file name, and would be dropped again by the next directory scan as "no longer present". `UpdatePackage` refuses it up front, because there is no package file to replace it with. Deactivating it shuts its plugin down and withdraws it from the `PluginManager`; the assembly stays loaded, and activating registers a fresh plugin from that assembly. The decision is kept in `PackageCatalog.DisabledPlugins`, and on the next start such a plugin is withdrawn before anything of it boots.
+
+Uninstalling withdraws the plugin the same way, but the assembly cannot be deleted right away: it is loaded into the default assembly load context and, on Windows, locked until the process ends. Its file name is kept in `PackageCatalog.RemovedPlugins`, and the next start deletes the file before the `PluginManager` loads anything. A file the host's dependency manifest (`*.deps.json`) lists is not deleted - the host would no longer start without it - but stays in the list and is left out of the loading on every start.
+
+A system plugin - `webexpress.webui`, `webexpress.webapp` - carries the framework every application and the management surface are built on and can be neither deactivated nor uninstalled. Deduplication is by id - a plugin that is present both statically and as an installed package is reported once, as the package, which is the entry the operations can act on.
+
+The management surface of `WebExpress.WebApp` also refuses to deactivate or remove the plugin of the application it is reached through, together with everything that plugin runs on: nothing would be left to activate it again with.
 
 ```
 ╔WebExpress.Core═══════════════════════════════════════════════════════════════════════╗
@@ -349,11 +371,13 @@ The synthesized entries exist in the read path only. They are never added to `Pa
 ║      ├────────────────────────────────┤                                              ║
 ║      │ GetPackages()                  │── installed packages + built-in plugins      ║
 ║      │ GetPackage(id)                 │                                              ║
+║      │ GetDependentPackages(id)       │── active packages that run on it             ║
 ║      │ InstallPackage(…)              │                                              ║
+║      │ UploadPackage(…)               │                                              ║
 ║      │ ActivatePackage(id)            │──┐                                           ║
-║      │ DeactivatePackage(id)          │──┤                                           ║
-║      │ UpdatePackage(id, …)           │──┼─ refuse a built-in entry                  ║
-║      │ UninstallPackage(id)           │──┘                                           ║
+║      │ DeactivatePackage(id)          │──┼─ refuse a system plugin                   ║
+║      │ UninstallPackage(id, settings) │──┘                                           ║
+║      │ UpdatePackage(id, …)           │──── refuse a built-in entry                  ║
 ║      └────────────────────────────────┘                                              ║
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
@@ -389,7 +413,7 @@ A package ships the defaults of its plugin as a settings file named in the spec:
 <settings>settings/webexpress.tutorial.webapp.settings.json</settings>
 ```
 
-The `PackageBuilder` places the file under `settings/` in the package, and the `PackageManager` deploys it to the settings directory of the server on installation and reloads the configuration, so the plugin finds its section when it boots. A file that already exists there is never overwritten - it is the administrator's, and an update of the package keeps their changes. A value in `webexpress.settings.json` overrides the plugin's file, which is where an administrator changes a default without touching the plugin's file.
+The `PackageBuilder` places the file under `settings/` in the package, and the `PackageManager` deploys it to the settings directory of the server on installation and reloads the configuration, so the plugin finds its section when it boots. A file that already exists there is never overwritten - it is the administrator's, and an update of the package keeps their changes. For the same reason uninstalling a package keeps the file; `UninstallPackage(id, removeSettings: true)` deletes it as well. A package may only set keys below `Plugins:<id>` of its own package id or of one of its plugins, which are named after their plugin sources; a file that reaches further is not deployed. A value in `webexpress.settings.json` overrides the plugin's file, which is where an administrator changes a default without touching the plugin's file.
 
 ## Plugin model
 
