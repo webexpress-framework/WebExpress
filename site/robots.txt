@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://webexpress-framework.github.io/WebExpress/sitemap.xml

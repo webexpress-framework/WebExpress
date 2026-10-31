@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
 	<id>WebExpress</id>
-	<version>0.0.11-alpha</version>
+	<version>2.0.0-alpha</version>
 	<title>WebExpress</title>
 	<authors>webexpress-framework@outlook.com</authors>
 	<license>MIT</license>
@@ -16,5 +16,5 @@
 	<artifact>WebExpress.dll</artifact>
 	<artifact>WebExpress.exe</artifact>
 	<artifact>WebExpress.runtimeconfig.json</artifact>
-	<artifact>config/webexpress.config.xml</artifact>
+	<artifact>settings/webexpress.settings.json</artifact>
 </package>
