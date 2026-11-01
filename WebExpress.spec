@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package>
 	<id>WebExpress</id>
-	<version>2.0.0-alpha</version>
+	<version>2.0.1-alpha</version>
 	<title>WebExpress</title>
 	<authors>webexpress-framework@outlook.com</authors>
 	<license>MIT</license>
@@ -13,8 +13,17 @@
 	<artifact>WebExpress.WebUI.dll</artifact>
 	<artifact>WebExpress.WebIndex.dll</artifact>
 	<artifact>WebExpress.WebApp.dll</artifact>
+	<artifact>Microsoft.Bcl.Cryptography.dll</artifact>
+	<artifact>Microsoft.IdentityModel.Abstractions.dll</artifact>
+	<artifact>Microsoft.IdentityModel.JsonWebTokens.dll</artifact>
+	<artifact>Microsoft.IdentityModel.Logging.dll</artifact>
+	<artifact>Microsoft.IdentityModel.Protocols.dll</artifact>
+	<artifact>Microsoft.IdentityModel.Protocols.OpenIdConnect.dll</artifact>
+	<artifact>Microsoft.IdentityModel.Tokens.dll</artifact>
+	<artifact>System.IdentityModel.Tokens.Jwt.dll</artifact>
 	<artifact>WebExpress.dll</artifact>
 	<artifact>WebExpress.exe</artifact>
+	<artifact>WebExpress.deps.json</artifact>
 	<artifact>WebExpress.runtimeconfig.json</artifact>
 	<artifact>settings/webexpress.settings.json</artifact>
 </package>
