@@ -504,6 +504,10 @@ The implemented methods from the interface cover the life cycle of the plugin. M
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
 ```
 
+### Plugin type catalog
+
+The types a plugin contributes to an extension point - the framework's or an application's - are collected by `PluginTypeCatalog<TItem>` (`WebExpress.WebCore.WebPlugin`). A manager holds the catalog as a field (there is deliberately no manager base class): `Attach(componentHub, httpServerContext)` collects the plugins already loaded and follows `AddPlugin`/`RemovePlugin`, so a manager built before the plugins arrive misses none. A type is an item when it is a public top-level, sealed, non-abstract, closed class assignable to the contract with a public parameterless constructor (or built by a factory); any other type is skipped silently, a defective one (throwing constructor, no key, a duplicate key within its plugin) is logged and skipped. Every plugin's offer is kept in arrival order and the latest offer of a key is in use; a plugin that leaves takes only the keys it still provides, which fall back to another plugin's offer. `Register(item)` files an item that is no type and belongs to no plugin. With `PluginTypeBinding.Application` items are bound per plugin and application, as the `HealthManager`'s checks are. Details and an example: [Plugin type catalog](https://github.com/webexpress-framework/WebExpress.WebCore/blob/main/docs/plugin-type-catalog.md).
+
 ## Internationalization model
 
 The provision of multilingual applications for different cultures is supported by **WebExpress**. In addition, the following text formatting is also adapted to the corresponding culture:
