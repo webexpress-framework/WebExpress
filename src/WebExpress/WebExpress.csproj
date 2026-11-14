@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>2.0.0.0</Version>
-		<AssemblyVersion>2.0.0.0</AssemblyVersion>
+		<Version>2.0.1-alpha</Version>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net10.0</TargetFramework>
 		<ApplicationIcon>ufo.ico</ApplicationIcon>
@@ -17,17 +16,20 @@
 	<PropertyGroup>
 		<!-- under Visual Studio the package would start its sbom-tool.exe, which requires the .NET 8 runtime; GenerateSbomWithDotnet hands the work to the dotnet msbuild instead -->
 		<GenerateSbom Condition="'$(MSBuildRuntimeType)' == 'Core' AND '$(Configuration)' == 'Release'">true</GenerateSbom>
-		<SbomGenerationPackageVersion>$(PackageVersion)</SbomGenerationPackageVersion>
-		<!-- scan only the restore graph, otherwise older packages lying in bin end up as dependencies -->
-		<SbomGenerationBuildComponentPath>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)</SbomGenerationBuildComponentPath>
+		<SbomGenerationPackageVersion>$(Version)</SbomGenerationPackageVersion>
+		<!-- the component detection takes every *.nuspec it sees for a dependency, and obj keeps one per version ever packed; it scans a folder holding only the restore graph (see PrepareSbomComponents) -->
+		<SbomGenerationBuildComponentPath>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)sbom-components</SbomGenerationBuildComponentPath>
 	</PropertyGroup>
 
+	<!-- downloaded rather than referenced: a package reference, even with PrivateAssets="all", lands in the restore graph, and the SBOM would list its own build tool as a dependency of the package -->
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.13" PrivateAssets="all" />
+		<PackageDownload Include="Microsoft.Sbom.Targets" Version="[4.1.13]" />
 	</ItemGroup>
 
+	<Import Project="$(NuGetPackageRoot)microsoft.sbom.targets\4.1.13\build\Microsoft.Sbom.Targets.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.sbom.targets\4.1.13\build\Microsoft.Sbom.Targets.targets')" />
+
 	<ItemGroup Condition="'$(Configuration)' != 'DebugLocal'">
-		<PackageReference Include="WebExpress.WebApp" Version="2.0.0-alpha" />
+		<PackageReference Include="WebExpress.WebApp" Version="2.0.1-alpha" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'DebugLocal'">
@@ -43,31 +45,70 @@
 		</None>
 	</ItemGroup>
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-		<Exec Command="$(SolutionDir)$(AssemblyName)\bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).exe -s $(SolutionDir)..\$(SolutionName).spec -c $(Configuration) -t $(TargetFramework) -o $(SolutionDir)..\pkg\$(Configuration)" />
-	</Target>
+	<PropertyGroup>
+		<PackageRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..'))</PackageRoot>
+	</PropertyGroup>
 
-	<Target Name="GenerateSbomWithDotnet" AfterTargets="Pack" Condition="'$(MSBuildRuntimeType)' != 'Core' AND '$(IsPackable)' == 'true' AND '$(Configuration)' == 'Release'">
-		<Exec Command="dotnet msbuild &quot;$(MSBuildProjectFullPath)&quot; -nologo -v:m -t:GenerateSbomTarget -p:Configuration=$(Configuration)" />
-	</Target>
-
-	<!-- Microsoft.Sbom.Targets only embeds the manifest in the nupkg; copy it next to the package as well -->
-	<Target Name="CopySbomToPackageOutput" AfterTargets="GenerateSbomTarget" Condition="'$(IsPackable)' == 'true' AND '$(GenerateSbom)' == 'true'">
-		<!-- set inside the target because PackageId and PackageOutputPath are only defined after the project file is evaluated -->
+	<!-- the zip lands where NuGet puts the packages of the modules; PackageOutputPath is only defined after the project file is evaluated, hence a target -->
+	<Target Name="ResolveServerPackageDir">
 		<PropertyGroup>
-			<SbomUnzipPath>$(IntermediateOutputPath)sbom</SbomUnzipPath>
-			<SbomFileName>$(PackageId.ToLowerInvariant())</SbomFileName>
-			<!-- dotnet pack -o sets PackageOutputPath without a trailing slash -->
-			<SbomPackageDir>$([MSBuild]::EnsureTrailingSlash('$(PackageOutputPath)'))</SbomPackageDir>
+			<ServerPackageDir>$([MSBuild]::EnsureTrailingSlash($([System.IO.Path]::GetFullPath($([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(PackageOutputPath)'))))))</ServerPackageDir>
 		</PropertyGroup>
-		<RemoveDir Directories="$(SbomUnzipPath)" />
-		<Unzip SourceFiles="$(SbomPackageDir)$(PackageId).$(PackageVersion).nupkg" DestinationFolder="$(SbomUnzipPath)" />
-		<ItemGroup>
-			<SbomFile Include="$(SbomUnzipPath)\_manifest\$(SbomSpecification)\manifest.spdx.json" TargetPath="$(SbomPackageDir)$(SbomFileName).spdx.json" />
-			<SbomFile Include="$(SbomUnzipPath)\_manifest\$(SbomSpecification)\manifest.spdx.json.sha256" TargetPath="$(SbomPackageDir)$(SbomFileName).spdx.json.sha256" />
-		</ItemGroup>
-		<Copy SourceFiles="@(SbomFile)" DestinationFiles="@(SbomFile->'%(TargetPath)')" />
-		<RemoveDir Directories="$(SbomUnzipPath)" />
+	</Target>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent" DependsOnTargets="ResolveServerPackageDir" Condition="'$(Configuration)' == 'Release'">
+		<Exec Command="&quot;$(TargetDir)$(AssemblyName).exe&quot; -s &quot;$(PackageRoot)\WebExpress.spec&quot; -c $(Configuration) -t $(TargetFramework) -o &quot;$(ServerPackageDir.TrimEnd('\'))&quot;" />
+	</Target>
+
+	<!-- the server ships as the zip of the PackageBuilder, not as a nupkg, so the Pack-bound GenerateSbomTarget never runs; the zip gets the same treatment instead: unpack, scan, pack again -->
+	<Target Name="GenerateSbomWithDotnet" AfterTargets="PostBuild" Condition="'$(MSBuildRuntimeType)' != 'Core' AND '$(Configuration)' == 'Release'">
+		<Exec Command="dotnet msbuild &quot;$(MSBuildProjectFullPath)&quot; -nologo -v:m -t:GenerateServerSbom -p:Configuration=$(Configuration)" />
+	</Target>
+
+	<Target Name="PrepareSbomComponents" Condition="'$(GenerateSbom)' == 'true'">
+		<PropertyGroup>
+			<!-- the detection reports download dependencies too, which holds nothing but the SBOM tool; the array has flat objects only, so a pattern can empty it -->
+			<SbomDownloadDependencies>"downloadDependencies":\s*\[[^{}\]]*(\{[^{}]*\}[^{}\]]*)*\]</SbomDownloadDependencies>
+			<SbomRestoreGraph>$([System.IO.File]::ReadAllText('$(ProjectAssetsFile)'))</SbomRestoreGraph>
+			<SbomRestoreGraph>$([System.Text.RegularExpressions.Regex]::Replace('$(SbomRestoreGraph)', '$(SbomDownloadDependencies)', '"downloadDependencies": []'))</SbomRestoreGraph>
+		</PropertyGroup>
+		<RemoveDir Directories="$(SbomGenerationBuildComponentPath)" />
+		<WriteLinesToFile File="$(SbomGenerationBuildComponentPath)\project.assets.json" Lines="$([MSBuild]::Escape('$(SbomRestoreGraph)'))" Overwrite="true" />
+	</Target>
+
+	<Target Name="GenerateServerSbom" AfterTargets="PostBuild" DependsOnTargets="ResolveServerPackageDir;PrepareSbomComponents" Condition="'$(GenerateSbom)' == 'true'">
+		<!-- name and file name of the archive come from the spec, which the PackageBuilder reads as well -->
+		<XmlPeek XmlInputPath="$(PackageRoot)\WebExpress.spec" Query="/package/id/text()">
+			<Output TaskParameter="Result" PropertyName="ServerPackageId" />
+		</XmlPeek>
+		<XmlPeek XmlInputPath="$(PackageRoot)\WebExpress.spec" Query="/package/version/text()">
+			<Output TaskParameter="Result" PropertyName="ServerPackageVersion" />
+		</XmlPeek>
+		<PropertyGroup>
+			<ServerPackage>$(ServerPackageDir)$(ServerPackageId).$(ServerPackageVersion).zip</ServerPackage>
+			<ServerPackageUnzip>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)sbom-package</ServerPackageUnzip>
+			<ServerSbomFile>$(ServerPackageDir)$(ServerPackageId.ToLowerInvariant()).spdx.json</ServerSbomFile>
+		</PropertyGroup>
+		<RemoveDir Directories="$(ServerPackageUnzip)" />
+		<Unzip SourceFiles="$(ServerPackage)" DestinationFolder="$(ServerPackageUnzip)" />
+		<GenerateSbom
+			BuildDropPath="$(ServerPackageUnzip)"
+			BuildComponentPath="$(SbomGenerationBuildComponentPath)"
+			PackageSupplier="$(SbomGenerationPackageSupplier)"
+			PackageName="$(ServerPackageId)"
+			PackageVersion="$(ServerPackageVersion)"
+			NamespaceBaseUri="http://spdx.org/spdxdocs/$(ServerPackageId)"
+			FetchLicenseInformation="$(SbomGenerationFetchLicenseInformation)"
+			EnablePackageMetadataParsing="$(SbomGenerationEnablePackageMetadataParsing)"
+			Verbosity="$(SbomGenerationVerbosity)"
+			ManifestInfo="$(SbomGenerationManifestInfo)"
+			DeleteManifestDirIfPresent="true"
+			SbomToolPath="$(SbomToolPath)" />
+		<ZipDirectory SourceDirectory="$(ServerPackageUnzip)" DestinationFile="$(ServerPackage)" Overwrite="true" />
+		<!-- next to the archive as well, so the SBOM can be published without unpacking -->
+		<Copy SourceFiles="$(ServerPackageUnzip)\_manifest\$(SbomSpecification)\manifest.spdx.json" DestinationFiles="$(ServerSbomFile)" />
+		<Copy SourceFiles="$(ServerPackageUnzip)\_manifest\$(SbomSpecification)\manifest.spdx.json.sha256" DestinationFiles="$(ServerSbomFile).sha256" />
+		<RemoveDir Directories="$(ServerPackageUnzip)" />
 	</Target>
 
 </Project>

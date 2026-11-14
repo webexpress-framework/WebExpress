@@ -253,6 +253,7 @@ Without it, sign-in is refused with the message *Configure WebExpress:Authentica
 |`RequireHttps`                       |`true` (the default) accepts sign-in over https only. Set `false` for local development over plain http only.
 |`TokenStorePath`                     |A folder for the markers that stop a stolen refresh token from being reused and that record revoked access tokens. Left out, they go to the shared cluster state (see [`Cluster`](#running-several-instances--cluster)); with neither, sign-in is unavailable.
 |`ApplicationId`                      |The application the sign-in addresses (`/api/auth/…`) use when the request names none – needed when several applications run on the server.
+|`ApplicationGroups`                  |Groups of applications that accept each other's sign-in, e.g. `{ "suite": [ "my.core", "my.portal" ] }`. Without a group a sign-in is valid in its own application only, and since the browser keeps one sign-in cookie per host, signing in to a second application ends the first. Members of a group need the same token store.
 |`AccessTokenLifetime`                |How long a sign-in is trusted before it is renewed in the background. Default `00:05:00` (five minutes).
 |`RefreshTokenLifetime`               |How long a visitor stays signed in without signing in again. Default `7.00:00:00` (seven days).
 |`MaximumPersonalAccessTokenLifetime` |The longest lifetime a personal access token for scripts and other programs may get. Default `90.00:00:00`.
