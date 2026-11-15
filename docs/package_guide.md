@@ -7,7 +7,7 @@ project (`PackageOutputPath`):
 ```
 src/WebExpress/bin/
 └── Release/
-    ├── WebExpress.<version>.zip     # e.g. WebExpress.2.0.1-alpha.zip
+    ├── WebExpress.<version>.zip     # e.g. WebExpress.2.0.2-alpha.zip
     ├── webexpress.spdx.json         # SBOM of the archive (SPDX 2.2), also inside it
     └── webexpress.spdx.json.sha256
 ```
@@ -152,7 +152,7 @@ WebExpress.exe -s <spec file> -c <configuration> -t <tfm> -o <output folder>
 |-------------------|----------------------------------------------------------------------------------|--------------------------|
 | `-s`, `-spec`     | Path to the spec file. Its folder is the search scope for every file of the package. | `..\..\WebExpress.spec`  |
 | `-c`, `-config`   | Build configuration whose output is packed (only relevant for `<plugin>`).       | `Release`                |
-| `-t`, `-target`   | Target framework(s), several separated by `;` (only relevant for `<plugin>`).    | `net10.0`                |
+| `-t`, `-target`   | Target framework(s), several separated by `;` (only relevant for `<plugin>`).    | `net11.0`                |
 | `-o`, `-output`   | Output folder, created if necessary.                                             | `bin\Release`            |
 
 If a parameter is missing, the call ends with exit code `1` and a message `*** PackageBuilder: ...`.
@@ -163,7 +163,7 @@ If a parameter is missing, the call ends with exit code `1` and a message `*** P
 <?xml version="1.0" encoding="utf-8"?>
 <package>
     <id>WebExpress</id>
-    <version>2.0.1-alpha</version>
+    <version>2.0.2-alpha</version>
     <title>WebExpress</title>
     <authors>webexpress-framework@outlook.com</authors>
     <license>MIT</license>
@@ -205,7 +205,7 @@ folder and all of its subfolders - never above it. A match must end on a path bo
 3. files outside of any build output (sources, `README.md`, `licenses/`, ...)
 
 Output of another configuration (e.g. a stale `bin/Debug` in a Release build), output of another target
-framework (e.g. `bin/Release/net8.0` when building for `net10.0`) and anything below `obj/` never
+framework (e.g. `bin/Release/net8.0` when building for `net11.0`) and anything below `obj/` never
 qualifies. Within a rank, the shallowest path wins, so the `README.md` next to the spec beats one
 in a subfolder. The builder's output shows the path actually used for each file
 (`*** PackageBuilder: Create the artifact file '...'`).
@@ -228,7 +228,7 @@ with the WebCore from the NuGet package, so it applies from the WebCore package 
 1. Raise the version in `WebExpress.spec` (`<version>`) and in `src/WebExpress/WebExpress.csproj`
    (`Version`, `AssemblyVersion`).
 2. Set the version of the `WebExpress.WebApp` package reference in the csproj to the published release.
-3. If a new runtime dependency appears (a new dll in `bin/Release/net10.0/`), add it to the spec as an
+3. If a new runtime dependency appears (a new dll in `bin/Release/net11.0/`), add it to the spec as an
    `<artifact>`. The `runtime` section of `WebExpress.deps.json` is authoritative: every dll listed there
    must be in the package, otherwise the server aborts on start with a `FileNotFoundException`.
 4. Build Release. A `*** PackageBuilder: Not found: ...` line names a spec entry without a file.

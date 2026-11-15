@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>2.0.1-alpha</Version>
+		<Version>2.0.2-alpha</Version>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFramework>net11.0</TargetFramework>
 		<ApplicationIcon>ufo.ico</ApplicationIcon>
 		<Authors>webexpress-framework@outlook.com</Authors>
 		<StartupObject>WebExpress.App.Program</StartupObject>
@@ -29,7 +29,7 @@
 	<Import Project="$(NuGetPackageRoot)microsoft.sbom.targets\4.1.13\build\Microsoft.Sbom.Targets.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.sbom.targets\4.1.13\build\Microsoft.Sbom.Targets.targets')" />
 
 	<ItemGroup Condition="'$(Configuration)' != 'DebugLocal'">
-		<PackageReference Include="WebExpress.WebApp" Version="2.0.1-alpha" />
+		<PackageReference Include="WebExpress.WebApp" Version="2.0.2-alpha" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'DebugLocal'">
