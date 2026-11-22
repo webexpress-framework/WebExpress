@@ -263,7 +263,7 @@ By using dependency injection, it is ensured that all required dependencies are 
 |-------------------|-------------------
 |lib                |This directory contains the libraries.
 |plugin             |The build output of one plugin project of the package.
-|tfm                |The target framework moniker (e.g. `net10.0`) the output was built for.
+|tfm                |The target framework moniker (e.g. `net11.0`) the output was built for.
 |runtimes           |Contains the platform-dependent libraries, if the plugin has any.
 |rid                |A runtime identifier (RID) of the supported runtime (see .NET Runtime Identifier (RID) catalog). Each supported runtime is created in its own directory.
 |settings           |The settings files (json) of the plugins. On installation they are deployed to the settings directory of the server, see [Plugin settings](#plugin-settings).
